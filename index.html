@@ -845,15 +845,30 @@
     }
 
     function sendCompletionEmail(req) {
-      const recipientEmail = req.createdByEmail || req.assignEmail;
-      const recipientName = req.createdByName || "Assigner";
+  // ၁။ စစချင်း Request တင်ခဲ့သူ (Requestor)
+  const requestorName = req.createdByName || "Requestor";
+  const requestorEmail = req.createdByEmail || req.assignEmail;
 
-      emailjs.send('service_94a1xtp', 'template_h6xz4dc', {
-        to_name: recipientName, to_email: recipientEmail, cc_email: CC_EMAIL,
-        sender_name: currentUser ? currentUser.name : req.assignPerson,
-        location: req.location, description: `COMPLETED / RESOLVED: ${req.desc}`
-      }).then(() => alert(`Completion email sent to ${recipientName}`));
-    }
+  // ၂။ အလုပ်ဝင်ပြင်ပြီး After Image တင်ပေးသူ (Technician / Assignee)
+  const technicianName = currentUser ? currentUser.name : req.assignPerson;
+
+  // ၃။ EmailJS သို့ Parameter များ အမှန်အတိုင်း ပို့ပေးခြင်း
+  emailjs.send('service_94a1xtp', 'template_ik9p9kc', {
+    to_name: requestorName,          // {{to_name}} သို့မဟုတ် {{requestor_name}}
+    requestor_name: requestorName,   // {{requestor_name}}
+    to_email: requestorEmail,        // လက်ခံမည့် Email
+    cc_email: CC_EMAIL,
+    technician_name: technicianName, // {{technician_name}}
+    location: req.location,          // {{location}}
+    description: req.desc,           // {{description}}
+    after_image_url: req.afterImg    // {{after_image_url}}
+  }).then(() => {
+    alert(`Completion email sent to ${requestorName}`);
+  }).catch((error) => {
+    console.error("EmailJS Error:", error);
+    alert("Failed to send email. Please check image size or EmailJS settings.");
+  });
+}
 
     function openUpdateModal(key) {
       const req = maintenanceRequests[key];
