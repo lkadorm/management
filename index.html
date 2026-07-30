@@ -4,8 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>L K Ang Dormitory Management System</title>
+
   <!-- SheetJS Library for Excel Export -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- EmailJS SDK Integration -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <script type="text/javascript">
+    (function(){
+      // ⚠️ သင်၏ EmailJS Public Key ကို ဒီနေရာတွင် အစားထိုးပါ
+      emailjs.init("7gdiQ9fgdDVwO-V9W"); 
+    })();
+  </script>
+
   <style>
     /* --- GLOBAL & BASE STYLES --- */
     * {
@@ -224,14 +235,6 @@
     .header-actions { display: flex; gap: 10px; }
 
     /* --- CARDS & TABLES --- */
-    .card {
-      background-color: #111827;
-      border: 1px solid #1e293b;
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 24px;
-    }
-
     .table-container {
       width: 100%;
       overflow-x: auto;
@@ -480,7 +483,7 @@
                   <th>Before Image</th>
                   <th>After Image</th>
                   <th>Status</th>
-                  <th>Notify</th>
+                  <th>Auto Notify</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -666,7 +669,7 @@
           <input type="file" id="req-before-img" class="form-input" accept="image/*" required>
         </div>
         <div style="display:flex; gap:10px; margin-top:20px;">
-          <button type="submit" class="btn btn-green">Submit & Assign Request</button>
+          <button type="submit" class="btn btn-green">Submit & Send Auto Email</button>
           <button type="button" class="btn btn-secondary" onclick="closeModal('modal-new-request')">Cancel</button>
         </div>
       </form>
@@ -1045,7 +1048,7 @@
       XLSX.writeFile(workbook, "LK_Ang_Dormitory_Residents.xlsx");
     }
 
-    // --- MAINTENANCE SYSTEM LOGIC ---
+    // --- MAINTENANCE SYSTEM & EMAILJS LOGIC ---
     function submitMaintenanceRequest(e) {
       e.preventDefault();
       const assignPerson = document.getElementById('req-assign-person').value;
@@ -1071,7 +1074,7 @@
         renderMaintenanceTable();
         closeModal('modal-new-request');
 
-        // Automatically Trigger Mail Client to Send Email & CC
+        // EmailJS Auto Email Send (Background)
         sendNotificationEmail(assignPerson, assignEmail, location, desc);
       };
 
@@ -1080,13 +1083,28 @@
       }
     }
 
+    // EmailJS API Call Function
     function sendNotificationEmail(personName, email, location, desc) {
       const senderName = currentUser ? currentUser.name : "System User";
-      const subject = encodeURIComponent(`[L K Ang Dormitory] New Maintenance Assigned: ${location}`);
-      const body = encodeURIComponent(`Hi ${personName},\n\nYou have been assigned a new maintenance job by ${senderName}.\n\nLocation: ${location}\nDescription: ${desc}\nStatus: Pending\n\nPlease check the dormitory system portal for details.`);
-      
-      // Auto triggers Mailto with CC to hlang@lkac.com.sg
-      window.location.href = `mailto:${email}?cc=${CC_EMAIL}&subject=${subject}&body=${body}`;
+
+      const templateParams = {
+        to_name: personName,
+        to_email: email,                  // Maung သို့ Zia ၏ Email
+        cc_email: CC_EMAIL,               // CC: hlang@lkac.com.sg
+        sender_name: senderName,
+        location: location,
+        description: desc
+      };
+
+      // ⚠️ သင်၏ EmailJS SERVICE_ID နှင့် TEMPLATE_ID ကို ဒီနေရာတွင် အစားထိုးပါ
+      emailjs.send('service_94a1xtp', 'template_ik9p9kc', templateParams)
+        .then(function(response) {
+           console.log('SUCCESS!', response.status, response.text);
+           alert(`Maintenance request assigned to ${personName}. Auto-email sent successfully!`);
+        }, function(error) {
+           console.log('FAILED...', error);
+           alert('Email sending failed: ' + JSON.stringify(error));
+        });
     }
 
     function openUpdateModal(index) {
@@ -1174,11 +1192,6 @@
         if (req.status === 'In Progress') badgeClass = 'badge-progress';
         if (req.status === 'Resolved') badgeClass = 'badge-resolved';
 
-        const senderName = currentUser ? currentUser.name : "System User";
-        const subject = encodeURIComponent(`[L K Ang Dormitory] Reminder: Maintenance for ${req.location}`);
-        const body = encodeURIComponent(`Hi ${req.assignPerson},\n\nReminder regarding the maintenance task assigned to you by ${senderName}.\n\nLocation: ${req.location}\nDescription: ${req.desc}\nCurrent Status: ${req.status}`);
-        const mailtoUrl = `mailto:${req.assignEmail}?cc=${CC_EMAIL}&subject=${subject}&body=${body}`;
-
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td><b>${req.assignPerson}</b><br><span style="font-size:0.75rem; color:#94a3b8;">${req.assignEmail}</span></td>
@@ -1188,7 +1201,7 @@
           <td>${req.afterImg ? `<img src="${req.afterImg}" class="img-preview" onclick="viewFullImage('${req.afterImg}')" alt="After">` : '<span style="color:#64748b;">Not Uploaded</span>'}</td>
           <td><span class="badge ${badgeClass}">${req.status}</span></td>
           <td>
-            <a href="${mailtoUrl}" class="btn btn-secondary" style="padding:4px 8px; font-size:0.75rem;">📧 Send Email</a>
+            <button class="btn btn-secondary" style="padding:4px 8px; font-size:0.75rem;" onclick="sendNotificationEmail('${req.assignPerson}', '${req.assignEmail}', '${req.location}', '${req.desc}')">⚡ Resend Email</button>
           </td>
           <td style="display:flex; gap:6px; margin-top:8px;">
             <button class="btn btn-warning" style="padding:4px 8px; font-size:0.75rem;" onclick="openUpdateModal(${index})">Edit / Update</button>
