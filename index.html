@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>L K Ang Dormitory Mangement System</title>
+  <title>L K Ang Dormitory Management System</title>
   <style>
     /* --- CSS RESET & BASE STYLES --- */
     * {
@@ -294,18 +294,6 @@
 
     .btn-danger:hover { background-color: #b91c1c; }
 
-    .btn-orange {
-      background-color: #ea580c;
-      color: #ffffff;
-      padding: 8px 16px;
-      border-radius: 6px;
-      border: none;
-      font-weight: 500;
-      cursor: pointer;
-    }
-
-    .btn-orange:hover { background-color: #c2410c; }
-
     .btn-secondary {
       background-color: #334155;
       color: #ffffff;
@@ -383,17 +371,6 @@
       background-color: #161e2e;
     }
 
-    .status-check {
-      color: #22c55e;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      border: 1px solid #22c55e;
-    }
-
     .table-actions {
       display: flex;
       gap: 12px;
@@ -418,44 +395,6 @@
       max-width: 900px;
     }
 
-    .toggle-switch {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-top: 28px;
-    }
-
-    .switch {
-      position: relative;
-      display: inline-block;
-      width: 44px;
-      height: 24px;
-    }
-
-    .switch input { opacity: 0; width: 0; height: 0; }
-
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #334155;
-      transition: .3s;
-      border-radius: 24px;
-    }
-
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 18px; width: 18px;
-      left: 3px; bottom: 3px;
-      background-color: white;
-      transition: .3s;
-      border-radius: 50%;
-    }
-
-    input:checked + .slider { background-color: #3b82f6; }
-    input:checked + .slider:before { transform: translateX(20px); }
-
     .form-actions {
       display: flex;
       gap: 12px;
@@ -473,7 +412,7 @@
   <div id="login-view">
     <div class="login-card">
       <div class="login-header">
-        <h2>Fresh E-Token Portal</h2>
+        <h2>Dorm Management</h2>
         <h1>Sign in</h1>
       </div>
       <form onsubmit="handleLogin(event)">
@@ -504,19 +443,16 @@
       <a class="nav-item active" onclick="switchTab('residents')">
         📦 Residents
       </a>
-      <a class="nav-item" onclick="switchTab('settings')">
-        ⚙️ Site Settings
-      </a>
-      <a class="nav-item" onclick="switchTab('usage')">
-        📊 Usage
-      </a>
+      <a class="nav-item" onclick="switchTab('maintenance')">
+        ⚙️ Maintenance Request
+      </a>      
     </div>
 
     <!-- Main Wrapper -->
     <div class="main-wrapper">
       <!-- Navbar -->
       <div class="navbar">
-        <div class="navbar-title">L K Ang Construction - Fresh E-Token Portal</div>
+        <div class="navbar-title">L K Ang Dormitory Management System</div>
         <div class="avatar-btn" onclick="handleLogout()" title="Click to Logout">MM</div>
       </div>
 
@@ -544,6 +480,7 @@
             <table>
               <thead>
                 <tr>
+                  <th><input type="checkbox"></th>
                   <th>Resident ID</th>
                   <th>Name</th>
                   <th>Company Name</th>
@@ -576,19 +513,24 @@
                 <input type="text" id="edit-name" class="form-input" required>
               </div>
               <div class="form-group">
-                <label>Username<span>*</span></label>
-                <input type="text" id="edit-username" class="form-input" required>
+                <label>Company Name<span>*</span></label>
+                <input type="text" id="edit-company" class="form-input" required>
               </div>
               <div class="form-group">
-                <label>Token Balance<span>*</span></label>
-                <input type="number" id="edit-tokens" class="form-input" required>
+                <label>Check-in Date<span>*</span></label>
+                <input type="date" id="edit-checkin" class="form-input" required>
               </div>
-              <div class="form-group toggle-switch">
-                <label class="switch">
-                  <input type="checkbox" id="edit-enabled">
-                  <span class="slider"></span>
-                </label>
-                <span style="font-size: 0.9rem; color: #cbd5e1;">Enabled</span>
+              <div class="form-group">
+                <label>Check-out Date</label>
+                <input type="date" id="edit-checkout" class="form-input">
+              </div>
+              <div class="form-group">
+                <label>Room No.<span>*</span></label>
+                <input type="text" id="edit-room" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label>Bed No.<span>*</span></label>
+                <input type="text" id="edit-bed" class="form-input" required>
               </div>
             </div>
 
@@ -616,23 +558,20 @@
 
   <!-- ==================== JAVASCRIPT LOGIC ==================== -->
   <script>
-    // Initial State Data
+    // Initial State Data matching table columns
     let mockResidents = [
-      { id: '21437', name: 'FL Technician', username: 'fltech', site: 'L K Ang Construction', tokens: 95, enabled: true },
-      { id: '21845', name: 'Sadul Jaman', username: 's_jaman', site: 'L K Ang Construction', tokens: 6, enabled: true },
-      { id: '21846', name: 'Biswas Shyemol Chandra', username: 'schandra', site: 'L K Ang Construction', tokens: 6, enabled: true },
-      { id: '21847', name: 'Hosen Md Monir', username: 'mmonir', site: 'L K Ang Construction', tokens: 6, enabled: true },
-      { id: '21848', name: 'Dhali Balayat', username: 'balayatd', site: 'L K Ang Construction', tokens: 6, enabled: true },
-      { id: '21849', name: 'Nasir', username: 'nasir_ns', site: 'L K Ang Construction', tokens: 6, enabled: true },
-      { id: '21850', name: 'Karim Md Rejaul', username: 'kmd_rejaul', site: 'L K Ang Construction', tokens: 6, enabled: true },
-      { id: '21851', name: 'Jhontu', username: 'jhontu', site: 'L K Ang Construction', tokens: 6, enabled: true },
-      { id: '21852', name: 'Siddik Talukdar', username: 'stalukdar', site: 'L K Ang Construction', tokens: 6, enabled: true },
-      { id: '21853', name: 'Islam Md Monirul', username: 'im_monirul', site: 'L K Ang Construction', tokens: 6, enabled: true }
+      { id: '21437', name: 'FL Technician', company: 'L K Ang Construction', checkIn: '2024-01-10', checkOut: '-', roomNo: 'A-101', bedNo: '01' },
+      { id: '21845', name: 'Sadul Jaman', company: 'L K Ang Construction', checkIn: '2024-02-01', checkOut: '-', roomNo: 'A-102', bedNo: '02' },
+      { id: '21846', name: 'Biswas Shyemol Chandra', company: 'L K Ang Construction', checkIn: '2024-02-15', checkOut: '-', roomNo: 'B-201', bedNo: '01' },
+      { id: '21847', name: 'Hosen Md Monir', company: 'L K Ang Construction', checkIn: '2024-03-01', checkOut: '-', roomNo: 'B-202', bedNo: '03' },
+      { id: '21848', name: 'Dhali Balayat', company: 'L K Ang Construction', checkIn: '2024-03-05', checkOut: '-', roomNo: 'C-105', bedNo: '02' },
+      { id: '21849', name: 'Nasir', company: 'L K Ang Construction', checkIn: '2024-03-10', checkOut: '-', roomNo: 'C-106', bedNo: '01' },
+      { id: '21850', name: 'Karim Md Rejaul', company: 'L K Ang Construction', checkIn: '2024-03-12', checkOut: '-', roomNo: 'D-301', bedNo: '04' }
     ];
 
     let currentEditingId = null;
 
-    // View Navigation Logic
+    // View Navigation
     function handleLogin(e) {
       e.preventDefault();
       document.getElementById('login-view').classList.add('hidden');
@@ -661,16 +600,14 @@
           <td><input type="checkbox"></td>
           <td>${res.id}</td>
           <td>${res.name}</td>
-          <td>${res.username}</td>
-          <td>${res.site}</td>
-          <td>${res.tokens}</td>
-          <td>
-            <div class="status-check">✓</div>
-          </td>
+          <td>${res.company}</td>
+          <td>${res.checkIn}</td>
+          <td>${res.checkOut}</td>
+          <td>${res.roomNo}</td>
+          <td>${res.bedNo}</td>
           <td>
             <div class="table-actions">
               <span class="action-link" onclick="openEditPage('${res.id}')">✏️ Edit</span>
-              <span class="action-link" onclick="alert('Password reset link generated for ${res.username}')">🔑 Reset Password</span>
             </div>
           </td>
         `;
@@ -678,16 +615,18 @@
       });
     }
 
-    // Navigation & Form Switchers
+    // Navigation & Form Actions
     function openEditPage(id) {
       currentEditingId = id;
       const resident = mockResidents.find(r => r.id === id);
       if (!resident) return;
 
       document.getElementById('edit-name').value = resident.name;
-      document.getElementById('edit-username').value = resident.username;
-      document.getElementById('edit-tokens').value = resident.tokens;
-      document.getElementById('edit-enabled').checked = resident.enabled;
+      document.getElementById('edit-company').value = resident.company;
+      document.getElementById('edit-checkin').value = resident.checkIn !== '-' ? resident.checkIn : '';
+      document.getElementById('edit-checkout').value = resident.checkOut !== '-' ? resident.checkOut : '';
+      document.getElementById('edit-room').value = resident.roomNo;
+      document.getElementById('edit-bed').value = resident.bedNo;
 
       document.getElementById('page-residents-list').classList.add('hidden');
       document.getElementById('page-edit-resident').classList.remove('hidden');
@@ -705,9 +644,11 @@
       const resident = mockResidents.find(r => r.id === currentEditingId);
       if (resident) {
         resident.name = document.getElementById('edit-name').value;
-        resident.username = document.getElementById('edit-username').value;
-        resident.tokens = parseInt(document.getElementById('edit-tokens').value, 10);
-        resident.enabled = document.getElementById('edit-enabled').checked;
+        resident.company = document.getElementById('edit-company').value;
+        resident.checkIn = document.getElementById('edit-checkin').value || '-';
+        resident.checkOut = document.getElementById('edit-checkout').value || '-';
+        resident.roomNo = document.getElementById('edit-room').value;
+        resident.bedNo = document.getElementById('edit-bed').value;
       }
       renderTable();
       showListPage();
