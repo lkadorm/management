@@ -634,8 +634,8 @@
           <label>Assign Person Name</label>
           <select id="req-assign-person" class="form-select" required>
             <option value="">-- Select Assign Person --</option>
-            <option value="Maung">Maung (maung@lkangco.sg)</option>
-            <option value="Zia">Zia (lkadorm@gmail.com)</option>
+            <option value="maung@lkangco.sg" data-name="Maung">Maung (maung@lkangco.sg)</option>
+            <option value="lkadorm@gmail.com" data-name="Zia">Zia (lkadorm@gmail.com)</option>
           </select>
         </div>
         <div class="form-group">
@@ -686,8 +686,8 @@
         <div class="form-group">
           <label>Assign Person Name</label>
           <select id="update-assign-person" class="form-select" required>
-            <option value="Maung">Maung (maung@lkangco.sg)</option>
-            <option value="Zia">Zia (lkadorm@gmail.com)</option>
+            <option value="maung@lkangco.sg" data-name="Maung">Maung (maung@lkangco.sg)</option>
+            <option value="lkadorm@gmail.com" data-name="Zia">Zia (lkadorm@gmail.com)</option>
           </select>
         </div>
 
@@ -787,12 +787,6 @@
 
   <!-- ==================== JAVASCRIPT LOGIC ==================== -->
   <script>
-    // ASSIGNED PERSON MAP
-    const ASSIGNED_PERSONS = {
-      "Maung": "maung@lkangco.sg",
-      "Zia": "lkadorm@gmail.com"
-    };
-
     const CC_EMAIL = "hlang@lkac.com.sg";
 
     // Local Data Storage
@@ -1051,8 +1045,10 @@
     // --- MAINTENANCE SYSTEM & EMAILJS LOGIC ---
     function submitMaintenanceRequest(e) {
       e.preventDefault();
-      const assignPerson = document.getElementById('req-assign-person').value;
-      const assignEmail = ASSIGNED_PERSONS[assignPerson] || '';
+      const selectEl = document.getElementById('req-assign-person');
+      const assignEmail = selectEl.value; 
+      const assignPerson = selectEl.options[selectEl.selectedIndex].getAttribute('data-name'); 
+      
       const location = document.getElementById('req-location').value;
       const desc = document.getElementById('req-desc').value;
       const fileInput = document.getElementById('req-before-img');
@@ -1074,7 +1070,7 @@
         renderMaintenanceTable();
         closeModal('modal-new-request');
 
-        // EmailJS Auto Email Send (Background)
+        // EmailJS Auto Email Send
         sendNotificationEmail(assignPerson, assignEmail, location, desc);
       };
 
@@ -1085,6 +1081,11 @@
 
     // EmailJS API Call Function
     function sendNotificationEmail(personName, email, location, desc) {
+      if (!email) {
+        alert("Recipient email is missing!");
+        return;
+      }
+
       const senderName = currentUser ? currentUser.name : "System User";
 
       const templateParams = {
@@ -1112,7 +1113,7 @@
       if (!req) return;
 
       document.getElementById('update-req-index').value = index;
-      document.getElementById('update-assign-person').value = req.assignPerson;
+      document.getElementById('update-assign-person').value = req.assignEmail;
       document.getElementById('update-status').value = req.status;
       document.getElementById('req-after-img').value = '';
 
@@ -1146,7 +1147,10 @@
     function saveMaintenanceUpdate(e) {
       e.preventDefault();
       const index = parseInt(document.getElementById('update-req-index').value);
-      const assignPerson = document.getElementById('update-assign-person').value;
+      const selectEl = document.getElementById('update-assign-person');
+      const assignEmail = selectEl.value;
+      const assignPerson = selectEl.options[selectEl.selectedIndex].getAttribute('data-name');
+      
       let status = document.getElementById('update-status').value;
       const fileInput = document.getElementById('req-after-img');
 
@@ -1154,7 +1158,7 @@
       if (!target) return;
 
       target.assignPerson = assignPerson;
-      target.assignEmail = ASSIGNED_PERSONS[assignPerson] || '';
+      target.assignEmail = assignEmail;
 
       if (fileInput.files[0]) {
         const reader = new FileReader();
