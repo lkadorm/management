@@ -103,6 +103,7 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
+      text-decoration: none;
     }
 
     .btn-primary { background-color: #2563eb; color: #fff; }
@@ -265,7 +266,7 @@
       background-color: #161e2e;
     }
 
-    /* Resident & Maintenance Images */
+    /* Images */
     .img-preview {
       width: 50px;
       height: 50px;
@@ -405,7 +406,6 @@
     <!-- Sidebar -->
     <div class="sidebar">
       <div class="brand">L K Ang Dormitory</div>
-      <!-- RESIDENT RECORDS MOVED TO TOP -->
       <a class="nav-item active" onclick="switchTab('residents')">👥 Resident Records</a>
       <a class="nav-item" onclick="switchTab('maintenance')">🛠️ Maintenance Requests</a>
       <a class="nav-item" onclick="switchTab('checklist')">📋 Weekly Checklist</a>
@@ -428,7 +428,7 @@
 
       <div class="content-container">
 
-        <!-- TAB 1: RESIDENT RECORDS (TOP DEFAULT) -->
+        <!-- TAB 1: RESIDENT RECORDS -->
         <div id="tab-residents">
           <div class="page-header">
             <h1 class="page-title">Resident Records</h1>
@@ -475,12 +475,13 @@
             <table>
               <thead>
                 <tr>
-                  <th>ID</th>
+                  <th>Assign Person (Email)</th>
                   <th>Location / Room</th>
                   <th>Description</th>
                   <th>Before Image</th>
                   <th>After Image</th>
                   <th>Status</th>
+                  <th>Notify</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -550,7 +551,6 @@
     <div class="modal-content">
       <h2 id="modal-resident-title" style="margin-bottom:16px;">Add New Resident Record</h2>
       <form onsubmit="saveResidentForm(event)">
-        <!-- Hidden index for edit mode -->
         <input type="hidden" id="res-edit-index" value="-1">
         
         <div class="form-group">
@@ -615,7 +615,7 @@
     </div>
   </div>
 
-  <!-- Modal: FULL IMAGE VIEWER (CLICK TO ZOOM) -->
+  <!-- Modal: FULL IMAGE VIEWER -->
   <div id="modal-image-viewer" class="modal hidden" onclick="closeModal('modal-image-viewer')">
     <div class="image-viewer-content" onclick="event.stopPropagation()">
       <button class="close-img-btn" onclick="closeModal('modal-image-viewer')">✕ Close</button>
@@ -629,8 +629,30 @@
       <h2 style="margin-bottom:16px;">New Maintenance Request</h2>
       <form onsubmit="submitMaintenanceRequest(event)">
         <div class="form-group">
-          <label>Room / Location</label>
-          <input type="text" id="req-location" class="form-input" required placeholder="e.g. Room A-201">
+          <label>Assign Person Email</label>
+          <input type="email" id="req-assign-email" class="form-input" required placeholder="technician@lkang.com">
+        </div>
+        <div class="form-group">
+          <label>Location / Room</label>
+          <select id="req-location" class="form-select" required>
+            <option value="">-- Select Location --</option>
+            <option value="Room-1">Room-1</option>
+            <option value="Room-2">Room-2</option>
+            <option value="Room-3">Room-3</option>
+            <option value="Room-4">Room-4</option>
+            <option value="Room-5">Room-5</option>
+            <option value="Room-6">Room-6</option>
+            <option value="Room-7">Room-7</option>
+            <option value="Room-8">Room-8</option>
+            <option value="Room-9">Room-9</option>
+            <option value="Room-10">Room-10</option>
+            <option value="Room-11">Room-11</option>
+            <option value="External Corridor">External Corridor</option>
+            <option value="Internal Corridor">Internal Corridor</option>
+            <option value="Kitchen">Kitchen</option>
+            <option value="Lift">Lift</option>
+            <option value="Wifi">Wifi</option>
+          </select>
         </div>
         <div class="form-group">
           <label>Issue Description</label>
@@ -641,30 +663,47 @@
           <input type="file" id="req-before-img" class="form-input" accept="image/*" required>
         </div>
         <div style="display:flex; gap:10px; margin-top:20px;">
-          <button type="submit" class="btn btn-green">Submit Request</button>
+          <button type="submit" class="btn btn-green">Submit & Assign Request</button>
           <button type="button" class="btn btn-secondary" onclick="closeModal('modal-new-request')">Cancel</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Modal: Update Maintenance (After Image) -->
+  <!-- Modal: Update Maintenance (After Image & Re-assign) -->
   <div id="modal-update-request" class="modal hidden">
     <div class="modal-content">
-      <h2 style="margin-bottom:16px;">Update Request Status</h2>
+      <h2 style="margin-bottom:16px;">Update Request Details</h2>
       <form onsubmit="saveMaintenanceUpdate(event)">
-        <input type="hidden" id="update-req-id">
+        <input type="hidden" id="update-req-index">
+        
+        <div class="form-group">
+          <label>Assign Person Email</label>
+          <input type="email" id="update-assign-email" class="form-input" required>
+        </div>
+
         <div class="form-group">
           <label>Status</label>
           <select id="update-status" class="form-select">
+            <option value="Pending">Pending</option>
             <option value="In Progress">In Progress</option>
             <option value="Resolved">Resolved</option>
           </select>
         </div>
+
         <div class="form-group">
           <label>After Image (Upload Fixed Photo)</label>
           <input type="file" id="req-after-img" class="form-input" accept="image/*">
         </div>
+
+        <!-- Preview & Remove Option for Existing After Image -->
+        <div id="after-img-preview-container" class="hidden" style="margin-top: 10px; border: 1px dashed #334155; padding: 10px; border-radius: 6px; text-align: center;">
+          <p style="font-size:0.8rem; color:#cbd5e1; margin-bottom:6px;">Current After Image:</p>
+          <img id="update-after-preview" src="" class="img-preview" style="width:80px; height:80px;" alt="After Preview">
+          <br>
+          <button type="button" class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem; margin-top:8px;" onclick="removeAfterImage()">🗑️ Delete Image</button>
+        </div>
+
         <div style="display:flex; gap:10px; margin-top:20px;">
           <button type="submit" class="btn btn-primary">Save Changes</button>
           <button type="button" class="btn btn-secondary" onclick="closeModal('modal-update-request')">Cancel</button>
@@ -740,33 +779,17 @@
 
   <!-- ==================== JAVASCRIPT LOGIC ==================== -->
   <script>
-    // Local Data Storage Initialization
+    // Local Data Storage
     let users = JSON.parse(localStorage.getItem('lkang_users')) || [
       { name: "Default Admin", email: "admin@lkang.com", password: "admin123", role: "Admin" }
     ];
 
-    let residents = JSON.parse(localStorage.getItem('lkang_residents')) || [
-      {
-        photo: "",
-        id: "RES-1001",
-        name: "Aung Aung",
-        wpNo: "WP-8876123",
-        wpExpiry: "2026-12-31",
-        nationality: "Myanmar",
-        company: "L K Ang Construction",
-        bedNo: "A-101-Bed-1",
-        cardNo: "AC-55412",
-        foodOrder: "Yes",
-        checkIn: "2024-01-15",
-        checkOut: ""
-      }
-    ];
-
+    let residents = JSON.parse(localStorage.getItem('lkang_residents')) || [];
     let maintenanceRequests = JSON.parse(localStorage.getItem('lkang_maintenance')) || [];
     let checklists = JSON.parse(localStorage.getItem('lkang_checklists')) || [];
     let currentUser = null;
 
-    // --- AUTHENTICATION LOGIC ---
+    // --- AUTHENTICATION ---
     function toggleAuthMode(mode) {
       if (mode === 'register') {
         document.getElementById('login-card').classList.add('hidden');
@@ -790,7 +813,7 @@
 
       users.push({ name, email, password, role: "Admin" });
       localStorage.setItem('lkang_users', JSON.stringify(users));
-      alert("Admin Account Created Successfully! Please Sign In.");
+      alert("Admin Account Created Successfully!");
       toggleAuthMode('login');
     }
 
@@ -853,13 +876,12 @@
       openModal('modal-image-viewer');
     }
 
-    // --- RESIDENT MANAGEMENT LOGIC ---
+    // --- RESIDENT MANAGEMENT ---
     function openNewResidentModal() {
       document.getElementById('modal-resident-title').innerText = "Add New Resident Record";
       document.getElementById('res-submit-btn').innerText = "Save Resident";
       document.getElementById('res-edit-index').value = "-1";
       
-      // Reset form fields
       document.getElementById('res-photo-input').value = '';
       document.getElementById('res-id').value = '';
       document.getElementById('res-name').value = '';
@@ -884,7 +906,6 @@
       document.getElementById('res-submit-btn').innerText = "Update Resident";
       document.getElementById('res-edit-index').value = index;
 
-      // Populate form with existing data
       document.getElementById('res-photo-input').value = '';
       document.getElementById('res-id').value = res.id;
       document.getElementById('res-name').value = res.name;
@@ -959,7 +980,6 @@
 
       residents.forEach((res, index) => {
         const tr = document.createElement('tr');
-        
         const photoHtml = res.photo 
           ? `<img src="${res.photo}" class="img-preview" onclick="viewFullImage('${res.photo}')" alt="Resident">` 
           : `<span style="color:#64748b; font-size:0.75rem;">No Photo</span>`;
@@ -986,14 +1006,12 @@
       });
     }
 
-    // --- EXCEL EXPORT FUNCTION ---
     function exportResidentsToExcel() {
       if (residents.length === 0) {
         alert("No resident records available to export!");
         return;
       }
 
-      // Map object to match EXACT header names requested
       const excelData = residents.map(r => ({
         "Resident ID": r.id,
         "Name": r.name,
@@ -1011,14 +1029,13 @@
       const worksheet = XLSX.utils.json_to_sheet(excelData);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Resident Records");
-
-      // Save file dynamically
       XLSX.writeFile(workbook, "LK_Ang_Dormitory_Residents.xlsx");
     }
 
     // --- MAINTENANCE SYSTEM LOGIC ---
     function submitMaintenanceRequest(e) {
       e.preventDefault();
+      const assignEmail = document.getElementById('req-assign-email').value;
       const location = document.getElementById('req-location').value;
       const desc = document.getElementById('req-desc').value;
       const fileInput = document.getElementById('req-before-img');
@@ -1026,7 +1043,7 @@
       const reader = new FileReader();
       reader.onload = function() {
         const newReq = {
-          id: 'REQ-' + Math.floor(1000 + Math.random() * 9000),
+          assignEmail: assignEmail,
           location: location,
           desc: desc,
           beforeImg: reader.result,
@@ -1038,6 +1055,11 @@
         localStorage.setItem('lkang_maintenance', JSON.stringify(maintenanceRequests));
         renderMaintenanceTable();
         closeModal('modal-new-request');
+
+        // Trigger Direct Mail Client Notification Prompt
+        if (confirm(`Maintenance request assigned to ${assignEmail}. Send notification email now?`)) {
+          sendNotificationEmail(assignEmail, location, desc);
+        }
       };
 
       if (fileInput.files[0]) {
@@ -1045,35 +1067,85 @@
       }
     }
 
-    function openUpdateModal(reqId) {
-      document.getElementById('update-req-id').value = reqId;
+    function sendNotificationEmail(email, location, desc) {
+      const subject = encodeURIComponent(`[L K Ang Dormitory] New Maintenance Assigned: ${location}`);
+      const body = encodeURIComponent(`Hi,\n\nYou have been assigned a new maintenance job.\n\nLocation: ${location}\nDescription: ${desc}\nStatus: Pending\n\nPlease check the dormitory system portal for details.`);
+      window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+    }
+
+    function openUpdateModal(index) {
+      const req = maintenanceRequests[index];
+      if (!req) return;
+
+      document.getElementById('update-req-index').value = index;
+      document.getElementById('update-assign-email').value = req.assignEmail;
+      document.getElementById('update-status').value = req.status;
+      document.getElementById('req-after-img').value = '';
+
+      const previewContainer = document.getElementById('after-img-preview-container');
+      const previewImg = document.getElementById('update-after-preview');
+
+      if (req.afterImg) {
+        previewImg.src = req.afterImg;
+        previewContainer.classList.remove('hidden');
+      } else {
+        previewContainer.classList.add('hidden');
+      }
+
       openModal('modal-update-request');
+    }
+
+    function removeAfterImage() {
+      const index = parseInt(document.getElementById('update-req-index').value);
+      if (index >= 0 && maintenanceRequests[index]) {
+        maintenanceRequests[index].afterImg = '';
+        maintenanceRequests[index].status = 'Pending';
+        localStorage.setItem('lkang_maintenance', JSON.stringify(maintenanceRequests));
+        renderMaintenanceTable();
+        
+        document.getElementById('after-img-preview-container').classList.add('hidden');
+        document.getElementById('update-status').value = 'Pending';
+        alert('After image removed! Status reverted to Pending.');
+      }
     }
 
     function saveMaintenanceUpdate(e) {
       e.preventDefault();
-      const reqId = document.getElementById('update-req-id').value;
-      const status = document.getElementById('update-status').value;
+      const index = parseInt(document.getElementById('update-req-index').value);
+      const assignEmail = document.getElementById('update-assign-email').value;
+      let status = document.getElementById('update-status').value;
       const fileInput = document.getElementById('req-after-img');
 
-      const target = maintenanceRequests.find(r => r.id === reqId);
+      const target = maintenanceRequests[index];
       if (!target) return;
 
-      target.status = status;
+      target.assignEmail = assignEmail;
 
       if (fileInput.files[0]) {
         const reader = new FileReader();
         reader.onload = function() {
           target.afterImg = reader.result;
+          // AUTO CHANGE STATUS TO RESOLVED WHEN AFTER IMAGE IS ADDED
+          target.status = 'Resolved';
+
           localStorage.setItem('lkang_maintenance', JSON.stringify(maintenanceRequests));
           renderMaintenanceTable();
           closeModal('modal-update-request');
         };
         reader.readAsDataURL(fileInput.files[0]);
       } else {
+        target.status = status;
         localStorage.setItem('lkang_maintenance', JSON.stringify(maintenanceRequests));
         renderMaintenanceTable();
         closeModal('modal-update-request');
+      }
+    }
+
+    function deleteMaintenanceRecord(index) {
+      if (confirm('Are you sure you want to delete this maintenance record?')) {
+        maintenanceRequests.splice(index, 1);
+        localStorage.setItem('lkang_maintenance', JSON.stringify(maintenanceRequests));
+        renderMaintenanceTable();
       }
     }
 
@@ -1081,21 +1153,29 @@
       const tbody = document.getElementById('maintenance-table-body');
       tbody.innerHTML = '';
 
-      maintenanceRequests.forEach(req => {
+      maintenanceRequests.forEach((req, index) => {
         let badgeClass = 'badge-pending';
         if (req.status === 'In Progress') badgeClass = 'badge-progress';
         if (req.status === 'Resolved') badgeClass = 'badge-resolved';
 
+        const subject = encodeURIComponent(`[L K Ang Dormitory] Reminder: Maintenance for ${req.location}`);
+        const body = encodeURIComponent(`Hi,\n\nReminder regarding the maintenance task assigned to you.\n\nLocation: ${req.location}\nDescription: ${req.desc}\nCurrent Status: ${req.status}`);
+        const mailtoUrl = `mailto:${req.assignEmail}?subject=${subject}&body=${body}`;
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td><b>${req.id}</b></td>
+          <td><b>${req.assignEmail}</b></td>
           <td>${req.location}</td>
           <td>${req.desc}</td>
           <td><img src="${req.beforeImg}" class="img-preview" onclick="viewFullImage('${req.beforeImg}')" alt="Before"></td>
           <td>${req.afterImg ? `<img src="${req.afterImg}" class="img-preview" onclick="viewFullImage('${req.afterImg}')" alt="After">` : '<span style="color:#64748b;">Not Uploaded</span>'}</td>
           <td><span class="badge ${badgeClass}">${req.status}</span></td>
           <td>
-            <button class="btn btn-secondary" style="padding:4px 8px; font-size:0.75rem;" onclick="openUpdateModal('${req.id}')">Update</button>
+            <a href="${mailtoUrl}" class="btn btn-secondary" style="padding:4px 8px; font-size:0.75rem;">📧 Email</a>
+          </td>
+          <td style="display:flex; gap:6px; margin-top:8px;">
+            <button class="btn btn-warning" style="padding:4px 8px; font-size:0.75rem;" onclick="openUpdateModal(${index})">Edit / Update</button>
+            <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="deleteMaintenanceRecord(${index})">Delete</button>
           </td>
         `;
         tbody.appendChild(tr);
