@@ -316,7 +316,6 @@
       overflow-y: auto;
     }
 
-    /* Image Viewer Modal Specifics */
     .image-viewer-content {
       background: transparent;
       border: none;
@@ -475,7 +474,7 @@
             <table>
               <thead>
                 <tr>
-                  <th>Assign Person (Email)</th>
+                  <th>Assign Person</th>
                   <th>Location / Room</th>
                   <th>Description</th>
                   <th>Before Image</th>
@@ -629,8 +628,12 @@
       <h2 style="margin-bottom:16px;">New Maintenance Request</h2>
       <form onsubmit="submitMaintenanceRequest(event)">
         <div class="form-group">
-          <label>Assign Person Email</label>
-          <input type="email" id="req-assign-email" class="form-input" required placeholder="technician@lkang.com">
+          <label>Assign Person Name</label>
+          <select id="req-assign-person" class="form-select" required>
+            <option value="">-- Select Assign Person --</option>
+            <option value="Maung">Maung (maung@lkangco.sg)</option>
+            <option value="Zia">Zia (lkadorm@gmail.com)</option>
+          </select>
         </div>
         <div class="form-group">
           <label>Location / Room</label>
@@ -678,8 +681,11 @@
         <input type="hidden" id="update-req-index">
         
         <div class="form-group">
-          <label>Assign Person Email</label>
-          <input type="email" id="update-assign-email" class="form-input" required>
+          <label>Assign Person Name</label>
+          <select id="update-assign-person" class="form-select" required>
+            <option value="Maung">Maung (maung@lkangco.sg)</option>
+            <option value="Zia">Zia (lkadorm@gmail.com)</option>
+          </select>
         </div>
 
         <div class="form-group">
@@ -696,7 +702,6 @@
           <input type="file" id="req-after-img" class="form-input" accept="image/*">
         </div>
 
-        <!-- Preview & Remove Option for Existing After Image -->
         <div id="after-img-preview-container" class="hidden" style="margin-top: 10px; border: 1px dashed #334155; padding: 10px; border-radius: 6px; text-align: center;">
           <p style="font-size:0.8rem; color:#cbd5e1; margin-bottom:6px;">Current After Image:</p>
           <img id="update-after-preview" src="" class="img-preview" style="width:80px; height:80px;" alt="After Preview">
@@ -779,6 +784,14 @@
 
   <!-- ==================== JAVASCRIPT LOGIC ==================== -->
   <script>
+    // ASSIGNED PERSON MAP
+    const ASSIGNED_PERSONS = {
+      "Maung": "maung@lkangco.sg",
+      "Zia": "lkadorm@gmail.com"
+    };
+
+    const CC_EMAIL = "hlang@lkac.com.sg";
+
     // Local Data Storage
     let users = JSON.parse(localStorage.getItem('lkang_users')) || [
       { name: "Default Admin", email: "admin@lkang.com", password: "admin123", role: "Admin" }
@@ -1035,7 +1048,8 @@
     // --- MAINTENANCE SYSTEM LOGIC ---
     function submitMaintenanceRequest(e) {
       e.preventDefault();
-      const assignEmail = document.getElementById('req-assign-email').value;
+      const assignPerson = document.getElementById('req-assign-person').value;
+      const assignEmail = ASSIGNED_PERSONS[assignPerson] || '';
       const location = document.getElementById('req-location').value;
       const desc = document.getElementById('req-desc').value;
       const fileInput = document.getElementById('req-before-img');
@@ -1043,6 +1057,7 @@
       const reader = new FileReader();
       reader.onload = function() {
         const newReq = {
+          assignPerson: assignPerson,
           assignEmail: assignEmail,
           location: location,
           desc: desc,
@@ -1056,10 +1071,8 @@
         renderMaintenanceTable();
         closeModal('modal-new-request');
 
-        // Trigger Direct Mail Client Notification Prompt
-        if (confirm(`Maintenance request assigned to ${assignEmail}. Send notification email now?`)) {
-          sendNotificationEmail(assignEmail, location, desc);
-        }
+        // Automatically Trigger Mail Client to Send Email & CC
+        sendNotificationEmail(assignPerson, assignEmail, location, desc);
       };
 
       if (fileInput.files[0]) {
@@ -1067,10 +1080,13 @@
       }
     }
 
-    function sendNotificationEmail(email, location, desc) {
+    function sendNotificationEmail(personName, email, location, desc) {
+      const senderName = currentUser ? currentUser.name : "System User";
       const subject = encodeURIComponent(`[L K Ang Dormitory] New Maintenance Assigned: ${location}`);
-      const body = encodeURIComponent(`Hi,\n\nYou have been assigned a new maintenance job.\n\nLocation: ${location}\nDescription: ${desc}\nStatus: Pending\n\nPlease check the dormitory system portal for details.`);
-      window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+      const body = encodeURIComponent(`Hi ${personName},\n\nYou have been assigned a new maintenance job by ${senderName}.\n\nLocation: ${location}\nDescription: ${desc}\nStatus: Pending\n\nPlease check the dormitory system portal for details.`);
+      
+      // Auto triggers Mailto with CC to hlang@lkac.com.sg
+      window.location.href = `mailto:${email}?cc=${CC_EMAIL}&subject=${subject}&body=${body}`;
     }
 
     function openUpdateModal(index) {
@@ -1078,7 +1094,7 @@
       if (!req) return;
 
       document.getElementById('update-req-index').value = index;
-      document.getElementById('update-assign-email').value = req.assignEmail;
+      document.getElementById('update-assign-person').value = req.assignPerson;
       document.getElementById('update-status').value = req.status;
       document.getElementById('req-after-img').value = '';
 
@@ -1112,20 +1128,20 @@
     function saveMaintenanceUpdate(e) {
       e.preventDefault();
       const index = parseInt(document.getElementById('update-req-index').value);
-      const assignEmail = document.getElementById('update-assign-email').value;
+      const assignPerson = document.getElementById('update-assign-person').value;
       let status = document.getElementById('update-status').value;
       const fileInput = document.getElementById('req-after-img');
 
       const target = maintenanceRequests[index];
       if (!target) return;
 
-      target.assignEmail = assignEmail;
+      target.assignPerson = assignPerson;
+      target.assignEmail = ASSIGNED_PERSONS[assignPerson] || '';
 
       if (fileInput.files[0]) {
         const reader = new FileReader();
         reader.onload = function() {
           target.afterImg = reader.result;
-          // AUTO CHANGE STATUS TO RESOLVED WHEN AFTER IMAGE IS ADDED
           target.status = 'Resolved';
 
           localStorage.setItem('lkang_maintenance', JSON.stringify(maintenanceRequests));
@@ -1158,20 +1174,21 @@
         if (req.status === 'In Progress') badgeClass = 'badge-progress';
         if (req.status === 'Resolved') badgeClass = 'badge-resolved';
 
+        const senderName = currentUser ? currentUser.name : "System User";
         const subject = encodeURIComponent(`[L K Ang Dormitory] Reminder: Maintenance for ${req.location}`);
-        const body = encodeURIComponent(`Hi,\n\nReminder regarding the maintenance task assigned to you.\n\nLocation: ${req.location}\nDescription: ${req.desc}\nCurrent Status: ${req.status}`);
-        const mailtoUrl = `mailto:${req.assignEmail}?subject=${subject}&body=${body}`;
+        const body = encodeURIComponent(`Hi ${req.assignPerson},\n\nReminder regarding the maintenance task assigned to you by ${senderName}.\n\nLocation: ${req.location}\nDescription: ${req.desc}\nCurrent Status: ${req.status}`);
+        const mailtoUrl = `mailto:${req.assignEmail}?cc=${CC_EMAIL}&subject=${subject}&body=${body}`;
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td><b>${req.assignEmail}</b></td>
+          <td><b>${req.assignPerson}</b><br><span style="font-size:0.75rem; color:#94a3b8;">${req.assignEmail}</span></td>
           <td>${req.location}</td>
           <td>${req.desc}</td>
           <td><img src="${req.beforeImg}" class="img-preview" onclick="viewFullImage('${req.beforeImg}')" alt="Before"></td>
           <td>${req.afterImg ? `<img src="${req.afterImg}" class="img-preview" onclick="viewFullImage('${req.afterImg}')" alt="After">` : '<span style="color:#64748b;">Not Uploaded</span>'}</td>
           <td><span class="badge ${badgeClass}">${req.status}</span></td>
           <td>
-            <a href="${mailtoUrl}" class="btn btn-secondary" style="padding:4px 8px; font-size:0.75rem;">📧 Email</a>
+            <a href="${mailtoUrl}" class="btn btn-secondary" style="padding:4px 8px; font-size:0.75rem;">📧 Send Email</a>
           </td>
           <td style="display:flex; gap:6px; margin-top:8px;">
             <button class="btn btn-warning" style="padding:4px 8px; font-size:0.75rem;" onclick="openUpdateModal(${index})">Edit / Update</button>
