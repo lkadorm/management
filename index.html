@@ -113,6 +113,8 @@
     .btn-excel:hover { background-color: #059669; }
     .btn-secondary { background-color: #334155; color: #fff; }
     .btn-secondary:hover { background-color: #475569; }
+    .btn-warning { background-color: #d97706; color: #fff; }
+    .btn-warning:hover { background-color: #b45309; }
     .btn-danger { background-color: #dc2626; color: #fff; }
     .btn-danger:hover { background-color: #b91c1c; }
 
@@ -393,7 +395,7 @@
           <div class="page-header">
             <h1 class="page-title">Resident Records</h1>
             <div class="header-actions">
-              <button class="btn btn-green" onclick="openModal('modal-new-resident')">+ New Resident</button>
+              <button class="btn btn-green" onclick="openNewResidentModal()">+ New Resident</button>
               <button class="btn btn-excel" onclick="exportResidentsToExcel()">📊 Export to Excel</button>
             </div>
           </div>
@@ -504,11 +506,14 @@
 
   <!-- ==================== MODALS ==================== -->
 
-  <!-- Modal: Add New Resident -->
-  <div id="modal-new-resident" class="modal hidden">
+  <!-- Modal: Add / Edit Resident -->
+  <div id="modal-resident" class="modal hidden">
     <div class="modal-content">
-      <h2 style="margin-bottom:16px;">Add New Resident Record</h2>
-      <form onsubmit="submitNewResident(event)">
+      <h2 id="modal-resident-title" style="margin-bottom:16px;">Add New Resident Record</h2>
+      <form onsubmit="saveResidentForm(event)">
+        <!-- Hidden index for edit mode -->
+        <input type="hidden" id="res-edit-index" value="-1">
+        
         <div class="form-grid-2">
           <div class="form-group">
             <label>Resident ID</label>
@@ -559,8 +564,8 @@
           <input type="date" id="res-checkout" class="form-input">
         </div>
         <div style="display:flex; gap:10px; margin-top:20px;">
-          <button type="submit" class="btn btn-green">Save Resident</button>
-          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-new-resident')">Cancel</button>
+          <button type="submit" id="res-submit-btn" class="btn btn-green">Save Resident</button>
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-resident')">Cancel</button>
         </div>
       </form>
     </div>
@@ -700,7 +705,7 @@
         cardNo: "AC-55412",
         foodOrder: "Yes",
         checkIn: "2024-01-15",
-        checkOut: "-"
+        checkOut: ""
       }
     ];
 
@@ -789,9 +794,56 @@
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
     // --- RESIDENT MANAGEMENT LOGIC ---
-    function submitNewResident(e) {
+    function openNewResidentModal() {
+      document.getElementById('modal-resident-title').innerText = "Add New Resident Record";
+      document.getElementById('res-submit-btn').innerText = "Save Resident";
+      document.getElementById('res-edit-index').value = "-1";
+      
+      // Reset form fields
+      document.getElementById('res-id').value = '';
+      document.getElementById('res-name').value = '';
+      document.getElementById('res-wp').value = '';
+      document.getElementById('res-wp-expiry').value = '';
+      document.getElementById('res-nationality').value = '';
+      document.getElementById('res-company').value = '';
+      document.getElementById('res-bed').value = '';
+      document.getElementById('res-card').value = '';
+      document.getElementById('res-food').value = 'Yes';
+      document.getElementById('res-checkin').value = '';
+      document.getElementById('res-checkout').value = '';
+
+      openModal('modal-resident');
+    }
+
+    function openEditResidentModal(index) {
+      const res = residents[index];
+      if (!res) return;
+
+      document.getElementById('modal-resident-title').innerText = "Edit Resident Record";
+      document.getElementById('res-submit-btn').innerText = "Update Resident";
+      document.getElementById('res-edit-index').value = index;
+
+      // Populate form with existing data
+      document.getElementById('res-id').value = res.id;
+      document.getElementById('res-name').value = res.name;
+      document.getElementById('res-wp').value = res.wpNo;
+      document.getElementById('res-wp-expiry').value = res.wpExpiry;
+      document.getElementById('res-nationality').value = res.nationality;
+      document.getElementById('res-company').value = res.company;
+      document.getElementById('res-bed').value = res.bedNo;
+      document.getElementById('res-card').value = res.cardNo;
+      document.getElementById('res-food').value = res.foodOrder;
+      document.getElementById('res-checkin').value = res.checkIn;
+      document.getElementById('res-checkout').value = res.checkOut === '-' ? '' : res.checkOut;
+
+      openModal('modal-resident');
+    }
+
+    function saveResidentForm(e) {
       e.preventDefault();
-      const newRes = {
+      const editIndex = parseInt(document.getElementById('res-edit-index').value);
+
+      const resData = {
         id: document.getElementById('res-id').value,
         name: document.getElementById('res-name').value,
         wpNo: document.getElementById('res-wp').value,
@@ -805,16 +857,22 @@
         checkOut: document.getElementById('res-checkout').value || '-'
       };
 
-      residents.unshift(newRes);
+      if (editIndex >= 0) {
+        // UPDATE existing record
+        residents[editIndex] = resData;
+      } else {
+        // ADD new record
+        residents.unshift(resData);
+      }
+
       localStorage.setItem('lkang_residents', JSON.stringify(residents));
       renderResidentsTable();
-      closeModal('modal-new-resident');
-      e.target.reset();
+      closeModal('modal-resident');
     }
 
-    function deleteResident(id) {
+    function deleteResident(index) {
       if (confirm('Are you sure you want to delete this resident record?')) {
-        residents = residents.filter(r => r.id !== id);
+        residents.splice(index, 1);
         localStorage.setItem('lkang_residents', JSON.stringify(residents));
         renderResidentsTable();
       }
@@ -824,7 +882,7 @@
       const tbody = document.getElementById('resident-table-body');
       tbody.innerHTML = '';
 
-      residents.forEach(res => {
+      residents.forEach((res, index) => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td><b>${res.id}</b></td>
@@ -838,8 +896,9 @@
           <td>${res.foodOrder}</td>
           <td>${res.checkIn}</td>
           <td>${res.checkOut}</td>
-          <td>
-            <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="deleteResident('${res.id}')">Delete</button>
+          <td style="display:flex; gap:6px;">
+            <button class="btn btn-warning" style="padding:4px 8px; font-size:0.75rem;" onclick="openEditResidentModal(${index})">Edit</button>
+            <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="deleteResident(${index})">Delete</button>
           </td>
         `;
         tbody.appendChild(tr);
