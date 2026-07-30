@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>L K Ang Construction - Fresh E-Token Portal</title>
+  <style>
+    /* --- CSS RESET & BASE STYLES --- */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: #0b1120;
+      color: #f1f5f9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* --- LOGIN PAGE --- */
+    #login-view {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    .login-card {
+      background-color: #172033;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 40px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .login-header h2 {
+      font-size: 1.1rem;
+      color: #94a3b8;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .login-header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.875rem;
+      margin-bottom: 8px;
+      color: #cbd5e1;
+    }
+
+    .form-group label span {
+      color: #ef4444;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 10px 14px;
+      background-color: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      color: #f8fafc;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus {
+      border-color: #3b82f6;
+    }
+
+    .toggle-pwd {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #64748b;
+      cursor: pointer;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .checkbox-group label {
+      font-size: 0.875rem;
+      color: #cbd5e1;
+      cursor: pointer;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 10px 16px;
+      border-radius: 6px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: background-color 0.2s;
+    }
+
+    .btn-primary {
+      background-color: #2563eb;
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background-color: #1d4ed8;
+    }
+
+    /* --- DASHBOARD LAYOUT --- */
+    #dashboard-view {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 240px;
+      background-color: #0b1120;
+      border-right: 1px solid #1e293b;
+      display: flex;
+      flex-direction: column;
+      padding: 16px 12px;
+      flex-shrink: 0;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-bottom: 4px;
+      cursor: pointer;
+    }
+
+    .nav-item.active {
+      background-color: #2563eb;
+      color: #ffffff;
+    }
+
+    .nav-item:hover:not(.active) {
+      background-color: #1e293b;
+      color: #f8fafc;
+    }
+
+    /* Main Content Container */
+    .main-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Top Navigation Bar */
+    .navbar {
+      height: 60px;
+      background-color: #0b1120;
+      border-bottom: 1px solid #1e293b;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
+
+    .navbar-title {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #ffffff;
+    }
+
+    .avatar-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background-color: #1e293b;
+      color: #ffffff;
+      border: 1px solid #334155;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    /* Content Area */
+    .content-container {
+      padding: 32px 40px;
+      flex: 1;
+      background-color: #0b1120;
+    }
+
+    .breadcrumb {
+      color: #64748b;
+      font-size: 0.85rem;
+      margin-bottom: 8px;
+    }
+
+    .breadcrumb span {
+      color: #94a3b8;
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .page-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn-green {
+      background-color: #16a34a;
+      color: #ffffff;
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-green:hover { background-color: #15803d; }
+
+    .btn-blue {
+      background-color: #2563eb;
+      color: #ffffff;
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .btn-blue:hover { background-color: #1d4ed8; }
+
+    .btn-danger {
+      background-color: #dc2626;
+      color: #ffffff;
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: none;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .btn-danger:hover { background-color: #b91c1c; }
+
+    .btn-orange {
+      background-color: #ea580c;
+      color: #ffffff;
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: none;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .btn-orange:hover { background-color: #c2410c; }
+
+    .btn-secondary {
+      background-color: #334155;
+      color: #ffffff;
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: none;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .btn-secondary:hover { background-color: #475569; }
+
+    /* Data Table Card */
+    .table-card {
+      background-color: #111827;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .table-toolbar {
+      padding: 16px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .search-input {
+      background-color: #0b1120;
+      border: 1px solid #334155;
+      color: #ffffff;
+      padding: 6px 12px 6px 32px;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      outline: none;
+      width: 220px;
+    }
+
+    .search-wrapper {
+      position: relative;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #64748b;
+      font-size: 0.85rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.875rem;
+    }
+
+    th {
+      background-color: #0b1120;
+      color: #94a3b8;
+      font-weight: 600;
+      padding: 12px 16px;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid #1e293b;
+      color: #cbd5e1;
+    }
+
+    tr:hover td {
+      background-color: #161e2e;
+    }
+
+    .status-check {
+      color: #22c55e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 1px solid #22c55e;
+    }
+
+    .table-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .action-link {
+      color: #3b82f6;
+      text-decoration: none;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .action-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Edit Resident Form Styling */
+    .edit-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      max-width: 900px;
+    }
+
+    .toggle-switch {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .switch input { opacity: 0; width: 0; height: 0; }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #334155;
+      transition: .3s;
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px; width: 18px;
+      left: 3px; bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider { background-color: #3b82f6; }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== VIEW 1: LOGIN PAGE ==================== -->
+  <div id="login-view">
+    <div class="login-card">
+      <div class="login-header">
+        <h2>Fresh E-Token Portal</h2>
+        <h1>Sign in</h1>
+      </div>
+      <form onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label>Email address<span>*</span></label>
+          <input type="email" class="form-input" value="maung@lkangco.sg" required>
+        </div>
+        <div class="form-group">
+          <label>Password<span>*</span></label>
+          <div class="input-wrapper">
+            <input type="password" id="login-password" class="form-input" value="ABCDE654321" required>
+            <button type="button" class="toggle-pwd" onclick="togglePasswordVisibility('login-password')">👁️</button>
+          </div>
+        </div>
+        <div class="checkbox-group">
+          <input type="checkbox" id="remember" checked>
+          <label for="remember">Remember me</label>
+        </div>
+        <button type="submit" class="btn btn-primary">Sign in</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== VIEW 2: DASHBOARD LAYOUT ==================== -->
+  <div id="dashboard-view" class="hidden">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <a class="nav-item active" onclick="switchTab('residents')">
+        📦 Residents
+      </a>
+      <a class="nav-item" onclick="switchTab('settings')">
+        ⚙️ Site Settings
+      </a>
+      <a class="nav-item" onclick="switchTab('usage')">
+        📊 Usage
+      </a>
+    </div>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+      <!-- Navbar -->
+      <div class="navbar">
+        <div class="navbar-title">L K Ang Construction - Fresh E-Token Portal</div>
+        <div class="avatar-btn" onclick="handleLogout()" title="Click to Logout">MM</div>
+      </div>
+
+      <!-- Content Container -->
+      <div class="content-container">
+
+        <!-- SUB-PAGE: RESIDENTS LIST -->
+        <div id="page-residents-list">
+          <div class="breadcrumb">Residents &gt; <span>List</span></div>
+          <div class="page-header">
+            <h1 class="page-title">Residents</h1>
+            <div class="header-actions">
+              <button class="btn-blue">+ New resident</button>
+              <button class="btn-green">📥 Import Residents</button>
+            </div>
+          </div>
+
+          <div class="table-card">
+            <div class="table-toolbar">
+              <div class="search-wrapper">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" placeholder="Search">
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th><input type="checkbox"></th>
+                  <th>Resident ID ⌄</th>
+                  <th>Name ⌄</th>
+                  <th>Username ⌄</th>
+                  <th>Site ⌄</th>
+                  <th>Token Balance ⌄</th>
+                  <th>Enabled ⌄</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="resident-table-body">
+                <!-- Dynamically Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- SUB-PAGE: EDIT RESIDENT -->
+        <div id="page-edit-resident" class="hidden">
+          <div class="breadcrumb">Residents &gt; <span>Edit</span></div>
+          <div class="page-header">
+            <h1 class="page-title">Edit Resident</h1>
+            <button class="btn-danger" onclick="deleteResident()">Delete</button>
+          </div>
+
+          <form onsubmit="saveResident(event)">
+            <div class="edit-grid">
+              <div class="form-group">
+                <label>Name<span>*</span></label>
+                <input type="text" id="edit-name" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label>Username<span>*</span></label>
+                <input type="text" id="edit-username" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label>Token Balance<span>*</span></label>
+                <input type="number" id="edit-tokens" class="form-input" required>
+              </div>
+              <div class="form-group toggle-switch">
+                <label class="switch">
+                  <input type="checkbox" id="edit-enabled">
+                  <span class="slider"></span>
+                </label>
+                <span style="font-size: 0.9rem; color: #cbd5e1;">Enabled</span>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn-blue">Save changes</button>
+              <button type="button" class="btn-secondary" onclick="showListPage()">Cancel</button>
+              <button type="button" class="btn-orange">Reset Password</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- SUB-PAGES PLACEHOLDERS -->
+        <div id="page-settings" class="hidden">
+          <h1 class="page-title">Site Settings</h1>
+          <p style="margin-top: 12px; color: #94a3b8;">Site level configuration settings.</p>
+        </div>
+
+        <div id="page-usage" class="hidden">
+          <h1 class="page-title">Usage Statistics</h1>
+          <p style="margin-top: 12px; color: #94a3b8;">Token logs and consumption analytics.</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+  <script>
+    // Initial State Data
+    let mockResidents = [
+      { id: '21437', name: 'FL Technician', username: 'fltech', site: 'L K Ang Construction', tokens: 95, enabled: true },
+      { id: '21845', name: 'Sadul Jaman', username: 's_jaman', site: 'L K Ang Construction', tokens: 6, enabled: true },
+      { id: '21846', name: 'Biswas Shyemol Chandra', username: 'schandra', site: 'L K Ang Construction', tokens: 6, enabled: true },
+      { id: '21847', name: 'Hosen Md Monir', username: 'mmonir', site: 'L K Ang Construction', tokens: 6, enabled: true },
+      { id: '21848', name: 'Dhali Balayat', username: 'balayatd', site: 'L K Ang Construction', tokens: 6, enabled: true },
+      { id: '21849', name: 'Nasir', username: 'nasir_ns', site: 'L K Ang Construction', tokens: 6, enabled: true },
+      { id: '21850', name: 'Karim Md Rejaul', username: 'kmd_rejaul', site: 'L K Ang Construction', tokens: 6, enabled: true },
+      { id: '21851', name: 'Jhontu', username: 'jhontu', site: 'L K Ang Construction', tokens: 6, enabled: true },
+      { id: '21852', name: 'Siddik Talukdar', username: 'stalukdar', site: 'L K Ang Construction', tokens: 6, enabled: true },
+      { id: '21853', name: 'Islam Md Monirul', username: 'im_monirul', site: 'L K Ang Construction', tokens: 6, enabled: true }
+    ];
+
+    let currentEditingId = null;
+
+    // View Navigation Logic
+    function handleLogin(e) {
+      e.preventDefault();
+      document.getElementById('login-view').classList.add('hidden');
+      document.getElementById('dashboard-view').classList.remove('hidden');
+      renderTable();
+    }
+
+    function handleLogout() {
+      document.getElementById('dashboard-view').classList.add('hidden');
+      document.getElementById('login-view').classList.remove('hidden');
+    }
+
+    function togglePasswordVisibility(inputId) {
+      const input = document.getElementById(inputId);
+      input.type = input.type === 'password' ? 'text' : 'password';
+    }
+
+    // Render Table Rows dynamically
+    function renderTable() {
+      const tbody = document.getElementById('resident-table-body');
+      tbody.innerHTML = '';
+
+      mockResidents.forEach(res => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><input type="checkbox"></td>
+          <td>${res.id}</td>
+          <td>${res.name}</td>
+          <td>${res.username}</td>
+          <td>${res.site}</td>
+          <td>${res.tokens}</td>
+          <td>
+            <div class="status-check">✓</div>
+          </td>
+          <td>
+            <div class="table-actions">
+              <span class="action-link" onclick="openEditPage('${res.id}')">✏️ Edit</span>
+              <span class="action-link" onclick="alert('Password reset link generated for ${res.username}')">🔑 Reset Password</span>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Navigation & Form Switchers
+    function openEditPage(id) {
+      currentEditingId = id;
+      const resident = mockResidents.find(r => r.id === id);
+      if (!resident) return;
+
+      document.getElementById('edit-name').value = resident.name;
+      document.getElementById('edit-username').value = resident.username;
+      document.getElementById('edit-tokens').value = resident.tokens;
+      document.getElementById('edit-enabled').checked = resident.enabled;
+
+      document.getElementById('page-residents-list').classList.add('hidden');
+      document.getElementById('page-edit-resident').classList.remove('hidden');
+    }
+
+    function showListPage() {
+      document.getElementById('page-edit-resident').classList.add('hidden');
+      document.getElementById('page-settings').classList.add('hidden');
+      document.getElementById('page-usage').classList.add('hidden');
+      document.getElementById('page-residents-list').classList.remove('hidden');
+    }
+
+    function saveResident(e) {
+      e.preventDefault();
+      const resident = mockResidents.find(r => r.id === currentEditingId);
+      if (resident) {
+        resident.name = document.getElementById('edit-name').value;
+        resident.username = document.getElementById('edit-username').value;
+        resident.tokens = parseInt(document.getElementById('edit-tokens').value, 10);
+        resident.enabled = document.getElementById('edit-enabled').checked;
+      }
+      renderTable();
+      showListPage();
+    }
+
+    function deleteResident() {
+      if (confirm('Are you sure you want to delete this resident?')) {
+        mockResidents = mockResidents.filter(r => r.id !== currentEditingId);
+        renderTable();
+        showListPage();
+      }
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      
+      document.getElementById('page-residents-list').classList.add('hidden');
+      document.getElementById('page-edit-resident').classList.add('hidden');
+      document.getElementById('page-settings').classList.add('hidden');
+      document.getElementById('page-usage').classList.add('hidden');
+
+      if (tab === 'residents') {
+        event.currentTarget.classList.add('active');
+        document.getElementById('page-residents-list').classList.remove('hidden');
+      } else if (tab === 'settings') {
+        event.currentTarget.classList.add('active');
+        document.getElementById('page-settings').classList.remove('hidden');
+      } else if (tab === 'usage') {
+        event.currentTarget.classList.add('active');
+        document.getElementById('page-usage').classList.remove('hidden');
+      }
+    }
+  </script>
+</body>
+</html>
