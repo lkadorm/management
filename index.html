@@ -777,9 +777,9 @@
     </div>
   </div>
 
-  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+  <!-- ==================== JAVASCRIPT LOGIC WITH SESSION PERSISTENCE ==================== -->
   <script>
-    const CC_EMAIL = "hlang@lkac.com.sg";
+    const CC_EMAIL = "hlang@lkang.com.sg";
 
     // Local Data Storage
     let users = JSON.parse(localStorage.getItem('lkang_users')) || [
@@ -789,7 +789,35 @@
     let residents = JSON.parse(localStorage.getItem('lkang_residents')) || [];
     let maintenanceRequests = JSON.parse(localStorage.getItem('lkang_maintenance')) || [];
     let checklists = JSON.parse(localStorage.getItem('lkang_checklists')) || [];
-    let currentUser = null;
+    let currentUser = JSON.parse(localStorage.getItem('lkang_current_user')) || null;
+
+    // --- PAGE REFRESH AUTO-LOGIN CHECK ---
+    window.addEventListener('DOMContentLoaded', () => {
+      if (currentUser) {
+        // Refresh လုပ်သော်လည်း စနစ်ထဲတွင် ဆက်လက်ရှိနေမည်
+        showAppDashboard(currentUser);
+      }
+    });
+
+    function showAppDashboard(user) {
+      document.getElementById('auth-container').classList.add('hidden');
+      document.getElementById('app-container').classList.remove('hidden');
+      
+      document.getElementById('display-user-name').innerText = user.name;
+      document.getElementById('display-user-role').innerText = user.role;
+
+      if (user.role !== 'Admin') {
+        document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
+      } else {
+        document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+      }
+
+      // Refresh ဖြစ်ပြီးနောက် Data များကို ချက်ချင်း ပြန်ထုတ်ပြခြင်း
+      renderResidentsTable();
+      renderMaintenanceTable();
+      renderChecklistTable();
+      renderUsersTable();
+    }
 
     // --- AUTHENTICATION ---
     function toggleAuthMode(mode) {
@@ -828,22 +856,9 @@
 
       if (user) {
         currentUser = user;
-        document.getElementById('auth-container').classList.add('hidden');
-        document.getElementById('app-container').classList.remove('hidden');
-        
-        document.getElementById('display-user-name').innerText = user.name;
-        document.getElementById('display-user-role').innerText = user.role;
-
-        if (user.role !== 'Admin') {
-          document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
-        } else {
-          document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
-        }
-
-        renderResidentsTable();
-        renderMaintenanceTable();
-        renderChecklistTable();
-        renderUsersTable();
+        // User Session ကို LocalStorage တွင် သိမ်းဆည်းခြင်း (Refresh လုပ်လျှင် Login မထွက်သွားစေရန်)
+        localStorage.setItem('lkang_current_user', JSON.stringify(currentUser));
+        showAppDashboard(currentUser);
       } else {
         alert("Invalid Email or Password!");
       }
@@ -851,6 +866,7 @@
 
     function handleLogout() {
       currentUser = null;
+      localStorage.removeItem('lkang_current_user'); // Session ဖျက်ထုတ်ခြင်း
       document.getElementById('app-container').classList.add('hidden');
       document.getElementById('auth-container').classList.remove('hidden');
     }
@@ -871,7 +887,6 @@
     function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-    // FULL IMAGE VIEWER FUNCTION
     function viewFullImage(imgSrc) {
       if (!imgSrc) return;
       document.getElementById('full-size-image').src = imgSrc;
@@ -978,6 +993,7 @@
 
     function renderResidentsTable() {
       const tbody = document.getElementById('resident-table-body');
+      if (!tbody) return;
       tbody.innerHTML = '';
 
       residents.forEach((res, index) => {
@@ -1075,7 +1091,6 @@
       }
     }
 
-    // 1. Send Email to Assignee when Assigned
     function sendNotificationEmail(personName, email, location, desc) {
       if (!email) {
         alert("Recipient email is missing!");
@@ -1103,7 +1118,6 @@
         });
     }
 
-    // 2. Send Email to Requester/Creator when Request is Completed
     function sendCompletionEmail(req) {
       const recipientEmail = req.createdByEmail || req.assignEmail;
       const recipientName = req.createdByName || "Assigner";
@@ -1190,7 +1204,6 @@
           renderMaintenanceTable();
           closeModal('modal-update-request');
 
-          // Send Email upon Completion via After Image Upload
           sendCompletionEmail(target);
         };
         reader.readAsDataURL(fileInput.files[0]);
@@ -1200,7 +1213,6 @@
         renderMaintenanceTable();
         closeModal('modal-update-request');
 
-        // Send Email if status is updated directly to Resolved
         if (status === 'Resolved' && previousStatus !== 'Resolved') {
           sendCompletionEmail(target);
         }
@@ -1217,6 +1229,7 @@
 
     function renderMaintenanceTable() {
       const tbody = document.getElementById('maintenance-table-body');
+      if (!tbody) return;
       tbody.innerHTML = '';
 
       maintenanceRequests.forEach((req, index) => {
@@ -1265,6 +1278,7 @@
 
     function renderChecklistTable() {
       const tbody = document.getElementById('checklist-table-body');
+      if (!tbody) return;
       tbody.innerHTML = '';
 
       checklists.forEach(c => {
@@ -1356,6 +1370,7 @@
 
     function renderUsersTable() {
       const tbody = document.getElementById('users-table-body');
+      if (!tbody) return;
       tbody.innerHTML = '';
 
       users.forEach((u, index) => {
@@ -1373,5 +1388,6 @@
       });
     }
   </script>
+  
 </body>
 </html>
