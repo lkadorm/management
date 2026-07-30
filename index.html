@@ -351,7 +351,6 @@
 
   <!-- ==================== AUTHENTICATION SECTION ==================== -->
   <div id="auth-container">
-    <!-- LOGIN FORM (Fixed Blank Input Fields) -->
     <div id="login-card" class="auth-card">
       <div class="auth-header">
         <h2>L K Ang Dormitory</h2>
@@ -373,7 +372,6 @@
       </div>
     </div>
 
-    <!-- REGISTER ADMIN FORM -->
     <div id="register-card" class="auth-card hidden">
       <div class="auth-header">
         <h2>L K Ang Dormitory</h2>
@@ -402,7 +400,6 @@
 
   <!-- ==================== MAIN DASHBOARD APP ==================== -->
   <div id="app-container" class="hidden">
-    <!-- Sidebar -->
     <div class="sidebar">
       <div class="brand">L K Ang Dormitory</div>
       <a class="nav-item active" onclick="switchTab('residents')">👥 Resident Records</a>
@@ -411,9 +408,7 @@
       <a class="nav-item admin-only" onclick="switchTab('users')">⚙️ User Management</a>
     </div>
 
-    <!-- Main Content Area -->
     <div class="main-wrapper">
-      <!-- Navbar -->
       <div class="navbar">
         <div style="font-weight:600;">L K Ang Dormitory Portal</div>
         <div class="user-profile">
@@ -473,12 +468,13 @@
               <thead>
                 <tr>
                   <th>Assign Person</th>
+                  <th>Created By</th>
                   <th>Location / Room</th>
                   <th>Description</th>
                   <th>Before Image</th>
                   <th>After Image</th>
                   <th>Status</th>
-                  <th>Auto Notify</th>
+                  <th>Notify</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -1049,11 +1045,16 @@
       const desc = document.getElementById('req-desc').value;
       const fileInput = document.getElementById('req-before-img');
 
+      const creatorName = currentUser ? currentUser.name : "System User";
+      const creatorEmail = currentUser ? currentUser.email : "";
+
       const reader = new FileReader();
       reader.onload = function() {
         const newReq = {
           assignPerson: assignPerson,
           assignEmail: assignEmail,
+          createdByName: creatorName,
+          createdByEmail: creatorEmail,
           location: location,
           desc: desc,
           beforeImg: reader.result,
@@ -1074,6 +1075,7 @@
       }
     }
 
+    // 1. Send Email to Assignee when Assigned
     function sendNotificationEmail(personName, email, location, desc) {
       if (!email) {
         alert("Recipient email is missing!");
@@ -1098,6 +1100,30 @@
         }, function(error) {
            console.log('FAILED...', error);
            alert('Email sending failed: ' + JSON.stringify(error));
+        });
+    }
+
+    // 2. Send Email to Requester/Creator when Request is Completed
+    function sendCompletionEmail(req) {
+      const recipientEmail = req.createdByEmail || req.assignEmail;
+      const recipientName = req.createdByName || "Assigner";
+
+      const templateParams = {
+        to_name: recipientName,
+        to_email: recipientEmail,
+        cc_email: CC_EMAIL,
+        sender_name: currentUser ? currentUser.name : req.assignPerson,
+        location: req.location,
+        description: `COMPLETED / RESOLVED: ${req.desc}`
+      };
+
+      emailjs.send('service_94a1xtp', 'template_ik9p9kc', templateParams)
+        .then(function(response) {
+           console.log('COMPLETION EMAIL SUCCESS!', response.status, response.text);
+           alert(`Task Completed! Auto-notification email sent to ${recipientName} & CC recipients.`);
+        }, function(error) {
+           console.log('COMPLETION EMAIL FAILED...', error);
+           alert('Completion email failed to send: ' + JSON.stringify(error));
         });
     }
 
@@ -1150,6 +1176,7 @@
       const target = maintenanceRequests[index];
       if (!target) return;
 
+      const previousStatus = target.status;
       target.assignPerson = assignPerson;
       target.assignEmail = assignEmail;
 
@@ -1162,6 +1189,9 @@
           localStorage.setItem('lkang_maintenance', JSON.stringify(maintenanceRequests));
           renderMaintenanceTable();
           closeModal('modal-update-request');
+
+          // Send Email upon Completion via After Image Upload
+          sendCompletionEmail(target);
         };
         reader.readAsDataURL(fileInput.files[0]);
       } else {
@@ -1169,6 +1199,11 @@
         localStorage.setItem('lkang_maintenance', JSON.stringify(maintenanceRequests));
         renderMaintenanceTable();
         closeModal('modal-update-request');
+
+        // Send Email if status is updated directly to Resolved
+        if (status === 'Resolved' && previousStatus !== 'Resolved') {
+          sendCompletionEmail(target);
+        }
       }
     }
 
@@ -1192,6 +1227,7 @@
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td><b>${req.assignPerson}</b><br><span style="font-size:0.75rem; color:#94a3b8;">${req.assignEmail}</span></td>
+          <td><b>${req.createdByName || '-'}</b></td>
           <td>${req.location}</td>
           <td>${req.desc}</td>
           <td><img src="${req.beforeImg}" class="img-preview" onclick="viewFullImage('${req.beforeImg}')" alt="Before"></td>
@@ -1245,7 +1281,7 @@
       });
     }
 
-    // --- USER MANAGEMENT LOGIC (UPDATED WITH EDIT/DELETE) ---
+    // --- USER MANAGEMENT LOGIC ---
     function openNewUserModal() {
       document.getElementById('modal-user-title').innerText = "Add New User";
       document.getElementById('user-submit-btn').innerText = "Create User";
@@ -1271,7 +1307,7 @@
       document.getElementById('user-name-input').value = u.name;
       document.getElementById('user-email-input').value = u.email;
       document.getElementById('user-password-input').value = ''; 
-      document.getElementById('user-password-input').required = false; // Optional during edit
+      document.getElementById('user-password-input').required = false; 
       document.getElementById('user-role-input').value = u.role;
 
       openModal('modal-user');
@@ -1286,7 +1322,6 @@
       const role = document.getElementById('user-role-input').value;
 
       if (index >= 0) {
-        // Edit Mode
         users[index].name = name;
         users[index].email = email;
         users[index].role = role;
@@ -1294,7 +1329,6 @@
           users[index].password = pwd;
         }
       } else {
-        // Create Mode
         if (users.find(u => u.email === email)) {
           alert("User with this email already exists!");
           return;
