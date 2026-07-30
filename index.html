@@ -12,7 +12,6 @@
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <script type="text/javascript">
     (function(){
-      // ⚠️ သင်၏ EmailJS Public Key ကို ဒီနေရာတွင် အစားထိုးပါ
       emailjs.init("7gdiQ9fgdDVwO-V9W"); 
     })();
   </script>
@@ -269,7 +268,6 @@
       background-color: #161e2e;
     }
 
-    /* Images */
     .img-preview {
       width: 50px;
       height: 50px;
@@ -297,7 +295,6 @@
     .badge-progress { background-color: #1e3a8a; color: #93c5fd; }
     .badge-resolved { background-color: #14532d; color: #86efac; }
 
-    /* Modal Styling */
     .modal {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -354,7 +351,7 @@
 
   <!-- ==================== AUTHENTICATION SECTION ==================== -->
   <div id="auth-container">
-    <!-- LOGIN FORM -->
+    <!-- LOGIN FORM (Fixed Blank Input Fields) -->
     <div id="login-card" class="auth-card">
       <div class="auth-header">
         <h2>L K Ang Dormitory</h2>
@@ -363,11 +360,11 @@
       <form onsubmit="handleLogin(event)">
         <div class="form-group">
           <label>Email Address</label>
-          <input type="email" id="login-email" class="form-input" value="admin@lkang.com" required>
+          <input type="email" id="login-email" class="form-input" placeholder="Enter your email" required>
         </div>
         <div class="form-group">
           <label>Password</label>
-          <input type="password" id="login-password" class="form-input" value="admin123" required>
+          <input type="password" id="login-password" class="form-input" placeholder="Enter password" required>
         </div>
         <button type="submit" class="btn btn-primary" style="width:100%;">Log In</button>
       </form>
@@ -385,11 +382,11 @@
       <form onsubmit="handleRegister(event)">
         <div class="form-group">
           <label>Full Name</label>
-          <input type="text" id="reg-name" class="form-input" required>
+          <input type="text" id="reg-name" class="form-input" placeholder="e.g. Admin User" required>
         </div>
         <div class="form-group">
           <label>Email Address</label>
-          <input type="email" id="reg-email" class="form-input" required>
+          <input type="email" id="reg-email" class="form-input" placeholder="admin@lkang.com" required>
         </div>
         <div class="form-group">
           <label>Password</label>
@@ -459,9 +456,7 @@
                   <th>Actions</th>
                 </tr>
               </thead>
-              <tbody id="resident-table-body">
-                <!-- Dynamically populated -->
-              </tbody>
+              <tbody id="resident-table-body"></tbody>
             </table>
           </div>
         </div>
@@ -487,9 +482,7 @@
                   <th>Actions</th>
                 </tr>
               </thead>
-              <tbody id="maintenance-table-body">
-                <!-- Dynamically populated -->
-              </tbody>
+              <tbody id="maintenance-table-body"></tbody>
             </table>
           </div>
         </div>
@@ -513,9 +506,7 @@
                   <th>Remarks</th>
                 </tr>
               </thead>
-              <tbody id="checklist-table-body">
-                <!-- Dynamically populated -->
-              </tbody>
+              <tbody id="checklist-table-body"></tbody>
             </table>
           </div>
         </div>
@@ -524,7 +515,7 @@
         <div id="tab-users" class="hidden">
           <div class="page-header">
             <h1 class="page-title">User Accounts</h1>
-            <button class="btn btn-primary" onclick="openModal('modal-new-user')">+ Add User</button>
+            <button class="btn btn-primary" onclick="openNewUserModal()">+ Add User</button>
           </div>
           <div class="table-container">
             <table>
@@ -533,11 +524,10 @@
                   <th>Name</th>
                   <th>Email</th>
                   <th>Role</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
-              <tbody id="users-table-body">
-                <!-- Dynamically populated -->
-              </tbody>
+              <tbody id="users-table-body"></tbody>
             </table>
           </div>
         </div>
@@ -676,7 +666,7 @@
     </div>
   </div>
 
-  <!-- Modal: Update Maintenance (After Image & Re-assign) -->
+  <!-- Modal: Update Maintenance -->
   <div id="modal-update-request" class="modal hidden">
     <div class="modal-content">
       <h2 style="margin-bottom:16px;">Update Request Details</h2>
@@ -756,11 +746,13 @@
     </div>
   </div>
 
-  <!-- Modal: New User (Admin) -->
-  <div id="modal-new-user" class="modal hidden">
+  <!-- Modal: Add / Edit User (Admin) -->
+  <div id="modal-user" class="modal hidden">
     <div class="modal-content">
-      <h2 style="margin-bottom:16px;">Add New User</h2>
-      <form onsubmit="addNewUser(event)">
+      <h2 id="modal-user-title" style="margin-bottom:16px;">Add New User</h2>
+      <form onsubmit="saveUserForm(event)">
+        <input type="hidden" id="user-edit-index" value="-1">
+
         <div class="form-group">
           <label>Full Name</label>
           <input type="text" id="user-name-input" class="form-input" required>
@@ -768,6 +760,10 @@
         <div class="form-group">
           <label>Email</label>
           <input type="email" id="user-email-input" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label>Password (Leave blank to keep unchanged during edit)</label>
+          <input type="password" id="user-password-input" class="form-input">
         </div>
         <div class="form-group">
           <label>Role</label>
@@ -778,8 +774,8 @@
           </select>
         </div>
         <div style="display:flex; gap:10px; margin-top:20px;">
-          <button type="submit" class="btn btn-primary">Create User</button>
-          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-new-user')">Cancel</button>
+          <button type="submit" id="user-submit-btn" class="btn btn-primary">Create User</button>
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-user')">Cancel</button>
         </div>
       </form>
     </div>
@@ -829,8 +825,8 @@
 
     function handleLogin(e) {
       e.preventDefault();
-      const email = document.getElementById('login-email').value;
-      const pwd = document.getElementById('login-password').value;
+      const email = document.getElementById('login-email').value.trim();
+      const pwd = document.getElementById('login-password').value.trim();
 
       const user = users.find(u => u.email === email && u.password === pwd);
 
@@ -1070,7 +1066,6 @@
         renderMaintenanceTable();
         closeModal('modal-new-request');
 
-        // EmailJS Auto Email Send
         sendNotificationEmail(assignPerson, assignEmail, location, desc);
       };
 
@@ -1079,7 +1074,6 @@
       }
     }
 
-    // EmailJS API Call Function
     function sendNotificationEmail(personName, email, location, desc) {
       if (!email) {
         alert("Recipient email is missing!");
@@ -1090,14 +1084,13 @@
 
       const templateParams = {
         to_name: personName,
-        to_email: email,                  // Maung သို့ Zia ၏ Email
-        cc_email: CC_EMAIL,               // CC: hlang@lkac.com.sg
+        to_email: email,                  
+        cc_email: CC_EMAIL,               
         sender_name: senderName,
         location: location,
         description: desc
       };
 
-      // ⚠️ သင်၏ EmailJS SERVICE_ID နှင့် TEMPLATE_ID ကို ဒီနေရာတွင် အစားထိုးပါ
       emailjs.send('service_94a1xtp', 'template_ik9p9kc', templateParams)
         .then(function(response) {
            console.log('SUCCESS!', response.status, response.text);
@@ -1252,29 +1245,95 @@
       });
     }
 
-    // --- USER MANAGEMENT LOGIC ---
-    function addNewUser(e) {
+    // --- USER MANAGEMENT LOGIC (UPDATED WITH EDIT/DELETE) ---
+    function openNewUserModal() {
+      document.getElementById('modal-user-title').innerText = "Add New User";
+      document.getElementById('user-submit-btn').innerText = "Create User";
+      document.getElementById('user-edit-index').value = "-1";
+
+      document.getElementById('user-name-input').value = '';
+      document.getElementById('user-email-input').value = '';
+      document.getElementById('user-password-input').value = '';
+      document.getElementById('user-password-input').required = true;
+      document.getElementById('user-role-input').value = 'Staff';
+
+      openModal('modal-user');
+    }
+
+    function openEditUserModal(index) {
+      const u = users[index];
+      if (!u) return;
+
+      document.getElementById('modal-user-title').innerText = "Edit User Account";
+      document.getElementById('user-submit-btn').innerText = "Update User";
+      document.getElementById('user-edit-index').value = index;
+
+      document.getElementById('user-name-input').value = u.name;
+      document.getElementById('user-email-input').value = u.email;
+      document.getElementById('user-password-input').value = ''; 
+      document.getElementById('user-password-input').required = false; // Optional during edit
+      document.getElementById('user-role-input').value = u.role;
+
+      openModal('modal-user');
+    }
+
+    function saveUserForm(e) {
       e.preventDefault();
+      const index = parseInt(document.getElementById('user-edit-index').value);
       const name = document.getElementById('user-name-input').value;
       const email = document.getElementById('user-email-input').value;
+      const pwd = document.getElementById('user-password-input').value;
       const role = document.getElementById('user-role-input').value;
 
-      users.push({ name, email, password: '123', role });
+      if (index >= 0) {
+        // Edit Mode
+        users[index].name = name;
+        users[index].email = email;
+        users[index].role = role;
+        if (pwd.trim() !== "") {
+          users[index].password = pwd;
+        }
+      } else {
+        // Create Mode
+        if (users.find(u => u.email === email)) {
+          alert("User with this email already exists!");
+          return;
+        }
+        users.push({ name, email, password: pwd, role });
+      }
+
       localStorage.setItem('lkang_users', JSON.stringify(users));
       renderUsersTable();
-      closeModal('modal-new-user');
+      closeModal('modal-user');
+    }
+
+    function deleteUser(index) {
+      if (users.length <= 1) {
+        alert("Cannot delete the last remaining user!");
+        return;
+      }
+
+      if (confirm(`Are you sure you want to delete user "${users[index].name}"?`)) {
+        users.splice(index, 1);
+        localStorage.setItem('lkang_users', JSON.stringify(users));
+        renderUsersTable();
+      }
     }
 
     function renderUsersTable() {
       const tbody = document.getElementById('users-table-body');
       tbody.innerHTML = '';
 
-      users.forEach(u => {
+      users.forEach((u, index) => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${u.name}</td>
           <td>${u.email}</td>
           <td><b>${u.role}</b></td>
+          <td style="display:flex; gap:6px;">
+            <button class="btn btn-warning" style="padding:4px 8px; font-size:0.75rem;" onclick="openEditUserModal(${index})">Edit</button>
+            <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="deleteUser(${index})">Delete</button>
+          </td>
         `;
         tbody.appendChild(tr);
       });
