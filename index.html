@@ -4,1281 +4,398 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>L K Ang Dormitory Management System</title>
-
-  <!-- SheetJS Library for Excel Export -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
-  <!-- EmailJS SDK Integration -->
+  
+  <!-- EmailJS SDK -->
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-  <script type="text/javascript">
-    (function(){
-      // ⚠️ သင်၏ EmailJS Public Key ကို ဒီနေရာတွင် အစားထိုးပါ
-      emailjs.init("7gdiQ9fgdDVwO-V9W"); 
-    })();
-  </script>
-
+  
   <style>
-    /* --- GLOBAL & BASE STYLES --- */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    :root {
+      --primary-color: #003366;
+      --secondary-color: #0056b3;
+      --success-color: #28a745;
+      --bg-color: #f4f7f6;
     }
 
     body {
-      background-color: #0b1120;
-      color: #f1f5f9;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: var(--bg-color);
+      color: #333;
     }
 
-    .hidden { display: none !important; }
-
-    /* --- AUTHENTICATION (LOGIN / REGISTER) --- */
-    #auth-container {
+    .header {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 8px 8px 0 0;
       display: flex;
-      justify-content: center;
+      justify-content: space-between;
       align-items: center;
-      min-height: 100vh;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .content {
+      padding: 25px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: #fafafa;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
       padding: 20px;
     }
 
-    .auth-card {
-      background-color: #172033;
-      border: 1px solid #1e293b;
-      border-radius: 12px;
-      padding: 36px;
-      width: 100%;
-      max-width: 440px;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-    }
-
-    .auth-header {
-      text-align: center;
-      margin-bottom: 24px;
-    }
-
-    .auth-header h2 {
-      font-size: 1.1rem;
-      color: #3b82f6;
-      margin-bottom: 6px;
-    }
-
-    .auth-header h1 {
-      font-size: 1.5rem;
-      color: #ffffff;
+    .card h3 {
+      margin-top: 0;
+      color: var(--primary-color);
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 8px;
     }
 
     .form-group {
-      margin-bottom: 14px;
+      margin-bottom: 15px;
     }
 
-    .form-group label {
+    label {
       display: block;
-      font-size: 0.85rem;
-      margin-bottom: 6px;
-      color: #cbd5e1;
-    }
-
-    .form-input, .form-select, .form-textarea {
-      width: 100%;
-      padding: 9px 12px;
-      background-color: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 6px;
-      color: #f8fafc;
-      font-size: 0.875rem;
-      outline: none;
-    }
-
-    .form-input:focus, .form-select:focus, .form-textarea:focus {
-      border-color: #3b82f6;
-    }
-
-    .form-grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .btn {
-      padding: 9px 16px;
-      border-radius: 6px;
-      border: none;
       font-weight: 600;
-      cursor: pointer;
-      font-size: 0.875rem;
-      transition: background-color 0.2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      text-decoration: none;
+      margin-bottom: 5px;
+      font-size: 13px;
     }
 
-    .btn-primary { background-color: #2563eb; color: #fff; }
-    .btn-primary:hover { background-color: #1d4ed8; }
-    .btn-green { background-color: #16a34a; color: #fff; }
-    .btn-green:hover { background-color: #15803d; }
-    .btn-excel { background-color: #10b981; color: #fff; }
-    .btn-excel:hover { background-color: #059669; }
-    .btn-secondary { background-color: #334155; color: #fff; }
-    .btn-secondary:hover { background-color: #475569; }
-    .btn-warning { background-color: #d97706; color: #fff; }
-    .btn-warning:hover { background-color: #b45309; }
-    .btn-danger { background-color: #dc2626; color: #fff; }
-    .btn-danger:hover { background-color: #b91c1c; }
-
-    .auth-toggle {
-      margin-top: 16px;
-      text-align: center;
-      font-size: 0.85rem;
-      color: #94a3b8;
-    }
-
-    .auth-toggle a {
-      color: #3b82f6;
-      text-decoration: none;
-      cursor: pointer;
-    }
-
-    /* --- APP LAYOUT --- */
-    #app-container {
-      display: flex;
-      min-height: 100vh;
-    }
-
-    .sidebar {
-      width: 250px;
-      background-color: #0b1120;
-      border-right: 1px solid #1e293b;
-      display: flex;
-      flex-direction: column;
-      padding: 16px 12px;
-      flex-shrink: 0;
-    }
-
-    .brand {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: #ffffff;
-      padding: 12px 16px;
-      margin-bottom: 16px;
-      border-bottom: 1px solid #1e293b;
-    }
-
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 16px;
-      border-radius: 8px;
-      color: #94a3b8;
-      text-decoration: none;
-      font-size: 0.9rem;
-      font-weight: 500;
-      margin-bottom: 4px;
-      cursor: pointer;
-    }
-
-    .nav-item.active {
-      background-color: #2563eb;
-      color: #ffffff;
-    }
-
-    .nav-item:hover:not(.active) {
-      background-color: #1e293b;
-      color: #f8fafc;
-    }
-
-    .main-wrapper {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow-x: hidden;
-    }
-
-    .navbar {
-      height: 60px;
-      background-color: #0b1120;
-      border-bottom: 1px solid #1e293b;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 32px;
-    }
-
-    .user-profile {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .user-info { text-align: right; }
-    .user-name { font-weight: 600; font-size: 0.9rem; }
-    .user-role { font-size: 0.75rem; color: #94a3b8; }
-
-    .content-container {
-      padding: 32px;
-      flex: 1;
-    }
-
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-    }
-
-    .page-title { font-size: 1.5rem; font-weight: 700; }
-    .header-actions { display: flex; gap: 10px; }
-
-    /* --- CARDS & TABLES --- */
-    .table-container {
+    input, select, textarea {
       width: 100%;
-      overflow-x: auto;
-      border-radius: 8px;
-      border: 1px solid #1e293b;
+      padding: 10px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
     }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.85rem;
-      white-space: nowrap;
-    }
-
-    th {
-      background-color: #0f172a;
-      color: #94a3b8;
-      font-weight: 600;
-      padding: 12px 14px;
-      text-align: left;
-      border-bottom: 1px solid #1e293b;
-    }
-
-    td {
-      padding: 12px 14px;
-      border-bottom: 1px solid #1e293b;
-      color: #cbd5e1;
-      vertical-align: middle;
-    }
-
-    tr:hover td {
-      background-color: #161e2e;
-    }
-
-    /* Images */
-    .img-preview {
-      width: 50px;
-      height: 50px;
-      object-fit: cover;
-      border-radius: 6px;
-      border: 1px solid #334155;
-      cursor: pointer;
-      transition: transform 0.2s, border-color 0.2s;
-    }
-
-    .img-preview:hover {
-      transform: scale(1.08);
-      border-color: #3b82f6;
-    }
-
-    .badge {
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      display: inline-block;
-    }
-
-    .badge-pending { background-color: #7c2d12; color: #fdba74; }
-    .badge-progress { background-color: #1e3a8a; color: #93c5fd; }
-    .badge-resolved { background-color: #14532d; color: #86efac; }
-
-    /* Modal Styling */
-    .modal {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-
-    .modal-content {
-      background: #172033;
-      border: 1px solid #1e293b;
-      padding: 24px;
-      border-radius: 10px;
-      width: 100%;
-      max-width: 600px;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-
-    .image-viewer-content {
-      background: transparent;
+    button {
+      padding: 10px 15px;
       border: none;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      position: relative;
-    }
-
-    .full-image {
-      max-width: 85vw;
-      max-height: 85vh;
-      border-radius: 8px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-      border: 2px solid #334155;
-    }
-
-    .close-img-btn {
-      position: absolute;
-      top: -40px;
-      right: 0;
-      background: #ef4444;
-      color: white;
-      border: none;
-      padding: 6px 14px;
-      border-radius: 6px;
+      border-radius: 4px;
       cursor: pointer;
       font-weight: bold;
+      width: 100%;
+      transition: background 0.2s;
+    }
+
+    .btn-assign {
+      background-color: var(--secondary-color);
+      color: white;
+    }
+
+    .btn-assign:hover {
+      background-color: #004085;
+    }
+
+    .btn-complete {
+      background-color: var(--success-color);
+      color: white;
+    }
+
+    .btn-complete:hover {
+      background-color: #218838;
+    }
+
+    .status-box {
+      margin-top: 15px;
+      padding: 10px;
+      background-color: #e9ecef;
+      border-radius: 4px;
+      font-size: 13px;
     }
   </style>
 </head>
 <body>
 
-  <!-- ==================== AUTHENTICATION SECTION ==================== -->
-  <div id="auth-container">
-    <!-- LOGIN FORM -->
-    <div id="login-card" class="auth-card">
-      <div class="auth-header">
-        <h2>L K Ang Dormitory</h2>
-        <h1>Sign In</h1>
-      </div>
-      <form onsubmit="handleLogin(event)">
-        <div class="form-group">
-          <label>Email Address</label>
-          <input type="email" id="login-email" class="form-input" value="admin@lkang.com" required>
-        </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input type="password" id="login-password" class="form-input" value="admin123" required>
-        </div>
-        <button type="submit" class="btn btn-primary" style="width:100%;">Log In</button>
-      </form>
-      <div class="auth-toggle">
-        Don't have an admin account? <a onclick="toggleAuthMode('register')">Register Admin</a>
-      </div>
+  <div class="container">
+    <div class="header">
+      <h1>L K Ang Dormitory Management System</h1>
+      <span id="userInfo" style="font-size: 14px;">User: Admin</span>
     </div>
 
-    <!-- REGISTER ADMIN FORM -->
-    <div id="register-card" class="auth-card hidden">
-      <div class="auth-header">
-        <h2>L K Ang Dormitory</h2>
-        <h1>Create Admin User</h1>
-      </div>
-      <form onsubmit="handleRegister(event)">
-        <div class="form-group">
-          <label>Full Name</label>
-          <input type="text" id="reg-name" class="form-input" required>
-        </div>
-        <div class="form-group">
-          <label>Email Address</label>
-          <input type="email" id="reg-email" class="form-input" required>
-        </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input type="password" id="reg-password" class="form-input" required>
-        </div>
-        <button type="submit" class="btn btn-green" style="width:100%;">Create Account</button>
-      </form>
-      <div class="auth-toggle">
-        Already registered? <a onclick="toggleAuthMode('login')">Sign In</a>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================== MAIN DASHBOARD APP ==================== -->
-  <div id="app-container" class="hidden">
-    <!-- Sidebar -->
-    <div class="sidebar">
-      <div class="brand">L K Ang Dormitory</div>
-      <a class="nav-item active" onclick="switchTab('residents')">👥 Resident Records</a>
-      <a class="nav-item" onclick="switchTab('maintenance')">🛠️ Maintenance Requests</a>
-      <a class="nav-item" onclick="switchTab('checklist')">📋 Weekly Checklist</a>
-      <a class="nav-item admin-only" onclick="switchTab('users')">⚙️ User Management</a>
-    </div>
-
-    <!-- Main Content Area -->
-    <div class="main-wrapper">
-      <!-- Navbar -->
-      <div class="navbar">
-        <div style="font-weight:600;">L K Ang Dormitory Portal</div>
-        <div class="user-profile">
-          <div class="user-info">
-            <div class="user-name" id="display-user-name">User Name</div>
-            <div class="user-role" id="display-user-role">Role</div>
-          </div>
-          <button class="btn btn-secondary" onclick="handleLogout()">Logout</button>
-        </div>
-      </div>
-
-      <div class="content-container">
-
-        <!-- TAB 1: RESIDENT RECORDS -->
-        <div id="tab-residents">
-          <div class="page-header">
-            <h1 class="page-title">Resident Records</h1>
-            <div class="header-actions">
-              <button class="btn btn-green" onclick="openNewResidentModal()">+ New Resident</button>
-              <button class="btn btn-excel" onclick="exportResidentsToExcel()">📊 Export to Excel</button>
-            </div>
-          </div>
-
-          <div class="table-container">
-            <table id="resident-table">
-              <thead>
-                <tr>
-                  <th>Photo</th>
-                  <th>Resident ID</th>
-                  <th>Name</th>
-                  <th>WP No.</th>
-                  <th>WP Expiry</th>
-                  <th>Nationality</th>
-                  <th>Company Name</th>
-                  <th>Bed No.</th>
-                  <th>Access Card No.</th>
-                  <th>Food Order</th>
-                  <th>Check-in Date</th>
-                  <th>Check-out Date</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="resident-table-body">
-                <!-- Dynamically populated -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- TAB 2: MAINTENANCE REQUESTS -->
-        <div id="tab-maintenance" class="hidden">
-          <div class="page-header">
-            <h1 class="page-title">Maintenance Requests</h1>
-            <button class="btn btn-green" onclick="openModal('modal-new-request')">+ New Request</button>
-          </div>
-
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Assign Person</th>
-                  <th>Location / Room</th>
-                  <th>Description</th>
-                  <th>Before Image</th>
-                  <th>After Image</th>
-                  <th>Status</th>
-                  <th>Auto Notify</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="maintenance-table-body">
-                <!-- Dynamically populated -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- TAB 3: WEEKLY CHECKLIST -->
-        <div id="tab-checklist" class="hidden">
-          <div class="page-header">
-            <h1 class="page-title">Weekly Dormitory Inspection</h1>
-            <button class="btn btn-green" onclick="openModal('modal-new-checklist')">+ Submit Checklist</button>
-          </div>
-
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Inspector Name</th>
-                  <th>Block / Level</th>
-                  <th>Fire Safety</th>
-                  <th>Cleanliness</th>
-                  <th>Remarks</th>
-                </tr>
-              </thead>
-              <tbody id="checklist-table-body">
-                <!-- Dynamically populated -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- TAB 4: USER MANAGEMENT (ADMIN ONLY) -->
-        <div id="tab-users" class="hidden">
-          <div class="page-header">
-            <h1 class="page-title">User Accounts</h1>
-            <button class="btn btn-primary" onclick="openModal('modal-new-user')">+ Add User</button>
-          </div>
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Role</th>
-                </tr>
-              </thead>
-              <tbody id="users-table-body">
-                <!-- Dynamically populated -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================== MODALS ==================== -->
-
-  <!-- Modal: Add / Edit Resident -->
-  <div id="modal-resident" class="modal hidden">
-    <div class="modal-content">
-      <h2 id="modal-resident-title" style="margin-bottom:16px;">Add New Resident Record</h2>
-      <form onsubmit="saveResidentForm(event)">
-        <input type="hidden" id="res-edit-index" value="-1">
+    <div class="content">
+      <div class="grid-2">
         
-        <div class="form-group">
-          <label>Resident Photo (Upload Image)</label>
-          <input type="file" id="res-photo-input" class="form-input" accept="image/*">
+        <!-- SECTION 1: TASK ASSIGNMENT -->
+        <div class="card">
+          <h3>1. Maintenance Request & Assign</h3>
+          
+          <div class="form-group">
+            <label>Requestor/Assignor Name:</label>
+            <input type="text" id="reqName" placeholder="e.g. Supervisor John">
+          </div>
+          
+          <div class="form-group">
+            <label>Requestor Email (Auto Email ပြန်ဝင်မည်):</label>
+            <input type="email" id="reqEmail" placeholder="e.g. john@lkac.com.sg">
+          </div>
+
+          <div class="form-group">
+            <label>Assign To (Person Name):</label>
+            <input type="text" id="assigneeName" placeholder="e.g. Maung Maung">
+          </div>
+
+          <div class="form-group">
+            <label>Assignee Email:</label>
+            <input type="email" id="assigneeEmail" placeholder="e.g. maung@example.com">
+          </div>
+
+          <div class="form-group">
+            <label>Location / Unit No:</label>
+            <input type="text" id="location" placeholder="e.g. Block A, Unit #02-15">
+          </div>
+
+          <div class="form-group">
+            <label>Before Image (Issue Photo):</label>
+            <input type="file" id="beforeImageInput" accept="image/*">
+          </div>
+
+          <div class="form-group">
+            <label>Issue Description:</label>
+            <textarea id="description" rows="3" placeholder="Describe the maintenance issue..."></textarea>
+          </div>
+
+          <button class="btn-assign" onclick="handleAssignTask()">Assign Task & Send Notification</button>
         </div>
 
-        <div class="form-grid-2">
-          <div class="form-group">
-            <label>Resident ID</label>
-            <input type="text" id="res-id" class="form-input" placeholder="e.g. RES-001" required>
+        <!-- SECTION 2: AFTER IMAGE UPLOAD & COMPLETION -->
+        <div class="card">
+          <h3>2. Upload After Image & Complete</h3>
+          
+          <div class="status-box" id="taskStatusBox">
+            <b>Active Task Status:</b> <span id="activeStatus">No active task assigned yet.</span>
           </div>
-          <div class="form-group">
-            <label>Name</label>
-            <input type="text" id="res-name" class="form-input" required>
-          </div>
-          <div class="form-group">
-            <label>WP No.</label>
-            <input type="text" id="res-wp" class="form-input" required>
-          </div>
-          <div class="form-group">
-            <label>WP Expiry Date</label>
-            <input type="date" id="res-wp-expiry" class="form-input" required>
-          </div>
-          <div class="form-group">
-            <label>Nationality</label>
-            <input type="text" id="res-nationality" class="form-input" placeholder="e.g. Myanmar" required>
-          </div>
-          <div class="form-group">
-            <label>Company Name</label>
-            <input type="text" id="res-company" class="form-input" required>
-          </div>
-          <div class="form-group">
-            <label>Bed No.</label>
-            <input type="text" id="res-bed" class="form-input" placeholder="e.g. A-101-B" required>
-          </div>
-          <div class="form-group">
-            <label>Access Card No.</label>
-            <input type="text" id="res-card" class="form-input" required>
-          </div>
-          <div class="form-group">
-            <label>Food Order</label>
-            <select id="res-food" class="form-select">
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Check-in Date</label>
-            <input type="date" id="res-checkin" class="form-input" required>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Check-out Date (Optional)</label>
-          <input type="date" id="res-checkout" class="form-input">
-        </div>
-        <div style="display:flex; gap:10px; margin-top:20px;">
-          <button type="submit" id="res-submit-btn" class="btn btn-green">Save Resident</button>
-          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-resident')">Cancel</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Modal: FULL IMAGE VIEWER -->
-  <div id="modal-image-viewer" class="modal hidden" onclick="closeModal('modal-image-viewer')">
-    <div class="image-viewer-content" onclick="event.stopPropagation()">
-      <button class="close-img-btn" onclick="closeModal('modal-image-viewer')">✕ Close</button>
-      <img id="full-size-image" src="" class="full-image" alt="Enlarged Image">
-    </div>
-  </div>
-
-  <!-- Modal: New Maintenance Request -->
-  <div id="modal-new-request" class="modal hidden">
-    <div class="modal-content">
-      <h2 style="margin-bottom:16px;">New Maintenance Request</h2>
-      <form onsubmit="submitMaintenanceRequest(event)">
-        <div class="form-group">
-          <label>Assign Person Name</label>
-          <select id="req-assign-person" class="form-select" required>
-            <option value="">-- Select Assign Person --</option>
-            <option value="maung@lkangco.sg" data-name="Maung">Maung (maung@lkangco.sg)</option>
-            <option value="lkadorm@gmail.com" data-name="Zia">Zia (lkadorm@gmail.com)</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Location / Room</label>
-          <select id="req-location" class="form-select" required>
-            <option value="">-- Select Location --</option>
-            <option value="Room-1">Room-1</option>
-            <option value="Room-2">Room-2</option>
-            <option value="Room-3">Room-3</option>
-            <option value="Room-4">Room-4</option>
-            <option value="Room-5">Room-5</option>
-            <option value="Room-6">Room-6</option>
-            <option value="Room-7">Room-7</option>
-            <option value="Room-8">Room-8</option>
-            <option value="Room-9">Room-9</option>
-            <option value="Room-10">Room-10</option>
-            <option value="Room-11">Room-11</option>
-            <option value="External Corridor">External Corridor</option>
-            <option value="Internal Corridor">Internal Corridor</option>
-            <option value="Kitchen">Kitchen</option>
-            <option value="Lift">Lift</option>
-            <option value="Wifi">Wifi</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Issue Description</label>
-          <textarea id="req-desc" class="form-textarea" rows="3" required placeholder="Describe the issue..."></textarea>
-        </div>
-        <div class="form-group">
-          <label>Before Image (Upload Photo)</label>
-          <input type="file" id="req-before-img" class="form-input" accept="image/*" required>
-        </div>
-        <div style="display:flex; gap:10px; margin-top:20px;">
-          <button type="submit" class="btn btn-green">Submit & Send Auto Email</button>
-          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-new-request')">Cancel</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Modal: Update Maintenance (After Image & Re-assign) -->
-  <div id="modal-update-request" class="modal hidden">
-    <div class="modal-content">
-      <h2 style="margin-bottom:16px;">Update Request Details</h2>
-      <form onsubmit="saveMaintenanceUpdate(event)">
-        <input type="hidden" id="update-req-index">
-        
-        <div class="form-group">
-          <label>Assign Person Name</label>
-          <select id="update-assign-person" class="form-select" required>
-            <option value="maung@lkangco.sg" data-name="Maung">Maung (maung@lkangco.sg)</option>
-            <option value="lkadorm@gmail.com" data-name="Zia">Zia (lkadorm@gmail.com)</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>Status</label>
-          <select id="update-status" class="form-select">
-            <option value="Pending">Pending</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Resolved">Resolved</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>After Image (Upload Fixed Photo)</label>
-          <input type="file" id="req-after-img" class="form-input" accept="image/*">
-        </div>
-
-        <div id="after-img-preview-container" class="hidden" style="margin-top: 10px; border: 1px dashed #334155; padding: 10px; border-radius: 6px; text-align: center;">
-          <p style="font-size:0.8rem; color:#cbd5e1; margin-bottom:6px;">Current After Image:</p>
-          <img id="update-after-preview" src="" class="img-preview" style="width:80px; height:80px;" alt="After Preview">
           <br>
-          <button type="button" class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem; margin-top:8px;" onclick="removeAfterImage()">🗑️ Delete Image</button>
+
+          <div class="form-group">
+            <label>After Work Image (ပြင်ပြီးဓာတ်ပုံ):</label>
+            <input type="file" id="afterImageInput" accept="image/*">
+          </div>
+
+          <div class="form-group">
+            <label>Completion Remarks:</label>
+            <textarea id="completionRemarks" rows="3" placeholder="Explain what was repaired/fixed..."></textarea>
+          </div>
+
+          <button class="btn-complete" onclick="handleCompleteTask()">Upload & Send Completion Email</button>
         </div>
 
-        <div style="display:flex; gap:10px; margin-top:20px;">
-          <button type="submit" class="btn btn-primary">Save Changes</button>
-          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-update-request')">Cancel</button>
-        </div>
-      </form>
+      </div>
     </div>
   </div>
 
-  <!-- Modal: New Weekly Checklist -->
-  <div id="modal-new-checklist" class="modal hidden">
-    <div class="modal-content">
-      <h2 style="margin-bottom:16px;">Weekly Inspection Checklist</h2>
-      <form onsubmit="submitChecklist(event)">
-        <div class="form-group">
-          <label>Block / Level</label>
-          <input type="text" id="chk-block" class="form-input" required placeholder="e.g. Block B - Level 3">
-        </div>
-        <div class="form-group">
-          <label>Fire Safety Equipment Check</label>
-          <select id="chk-fire" class="form-select">
-            <option value="Pass">Pass</option>
-            <option value="Fail">Fail</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Cleanliness Status</label>
-          <select id="chk-clean" class="form-select">
-            <option value="Good">Good</option>
-            <option value="Satisfactory">Satisfactory</option>
-            <option value="Needs Improvement">Needs Improvement</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Remarks</label>
-          <textarea id="chk-remarks" class="form-textarea" rows="2"></textarea>
-        </div>
-        <div style="display:flex; gap:10px; margin-top:20px;">
-          <button type="submit" class="btn btn-green">Submit Inspection</button>
-          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-new-checklist')">Cancel</button>
-        </div>
-      </form>
-    </div>
-  </div>
+  <script type="text/javascript">
+    // ==========================================
+    // ⚙️ EMAILJS & SYSTEM CONFIGURATIONS
+    // ==========================================
+    const EMAILJS_SERVICE_ID = "YOUR_SERVICE_ID";                  // ⚠️ အစားထိုးပါ
+    const EMAILJS_ASSIGN_TEMPLATE_ID = "YOUR_ASSIGN_TEMPLATE_ID";      // ⚠️ Assign လုပ်သည့် Template ID
+    const EMAILJS_COMPLETE_TEMPLATE_ID = "YOUR_COMPLETE_TEMPLATE_ID";  // ⚠️ Completed လုပ်သည့် Template ID
+    const EMAILJS_PUBLIC_KEY = "YOUR_PUBLIC_KEY";                  // ⚠️ အစားထိုးပါ
+    const CC_EMAIL = "hlang@lkac.com.sg";                           // ⚠️ CC Email
 
-  <!-- Modal: New User (Admin) -->
-  <div id="modal-new-user" class="modal hidden">
-    <div class="modal-content">
-      <h2 style="margin-bottom:16px;">Add New User</h2>
-      <form onsubmit="addNewUser(event)">
-        <div class="form-group">
-          <label>Full Name</label>
-          <input type="text" id="user-name-input" class="form-input" required>
-        </div>
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" id="user-email-input" class="form-input" required>
-        </div>
-        <div class="form-group">
-          <label>Role</label>
-          <select id="user-role-input" class="form-select">
-            <option value="Staff">Staff</option>
-            <option value="Resident">Resident</option>
-            <option value="Admin">Admin</option>
-          </select>
-        </div>
-        <div style="display:flex; gap:10px; margin-top:20px;">
-          <button type="submit" class="btn btn-primary">Create User</button>
-          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-new-user')">Cancel</button>
-        </div>
-      </form>
-    </div>
-  </div>
+    // Current Logged-in User Information
+    const currentUser = {
+      name: "Dormitory Manager",
+      email: "manager@lkac.com.sg"
+    };
 
-  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
-  <script>
-    const CC_EMAIL = "hlang@lkac.com.sg";
+    // Active Task State Store
+    let currentTask = null;
 
-    // Local Data Storage
-    let users = JSON.parse(localStorage.getItem('lkang_users')) || [
-      { name: "Default Admin", email: "admin@lkang.com", password: "admin123", role: "Admin" }
-    ];
+    // Initialize EmailJS
+    (function() {
+      emailjs.init(EMAILJS_PUBLIC_KEY);
+    })();
 
-    let residents = JSON.parse(localStorage.getItem('lkang_residents')) || [];
-    let maintenanceRequests = JSON.parse(localStorage.getItem('lkang_maintenance')) || [];
-    let checklists = JSON.parse(localStorage.getItem('lkang_checklists')) || [];
-    let currentUser = null;
-
-    // --- AUTHENTICATION ---
-    function toggleAuthMode(mode) {
-      if (mode === 'register') {
-        document.getElementById('login-card').classList.add('hidden');
-        document.getElementById('register-card').classList.remove('hidden');
-      } else {
-        document.getElementById('register-card').classList.add('hidden');
-        document.getElementById('login-card').classList.remove('hidden');
-      }
-    }
-
-    function handleRegister(e) {
-      e.preventDefault();
-      const name = document.getElementById('reg-name').value;
-      const email = document.getElementById('reg-email').value;
-      const password = document.getElementById('reg-password').value;
-
-      if (users.find(u => u.email === email)) {
-        alert("User with this email already exists!");
-        return;
-      }
-
-      users.push({ name, email, password, role: "Admin" });
-      localStorage.setItem('lkang_users', JSON.stringify(users));
-      alert("Admin Account Created Successfully!");
-      toggleAuthMode('login');
-    }
-
-    function handleLogin(e) {
-      e.preventDefault();
-      const email = document.getElementById('login-email').value;
-      const pwd = document.getElementById('login-password').value;
-
-      const user = users.find(u => u.email === email && u.password === pwd);
-
-      if (user) {
-        currentUser = user;
-        document.getElementById('auth-container').classList.add('hidden');
-        document.getElementById('app-container').classList.remove('hidden');
-        
-        document.getElementById('display-user-name').innerText = user.name;
-        document.getElementById('display-user-role').innerText = user.role;
-
-        if (user.role !== 'Admin') {
-          document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
-        } else {
-          document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
-        }
-
-        renderResidentsTable();
-        renderMaintenanceTable();
-        renderChecklistTable();
-        renderUsersTable();
-      } else {
-        alert("Invalid Email or Password!");
-      }
-    }
-
-    function handleLogout() {
-      currentUser = null;
-      document.getElementById('app-container').classList.add('hidden');
-      document.getElementById('auth-container').classList.remove('hidden');
-    }
-
-    // --- NAVIGATION ---
-    function switchTab(tab) {
-      const tabs = ['residents', 'maintenance', 'checklist', 'users'];
-      tabs.forEach(t => {
-        document.getElementById(`tab-${t}`).classList.add('hidden');
-      });
-      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-
-      document.getElementById(`tab-${tab}`).classList.remove('hidden');
-      event.currentTarget.classList.add('active');
-    }
-
-    // --- MODAL UTILS ---
-    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-
-    // FULL IMAGE VIEWER FUNCTION
-    function viewFullImage(imgSrc) {
-      if (!imgSrc) return;
-      document.getElementById('full-size-image').src = imgSrc;
-      openModal('modal-image-viewer');
-    }
-
-    // --- RESIDENT MANAGEMENT ---
-    function openNewResidentModal() {
-      document.getElementById('modal-resident-title').innerText = "Add New Resident Record";
-      document.getElementById('res-submit-btn').innerText = "Save Resident";
-      document.getElementById('res-edit-index').value = "-1";
-      
-      document.getElementById('res-photo-input').value = '';
-      document.getElementById('res-id').value = '';
-      document.getElementById('res-name').value = '';
-      document.getElementById('res-wp').value = '';
-      document.getElementById('res-wp-expiry').value = '';
-      document.getElementById('res-nationality').value = '';
-      document.getElementById('res-company').value = '';
-      document.getElementById('res-bed').value = '';
-      document.getElementById('res-card').value = '';
-      document.getElementById('res-food').value = 'Yes';
-      document.getElementById('res-checkin').value = '';
-      document.getElementById('res-checkout').value = '';
-
-      openModal('modal-resident');
-    }
-
-    function openEditResidentModal(index) {
-      const res = residents[index];
-      if (!res) return;
-
-      document.getElementById('modal-resident-title').innerText = "Edit Resident Record";
-      document.getElementById('res-submit-btn').innerText = "Update Resident";
-      document.getElementById('res-edit-index').value = index;
-
-      document.getElementById('res-photo-input').value = '';
-      document.getElementById('res-id').value = res.id;
-      document.getElementById('res-name').value = res.name;
-      document.getElementById('res-wp').value = res.wpNo;
-      document.getElementById('res-wp-expiry').value = res.wpExpiry;
-      document.getElementById('res-nationality').value = res.nationality;
-      document.getElementById('res-company').value = res.company;
-      document.getElementById('res-bed').value = res.bedNo;
-      document.getElementById('res-card').value = res.cardNo;
-      document.getElementById('res-food').value = res.foodOrder;
-      document.getElementById('res-checkin').value = res.checkIn;
-      document.getElementById('res-checkout').value = res.checkOut === '-' ? '' : res.checkOut;
-
-      openModal('modal-resident');
-    }
-
-    function saveResidentForm(e) {
-      e.preventDefault();
-      const editIndex = parseInt(document.getElementById('res-edit-index').value);
-      const photoInput = document.getElementById('res-photo-input');
-
-      const processSave = (photoBase64) => {
-        const resData = {
-          photo: photoBase64,
-          id: document.getElementById('res-id').value,
-          name: document.getElementById('res-name').value,
-          wpNo: document.getElementById('res-wp').value,
-          wpExpiry: document.getElementById('res-wp-expiry').value,
-          nationality: document.getElementById('res-nationality').value,
-          company: document.getElementById('res-company').value,
-          bedNo: document.getElementById('res-bed').value,
-          cardNo: document.getElementById('res-card').value,
-          foodOrder: document.getElementById('res-food').value,
-          checkIn: document.getElementById('res-checkin').value,
-          checkOut: document.getElementById('res-checkout').value || '-'
-        };
-
-        if (editIndex >= 0) {
-          residents[editIndex] = resData;
-        } else {
-          residents.unshift(resData);
-        }
-
-        localStorage.setItem('lkang_residents', JSON.stringify(residents));
-        renderResidentsTable();
-        closeModal('modal-resident');
-      };
-
-      if (photoInput.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function() {
-          processSave(reader.result);
-        };
-        reader.readAsDataURL(photoInput.files[0]);
-      } else {
-        const existingPhoto = editIndex >= 0 ? residents[editIndex].photo : "";
-        processSave(existingPhoto);
-      }
-    }
-
-    function deleteResident(index) {
-      if (confirm('Are you sure you want to delete this resident record?')) {
-        residents.splice(index, 1);
-        localStorage.setItem('lkang_residents', JSON.stringify(residents));
-        renderResidentsTable();
-      }
-    }
-
-    function renderResidentsTable() {
-      const tbody = document.getElementById('resident-table-body');
-      tbody.innerHTML = '';
-
-      residents.forEach((res, index) => {
-        const tr = document.createElement('tr');
-        const photoHtml = res.photo 
-          ? `<img src="${res.photo}" class="img-preview" onclick="viewFullImage('${res.photo}')" alt="Resident">` 
-          : `<span style="color:#64748b; font-size:0.75rem;">No Photo</span>`;
-
-        tr.innerHTML = `
-          <td>${photoHtml}</td>
-          <td><b>${res.id}</b></td>
-          <td>${res.name}</td>
-          <td>${res.wpNo}</td>
-          <td>${res.wpExpiry}</td>
-          <td>${res.nationality}</td>
-          <td>${res.company}</td>
-          <td>${res.bedNo}</td>
-          <td>${res.cardNo}</td>
-          <td>${res.foodOrder}</td>
-          <td>${res.checkIn}</td>
-          <td>${res.checkOut}</td>
-          <td style="display:flex; gap:6px; margin-top:8px;">
-            <button class="btn btn-warning" style="padding:4px 8px; font-size:0.75rem;" onclick="openEditResidentModal(${index})">Edit</button>
-            <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="deleteResident(${index})">Delete</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
+    // Helper Function: Current Date & Time String
+    function getCurrentFormattedDateTime() {
+      const now = new Date();
+      return now.toLocaleString('en-SG', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: '2-digit', 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true 
       });
     }
 
-    function exportResidentsToExcel() {
-      if (residents.length === 0) {
-        alert("No resident records available to export!");
-        return;
-      }
-
-      const excelData = residents.map(r => ({
-        "Resident ID": r.id,
-        "Name": r.name,
-        "WP No.": r.wpNo,
-        "WP Expiry": r.wpExpiry,
-        "Nationality": r.nationality,
-        "Company Name": r.company,
-        "Bed No.": r.bedNo,
-        "Access Card No.": r.cardNo,
-        "Food Order": r.foodOrder,
-        "Check-in Date": r.checkIn,
-        "Check-out Date": r.checkOut
-      }));
-
-      const worksheet = XLSX.utils.json_to_sheet(excelData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Resident Records");
-      XLSX.writeFile(workbook, "LK_Ang_Dormitory_Residents.xlsx");
-    }
-
-    // --- MAINTENANCE SYSTEM & EMAILJS LOGIC ---
-    function submitMaintenanceRequest(e) {
-      e.preventDefault();
-      const selectEl = document.getElementById('req-assign-person');
-      const assignEmail = selectEl.value; 
-      const assignPerson = selectEl.options[selectEl.selectedIndex].getAttribute('data-name'); 
-      
-      const location = document.getElementById('req-location').value;
-      const desc = document.getElementById('req-desc').value;
-      const fileInput = document.getElementById('req-before-img');
-
-      const reader = new FileReader();
-      reader.onload = function() {
-        const newReq = {
-          assignPerson: assignPerson,
-          assignEmail: assignEmail,
-          location: location,
-          desc: desc,
-          beforeImg: reader.result,
-          afterImg: '',
-          status: 'Pending'
-        };
-
-        maintenanceRequests.unshift(newReq);
-        localStorage.setItem('lkang_maintenance', JSON.stringify(maintenanceRequests));
-        renderMaintenanceTable();
-        closeModal('modal-new-request');
-
-        // EmailJS Auto Email Send
-        sendNotificationEmail(assignPerson, assignEmail, location, desc);
-      };
-
-      if (fileInput.files[0]) {
-        reader.readAsDataURL(fileInput.files[0]);
-      }
-    }
-
-    // EmailJS API Call Function
-    function sendNotificationEmail(personName, email, location, desc) {
-      if (!email) {
-        alert("Recipient email is missing!");
-        return;
-      }
-
-      const senderName = currentUser ? currentUser.name : "System User";
-
+    // ==========================================
+    // 📩 1. ASSIGNMENT EMAIL FUNCTION
+    // ==========================================
+    function sendNotificationEmail(personName, email, location, desc, reqName, reqEmail, beforeDate, beforeImageUrl) {
       const templateParams = {
         to_name: personName,
-        to_email: email,                  // Maung သို့ Zia ၏ Email
-        cc_email: CC_EMAIL,               // CC: hlang@lkac.com.sg
-        sender_name: senderName,
+        to_email: email,                       // Assign ရရှိသူ၏ Email
+        cc_email: CC_EMAIL,                    // CC: hlang@lkac.com.sg
+        sender_name: reqName || currentUser.name,
         location: location,
-        description: desc
+        description: desc,
+        before_image_submitted_date: beforeDate, // 📅 Before Image တင်သည့်ရက်
+        before_image_url: beforeImageUrl || "N/A"
       };
 
-      // ⚠️ သင်၏ EmailJS SERVICE_ID နှင့် TEMPLATE_ID ကို ဒီနေရာတွင် အစားထိုးပါ
-      emailjs.send('service_94a1xtp', 'template_ik9p9kc', templateParams)
+      emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_ASSIGN_TEMPLATE_ID, templateParams, EMAILJS_PUBLIC_KEY)
         .then(function(response) {
-           console.log('SUCCESS!', response.status, response.text);
-           alert(`Maintenance request assigned to ${personName}. Auto-email sent successfully!`);
+           console.log('ASSIGN EMAIL SUCCESS!', response.status, response.text);
+           alert(`Maintenance task assigned to ${personName}. Notification email sent!`);
         }, function(error) {
-           console.log('FAILED...', error);
+           console.log('ASSIGN EMAIL FAILED...', error);
            alert('Email sending failed: ' + JSON.stringify(error));
         });
     }
 
-    function openUpdateModal(index) {
-      const req = maintenanceRequests[index];
-      if (!req) return;
-
-      document.getElementById('update-req-index').value = index;
-      document.getElementById('update-assign-person').value = req.assignEmail;
-      document.getElementById('update-status').value = req.status;
-      document.getElementById('req-after-img').value = '';
-
-      const previewContainer = document.getElementById('after-img-preview-container');
-      const previewImg = document.getElementById('update-after-preview');
-
-      if (req.afterImg) {
-        previewImg.src = req.afterImg;
-        previewContainer.classList.remove('hidden');
-      } else {
-        previewContainer.classList.add('hidden');
-      }
-
-      openModal('modal-update-request');
-    }
-
-    function removeAfterImage() {
-      const index = parseInt(document.getElementById('update-req-index').value);
-      if (index >= 0 && maintenanceRequests[index]) {
-        maintenanceRequests[index].afterImg = '';
-        maintenanceRequests[index].status = 'Pending';
-        localStorage.setItem('lkang_maintenance', JSON.stringify(maintenanceRequests));
-        renderMaintenanceTable();
-        
-        document.getElementById('after-img-preview-container').classList.add('hidden');
-        document.getElementById('update-status').value = 'Pending';
-        alert('After image removed! Status reverted to Pending.');
-      }
-    }
-
-    function saveMaintenanceUpdate(e) {
-      e.preventDefault();
-      const index = parseInt(document.getElementById('update-req-index').value);
-      const selectEl = document.getElementById('update-assign-person');
-      const assignEmail = selectEl.value;
-      const assignPerson = selectEl.options[selectEl.selectedIndex].getAttribute('data-name');
-      
-      let status = document.getElementById('update-status').value;
-      const fileInput = document.getElementById('req-after-img');
-
-      const target = maintenanceRequests[index];
-      if (!target) return;
-
-      target.assignPerson = assignPerson;
-      target.assignEmail = assignEmail;
-
-      if (fileInput.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function() {
-          target.afterImg = reader.result;
-          target.status = 'Resolved';
-
-          localStorage.setItem('lkang_maintenance', JSON.stringify(maintenanceRequests));
-          renderMaintenanceTable();
-          closeModal('modal-update-request');
-        };
-        reader.readAsDataURL(fileInput.files[0]);
-      } else {
-        target.status = status;
-        localStorage.setItem('lkang_maintenance', JSON.stringify(maintenanceRequests));
-        renderMaintenanceTable();
-        closeModal('modal-update-request');
-      }
-    }
-
-    function deleteMaintenanceRecord(index) {
-      if (confirm('Are you sure you want to delete this maintenance record?')) {
-        maintenanceRequests.splice(index, 1);
-        localStorage.setItem('lkang_maintenance', JSON.stringify(maintenanceRequests));
-        renderMaintenanceTable();
-      }
-    }
-
-    function renderMaintenanceTable() {
-      const tbody = document.getElementById('maintenance-table-body');
-      tbody.innerHTML = '';
-
-      maintenanceRequests.forEach((req, index) => {
-        let badgeClass = 'badge-pending';
-        if (req.status === 'In Progress') badgeClass = 'badge-progress';
-        if (req.status === 'Resolved') badgeClass = 'badge-resolved';
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><b>${req.assignPerson}</b><br><span style="font-size:0.75rem; color:#94a3b8;">${req.assignEmail}</span></td>
-          <td>${req.location}</td>
-          <td>${req.desc}</td>
-          <td><img src="${req.beforeImg}" class="img-preview" onclick="viewFullImage('${req.beforeImg}')" alt="Before"></td>
-          <td>${req.afterImg ? `<img src="${req.afterImg}" class="img-preview" onclick="viewFullImage('${req.afterImg}')" alt="After">` : '<span style="color:#64748b;">Not Uploaded</span>'}</td>
-          <td><span class="badge ${badgeClass}">${req.status}</span></td>
-          <td>
-            <button class="btn btn-secondary" style="padding:4px 8px; font-size:0.75rem;" onclick="sendNotificationEmail('${req.assignPerson}', '${req.assignEmail}', '${req.location}', '${req.desc}')">⚡ Resend Email</button>
-          </td>
-          <td style="display:flex; gap:6px; margin-top:8px;">
-            <button class="btn btn-warning" style="padding:4px 8px; font-size:0.75rem;" onclick="openUpdateModal(${index})">Edit / Update</button>
-            <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="deleteMaintenanceRecord(${index})">Delete</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    // --- CHECKLIST LOGIC ---
-    function submitChecklist(e) {
-      e.preventDefault();
-      const item = {
-        date: new Date().toLocaleDateString(),
-        inspector: currentUser.name,
-        block: document.getElementById('chk-block').value,
-        fire: document.getElementById('chk-fire').value,
-        clean: document.getElementById('chk-clean').value,
-        remarks: document.getElementById('chk-remarks').value
+    // ==========================================
+    // 📩 2. COMPLETION EMAIL FUNCTION
+    // ==========================================
+    function sendCompletionEmail(reqEmail, reqName, techName, location, desc, remarks, beforeDate, afterDate, afterImageUrl) {
+      const templateParams = {
+        to_email: reqEmail,                    // Original Requestor/Assignor ၏ Email
+        to_name: reqName,                      // Requestor အမည်
+        cc_email: CC_EMAIL,                    // CC: hlang@lkac.com.sg
+        technician_name: techName,             // ပြင်ဆင်ပြီးစီးခဲ့သူ (Assignee)
+        location: location,
+        description: desc,
+        resolution_notes: remarks || "Work completed successfully.",
+        before_image_submitted_date: beforeDate, // 📅 Request စတင်တင်ခဲ့သည့်ရက်
+        after_image_date: afterDate,           // 📅 After Image Upload တင်သည့်ရက်
+        after_image_url: afterImageUrl         // Upload တင်လိုက်သော ပုံ Link
       };
 
-      checklists.unshift(item);
-      localStorage.setItem('lkang_checklists', JSON.stringify(checklists));
-      renderChecklistTable();
-      closeModal('modal-new-checklist');
+      emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_COMPLETE_TEMPLATE_ID, templateParams, EMAILJS_PUBLIC_KEY)
+        .then(function(response) {
+           console.log('COMPLETION EMAIL SUCCESS!', response.status, response.text);
+           alert(`Work marked as completed! Completion notification sent back to ${reqName} (${reqEmail}) and CC'd.`);
+        }, function(error) {
+           console.log('COMPLETION EMAIL FAILED...', error);
+           alert('Completion email failed: ' + JSON.stringify(error));
+        });
     }
 
-    function renderChecklistTable() {
-      const tbody = document.getElementById('checklist-table-body');
-      tbody.innerHTML = '';
+    // ==========================================
+    // 🎯 EVENT HANDLERS
+    // ==========================================
 
-      checklists.forEach(c => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${c.date}</td>
-          <td>${c.inspector}</td>
-          <td>${c.block}</td>
-          <td>${c.fire}</td>
-          <td>${c.clean}</td>
-          <td>${c.remarks || '-'}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+    // Handle Assign Task
+    function handleAssignTask() {
+      const reqName = document.getElementById('reqName').value.trim();
+      const reqEmail = document.getElementById('reqEmail').value.trim();
+      const assigneeName = document.getElementById('assigneeName').value.trim();
+      const assigneeEmail = document.getElementById('assigneeEmail').value.trim();
+      const location = document.getElementById('location').value.trim();
+      const description = document.getElementById('description').value.trim();
+
+      if (!reqEmail || !assigneeName || !assigneeEmail || !location) {
+        alert("Please fill in required fields (Requestor Email, Assignee Name/Email, Location).");
+        return;
+      }
+
+      // Automatically capture Current Date & Time for Before Image Submitted Date
+      const beforeSubmittedDate = getCurrentFormattedDateTime();
+
+      // Simulated Upload for Before Image (သို့မဟုတ် မိမိ Cloud Upload URL ထည့်ပါ)
+      const beforeImageUrl = "https://via.placeholder.com/600x400.png?text=Before+Maintenance+Work";
+
+      // Record active task details in memory
+      currentTask = {
+        reqName: reqName || "Supervisor",
+        reqEmail: reqEmail,
+        assigneeName: assigneeName,
+        assigneeEmail: assigneeEmail,
+        location: location,
+        description: description,
+        beforeSubmittedDate: beforeSubmittedDate,
+        beforeImageUrl: beforeImageUrl
+      };
+
+      // Update UI Status
+      document.getElementById('activeStatus').innerText = `Assigned to ${assigneeName} on ${beforeSubmittedDate}`;
+
+      // Send Email to Assigned Person
+      sendNotificationEmail(
+        assigneeName, 
+        assigneeEmail, 
+        location, 
+        description, 
+        reqName, 
+        reqEmail, 
+        beforeSubmittedDate, 
+        beforeImageUrl
+      );
     }
 
-    // --- USER MANAGEMENT LOGIC ---
-    function addNewUser(e) {
-      e.preventDefault();
-      const name = document.getElementById('user-name-input').value;
-      const email = document.getElementById('user-email-input').value;
-      const role = document.getElementById('user-role-input').value;
+    // Handle Complete Work & Upload Image
+    function handleCompleteTask() {
+      if (!currentTask) {
+        alert("No active task available to complete. Please assign a task first.");
+        return;
+      }
 
-      users.push({ name, email, password: '123', role });
-      localStorage.setItem('lkang_users', JSON.stringify(users));
-      renderUsersTable();
-      closeModal('modal-new-user');
-    }
+      const fileInput = document.getElementById('afterImageInput');
+      const remarks = document.getElementById('completionRemarks').value.trim();
 
-    function renderUsersTable() {
-      const tbody = document.getElementById('users-table-body');
-      tbody.innerHTML = '';
+      if (fileInput.files.length === 0) {
+        alert("Please upload an After Work Image before submitting.");
+        return;
+      }
 
-      users.forEach(u => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${u.name}</td>
-          <td>${u.email}</td>
-          <td><b>${u.role}</b></td>
-        `;
-        tbody.appendChild(tr);
-      });
+      // Automatically capture Current Date & Time for After Image Date
+      const afterImageDate = getCurrentFormattedDateTime();
+
+      alert("Uploading image and sending completion email...");
+
+      // Simulated Upload for After Image
+      const uploadedImageUrl = "https://via.placeholder.com/600x400.png?text=L+K+Ang+Maintenance+Completed";
+
+      // Send Completion Email to Original Requestor
+      sendCompletionEmail(
+        currentTask.reqEmail,
+        currentTask.reqName,
+        currentTask.assigneeName,
+        currentTask.location,
+        currentTask.description,
+        remarks,
+        currentTask.beforeSubmittedDate, // 📅 Before Date
+        afterImageDate,                  // 📅 After Date
+        uploadedImageUrl
+      );
+
+      // Reset Task Status
+      document.getElementById('activeStatus').innerText = `Task Completed on ${afterImageDate}. Email Sent!`;
+      currentTask = null;
     }
   </script>
+
 </body>
 </html>
