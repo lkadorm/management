@@ -265,13 +265,20 @@
       background-color: #161e2e;
     }
 
-    /* Maintenance Images */
+    /* Resident & Maintenance Images */
     .img-preview {
-      width: 60px;
-      height: 60px;
+      width: 50px;
+      height: 50px;
       object-fit: cover;
       border-radius: 6px;
       border: 1px solid #334155;
+      cursor: pointer;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .img-preview:hover {
+      transform: scale(1.08);
+      border-color: #3b82f6;
     }
 
     .badge {
@@ -290,7 +297,7 @@
     .modal {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.75);
+      background: rgba(0, 0, 0, 0.8);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -306,6 +313,37 @@
       max-width: 600px;
       max-height: 90vh;
       overflow-y: auto;
+    }
+
+    /* Image Viewer Modal Specifics */
+    .image-viewer-content {
+      background: transparent;
+      border: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    .full-image {
+      max-width: 85vw;
+      max-height: 85vh;
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      border: 2px solid #334155;
+    }
+
+    .close-img-btn {
+      position: absolute;
+      top: -40px;
+      right: 0;
+      background: #ef4444;
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -404,6 +442,7 @@
             <table id="resident-table">
               <thead>
                 <tr>
+                  <th>Photo</th>
                   <th>Resident ID</th>
                   <th>Name</th>
                   <th>WP No.</th>
@@ -514,6 +553,11 @@
         <!-- Hidden index for edit mode -->
         <input type="hidden" id="res-edit-index" value="-1">
         
+        <div class="form-group">
+          <label>Resident Photo (Upload Image)</label>
+          <input type="file" id="res-photo-input" class="form-input" accept="image/*">
+        </div>
+
         <div class="form-grid-2">
           <div class="form-group">
             <label>Resident ID</label>
@@ -568,6 +612,14 @@
           <button type="button" class="btn btn-secondary" onclick="closeModal('modal-resident')">Cancel</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal: FULL IMAGE VIEWER (CLICK TO ZOOM) -->
+  <div id="modal-image-viewer" class="modal hidden" onclick="closeModal('modal-image-viewer')">
+    <div class="image-viewer-content" onclick="event.stopPropagation()">
+      <button class="close-img-btn" onclick="closeModal('modal-image-viewer')">✕ Close</button>
+      <img id="full-size-image" src="" class="full-image" alt="Enlarged Image">
     </div>
   </div>
 
@@ -695,6 +747,7 @@
 
     let residents = JSON.parse(localStorage.getItem('lkang_residents')) || [
       {
+        photo: "",
         id: "RES-1001",
         name: "Aung Aung",
         wpNo: "WP-8876123",
@@ -793,6 +846,13 @@
     function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
+    // FULL IMAGE VIEWER FUNCTION
+    function viewFullImage(imgSrc) {
+      if (!imgSrc) return;
+      document.getElementById('full-size-image').src = imgSrc;
+      openModal('modal-image-viewer');
+    }
+
     // --- RESIDENT MANAGEMENT LOGIC ---
     function openNewResidentModal() {
       document.getElementById('modal-resident-title').innerText = "Add New Resident Record";
@@ -800,6 +860,7 @@
       document.getElementById('res-edit-index').value = "-1";
       
       // Reset form fields
+      document.getElementById('res-photo-input').value = '';
       document.getElementById('res-id').value = '';
       document.getElementById('res-name').value = '';
       document.getElementById('res-wp').value = '';
@@ -824,6 +885,7 @@
       document.getElementById('res-edit-index').value = index;
 
       // Populate form with existing data
+      document.getElementById('res-photo-input').value = '';
       document.getElementById('res-id').value = res.id;
       document.getElementById('res-name').value = res.name;
       document.getElementById('res-wp').value = res.wpNo;
@@ -842,32 +904,45 @@
     function saveResidentForm(e) {
       e.preventDefault();
       const editIndex = parseInt(document.getElementById('res-edit-index').value);
+      const photoInput = document.getElementById('res-photo-input');
 
-      const resData = {
-        id: document.getElementById('res-id').value,
-        name: document.getElementById('res-name').value,
-        wpNo: document.getElementById('res-wp').value,
-        wpExpiry: document.getElementById('res-wp-expiry').value,
-        nationality: document.getElementById('res-nationality').value,
-        company: document.getElementById('res-company').value,
-        bedNo: document.getElementById('res-bed').value,
-        cardNo: document.getElementById('res-card').value,
-        foodOrder: document.getElementById('res-food').value,
-        checkIn: document.getElementById('res-checkin').value,
-        checkOut: document.getElementById('res-checkout').value || '-'
+      const processSave = (photoBase64) => {
+        const resData = {
+          photo: photoBase64,
+          id: document.getElementById('res-id').value,
+          name: document.getElementById('res-name').value,
+          wpNo: document.getElementById('res-wp').value,
+          wpExpiry: document.getElementById('res-wp-expiry').value,
+          nationality: document.getElementById('res-nationality').value,
+          company: document.getElementById('res-company').value,
+          bedNo: document.getElementById('res-bed').value,
+          cardNo: document.getElementById('res-card').value,
+          foodOrder: document.getElementById('res-food').value,
+          checkIn: document.getElementById('res-checkin').value,
+          checkOut: document.getElementById('res-checkout').value || '-'
+        };
+
+        if (editIndex >= 0) {
+          residents[editIndex] = resData;
+        } else {
+          residents.unshift(resData);
+        }
+
+        localStorage.setItem('lkang_residents', JSON.stringify(residents));
+        renderResidentsTable();
+        closeModal('modal-resident');
       };
 
-      if (editIndex >= 0) {
-        // UPDATE existing record
-        residents[editIndex] = resData;
+      if (photoInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function() {
+          processSave(reader.result);
+        };
+        reader.readAsDataURL(photoInput.files[0]);
       } else {
-        // ADD new record
-        residents.unshift(resData);
+        const existingPhoto = editIndex >= 0 ? residents[editIndex].photo : "";
+        processSave(existingPhoto);
       }
-
-      localStorage.setItem('lkang_residents', JSON.stringify(residents));
-      renderResidentsTable();
-      closeModal('modal-resident');
     }
 
     function deleteResident(index) {
@@ -884,7 +959,13 @@
 
       residents.forEach((res, index) => {
         const tr = document.createElement('tr');
+        
+        const photoHtml = res.photo 
+          ? `<img src="${res.photo}" class="img-preview" onclick="viewFullImage('${res.photo}')" alt="Resident">` 
+          : `<span style="color:#64748b; font-size:0.75rem;">No Photo</span>`;
+
         tr.innerHTML = `
+          <td>${photoHtml}</td>
           <td><b>${res.id}</b></td>
           <td>${res.name}</td>
           <td>${res.wpNo}</td>
@@ -896,7 +977,7 @@
           <td>${res.foodOrder}</td>
           <td>${res.checkIn}</td>
           <td>${res.checkOut}</td>
-          <td style="display:flex; gap:6px;">
+          <td style="display:flex; gap:6px; margin-top:8px;">
             <button class="btn btn-warning" style="padding:4px 8px; font-size:0.75rem;" onclick="openEditResidentModal(${index})">Edit</button>
             <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="deleteResident(${index})">Delete</button>
           </td>
@@ -1010,8 +1091,8 @@
           <td><b>${req.id}</b></td>
           <td>${req.location}</td>
           <td>${req.desc}</td>
-          <td><img src="${req.beforeImg}" class="img-preview" alt="Before"></td>
-          <td>${req.afterImg ? `<img src="${req.afterImg}" class="img-preview" alt="After">` : '<span style="color:#64748b;">Not Uploaded</span>'}</td>
+          <td><img src="${req.beforeImg}" class="img-preview" onclick="viewFullImage('${req.beforeImg}')" alt="Before"></td>
+          <td>${req.afterImg ? `<img src="${req.afterImg}" class="img-preview" onclick="viewFullImage('${req.afterImg}')" alt="After">` : '<span style="color:#64748b;">Not Uploaded</span>'}</td>
           <td><span class="badge ${badgeClass}">${req.status}</span></td>
           <td>
             <button class="btn btn-secondary" style="padding:4px 8px; font-size:0.75rem;" onclick="openUpdateModal('${req.id}')">Update</button>
