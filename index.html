@@ -631,13 +631,13 @@
       <h2 style="margin-bottom:16px;">New Maintenance Request</h2>
       <form onsubmit="submitMaintenanceRequest(event)">
         <div class="form-group">
-          <label>Assign Person Name</label>
-          <select id="req-assign-person" class="form-select" required>
-            <option value="">-- Select Assign Person --</option>
-            <option value="maung@lkangco.sg" data-name="Maung">Maung (maung@lkangco.sg)</option>
-            <option value="lkadorm@gmail.com" data-name="Zia">Zia (lkadorm@gmail.com)</option>
-          </select>
-        </div>
+  <label>Assign Person Name</label>
+  <select id="req-assign-person" class="form-select" required>
+    <option value="">-- Select Assign Person --</option>
+    <option value="maung@lkangco.sg" data-name="Maung">Maung (maung@lkangco.sg)</option>
+    <option value="lkadorm@gmail.com" data-name="Zia">Zia (lkadorm@gmail.com)</option>
+  </select>
+</div>
         <div class="form-group">
           <label>Location / Room</label>
           <select id="req-location" class="form-select" required>
@@ -1046,7 +1046,7 @@
     function submitMaintenanceRequest(e) {
       e.preventDefault();
       const selectEl = document.getElementById('req-assign-person');
-      const assignEmail = selectEl.value; 
+      const assignEmail = selectEl.value; // Get Email directly
       const assignPerson = selectEl.options[selectEl.selectedIndex].getAttribute('data-name'); 
       
       const location = document.getElementById('req-location').value;
