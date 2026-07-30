@@ -845,29 +845,41 @@
     }
 
     function sendCompletionEmail(req) {
-  // ၁။ စစချင်း Request တင်ခဲ့သူ (Requestor)
-  const requestorName = req.createdByName || "Requestor";
-  const requestorEmail = req.createdByEmail || req.assignEmail;
+  // ၁။ Variable တန်ဖိုးများ ထုတ်ယူခြင်း (Value မရှိပါက Default စာသားပြရန်)
+  const requestorName = req.createdByName || req.requestorName || "Requestor";
+  const technicianName = (typeof currentUser !== 'undefined' && currentUser.name) 
+                          ? currentUser.name 
+                          : (req.assignPerson || "Technician");
+  
+  // Base64 ပုံ သို့မဟုတ် Image URL
+  const imageUrl = req.afterImg || req.afterImageUrl || "";
 
-  // ၂။ အလုပ်ဝင်ပြင်ပြီး After Image တင်ပေးသူ (Technician / Assignee)
-  const technicianName = currentUser ? currentUser.name : req.assignPerson;
+  // ⚠️ Console မှာ Variable တွေမှာ Data ပါရဲ့လား စစ်ဆေးရန်
+  console.log("--- EmailJS Payload Check ---");
+  console.log("Requestor Name:", requestorName);
+  console.log("Technician Name:", technicianName);
+  console.log("Image Length/URL:", imageUrl ? imageUrl.substring(0, 50) + "..." : "EMPTY!");
 
-  // ၃။ EmailJS သို့ Parameter များ အမှန်အတိုင်း ပို့ပေးခြင်း
-  emailjs.send('service_94a1xtp', 'template_ik9p9kc', {
-    to_name: requestorName,          // {{to_name}} သို့မဟုတ် {{requestor_name}}
-    requestor_name: requestorName,   // {{requestor_name}}
-    to_email: requestorEmail,        // လက်ခံမည့် Email
-    cc_email: CC_EMAIL,
-    technician_name: technicianName, // {{technician_name}}
-    location: req.location,          // {{location}}
-    description: req.desc,           // {{description}}
-    after_image_url: req.afterImg    // {{after_image_url}}
-  }).then(() => {
-    alert(`Completion email sent to ${requestorName}`);
-  }).catch((error) => {
-    console.error("EmailJS Error:", error);
-    alert("Failed to send email. Please check image size or EmailJS settings.");
-  });
+  // ၂။ EmailJS သို့ ပို့မည့် Object (Key Name များကို Template နှင့် တစ်ထပ်တည်းတူအောင် ရေးထားသည်)
+  const templateParams = {
+    requestor_name: requestorName,     // {{requestor_name}} အတွက်
+    technician_name: technicianName,   // {{technician_name}} အတွက်
+    location: req.location || "N/A",  // {{location}} အတွက်
+    description: req.desc || req.resolution || "Completed", // {{description}} အတွက်
+    after_image_url: imageUrl,         // {{after_image_url}} အတွက်
+    to_email: req.createdByEmail || req.assignEmail || "maung@lkangco.sg"
+  };
+
+  // ၃။ ပို့ဆောင်ခြင်း
+  emailjs.send('service_94a1xtp', 'template_h6xz4dc', templateParams)
+    .then((response) => {
+      console.log('SUCCESS!', response.status, response.text);
+      alert("Completion email sent successfully!");
+    })
+    .catch((error) => {
+      console.error('FAILED...', error);
+      alert("Email sending failed. Check console for details.");
+    });
 }
 
     function openUpdateModal(key) {
