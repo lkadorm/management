@@ -848,7 +848,7 @@
       const recipientEmail = req.createdByEmail || req.assignEmail;
       const recipientName = req.createdByName || "Assigner";
 
-      emailjs.send('service_94a1xtp', 'template_ik9p9kc', {
+      emailjs.send('service_94a1xtp', 'template_h6xz4dc', {
         to_name: recipientName, to_email: recipientEmail, cc_email: CC_EMAIL,
         sender_name: currentUser ? currentUser.name : req.assignPerson,
         location: req.location, description: `COMPLETED / RESOLVED: ${req.desc}`
