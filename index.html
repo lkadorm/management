@@ -858,37 +858,38 @@
     }
 
     function sendCompletionEmail(req) {
-  // ၁။ နာမည်များ ထုတ်ယူခြင်း
+  // ၁။ နာမည်များနှင့် စာသားများ ထုတ်ယူခြင်း
   const requestorName = req.createdByName || req.requestorName || "Requestor";
   const technicianName = req.completedByName || (typeof currentUser !== 'undefined' && currentUser ? currentUser.name : req.assignPerson) || "Technician";
 
-  // ၂။ ရက်စွဲများ ထုတ်ယူခြင်း
   const todayStr = new Date().toLocaleDateString('en-GB'); 
   const beforeDate = req.createdDate || "N/A";
   const afterDate = req.completedDate || todayStr;
 
-  // ⚠️ 413 (Payload Too Large) မဖြစ်စေရန် EmailJS သို့ ပုံ (Base64) များကို လုံးဝ မပို့ဘဲ စာသားနှင့် ရက်စွဲများသာ ပို့မည်
-  const templateParams = {
-    requestor_name: requestorName,
-    technician_name: technicianName,
-    location: req.location || "N/A",
-    description: req.desc || "Completed / Resolved",
-    before_date: beforeDate,
-    after_date: afterDate,
-    to_email: req.createdByEmail || req.assignEmail || "maung@lkangco.sg"
+  // ⚠️ 413 Error မတက်စေရန်: ပုံ (Base64 String) များ လုံးဝ မပါဝင်ဘဲ
+  // စာသား သက်သက်ကိုသာ Object အသစ်တစ်ခု ပြုလုပ်၍ ပို့မည်
+  const safePayload = {
+    requestor_name: String(requestorName),
+    technician_name: String(technicianName),
+    location: String(req.location || "N/A"),
+    description: String(req.desc || req.resolution || "Completed / Resolved"),
+    before_date: String(beforeDate),
+    after_date: String(afterDate),
+    to_email: String(req.createdByEmail || req.assignEmail || "maung@lkangco.sg")
   };
 
-  console.log("=== Sending Lightweight Payload (No Images) ===", templateParams);
+  console.log("=== Clean Payload Sending ===", safePayload);
 
-  // EmailJS ပို့ဆောင်ခြင်း (Template ID ကို မိမိ၏ တကယ့် ID ပြောင်းပါ)
-  emailjs.send('service_94a1xtp', 'template_h6xz4dc', templateParams)
+  // EmailJS သို့ ပို့ဆောင်ခြင်း
+  // (မှတ်ချက်- 'template_ik9p9kc' နေရာတွင် မိမိ EmailJS Dashboard ထဲမှ Template ID အမှန် ထည့်ပေးပါ)
+  emailjs.send('service_94a1xtp', 'template_h6xz4dc', safePayload)
     .then((response) => {
-      console.log('SUCCESS!', response.status, response.text);
-      alert(`Completion email sent successfully to ${requestorName}!`);
+      console.log('EMAILJS SUCCESS!', response.status, response.text);
+      alert(`Completion email sent successfully!`);
     })
     .catch((error) => {
-      console.error('FAILED...', error);
-      alert("Failed to send email. Check browser console for details.");
+      console.error('EMAILJS FAILED...', error);
+      alert("Failed to send email. Check console.");
     });
 }
 
