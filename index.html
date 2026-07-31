@@ -11,6 +11,9 @@
   <!-- EmailJS SDK Integration -->
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
+  <!-- html2pdf SDK for Direct PDF Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
   <!-- Firebase SDKs (v9 Compat Mode) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -92,27 +95,23 @@
     .full-image { max-width: 85vw; max-height: 85vh; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); border: 2px solid #334155; }
     .close-img-btn { position: absolute; top: -40px; right: 0; background: #ef4444; color: white; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
-    /* Custom Checkbox Styling */
     .row-checkbox, #select-all-maint { cursor: pointer; width: 16px; height: 16px; accent-color: #16a34a; }
 
-    /* --- PRINT / PDF STYLING --- */
-    @media print {
-      body { background-color: #ffffff !important; color: #000000 !important; }
-      .sidebar, .navbar, .header-actions, .modal, .no-print { display: none !important; }
-      #app-container { display: block !important; }
-      .main-wrapper { margin: 0 !important; padding: 0 !important; }
-      .content-container { padding: 0 !important; }
-      .table-container { border: none !important; overflow: visible !important; }
-      table { border-collapse: collapse !important; width: 100% !important; font-size: 10pt !important; color: #000000 !important; }
-      th, td { border: 1px solid #cccccc !important; padding: 8px !important; color: #000000 !important; white-space: normal !important; }
-      th { background-color: #f1f5f9 !important; color: #000000 !important; }
-      .img-preview { width: 60px !important; height: 60px !important; border: 1px solid #999 !important; }
-      .badge { border: 1px solid #000 !important; color: #000 !important; background: transparent !important; }
-      /* Hide Unselected Rows during Print */
-      tr.unselected-for-print { display: none !important; }
-      /* Hide action & checkbox columns during print */
-      .col-hide-print { display: none !important; }
-    }
+    /* --- HIDDEN PDF TEMPLATE STYLES --- */
+    #pdf-report-template { display: none; background: #ffffff; color: #000000; padding: 25px; width: 790px; font-family: Arial, sans-serif; }
+    .pdf-header { text-align: center; border-bottom: 2px solid #2563eb; padding-bottom: 12px; margin-bottom: 20px; }
+    .pdf-header h1 { font-size: 24px; color: #1e3a8a; text-transform: uppercase; margin-bottom: 4px; }
+    .pdf-header p { font-size: 12px; color: #64748b; }
+    
+    .pdf-card { border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin-bottom: 20px; page-break-inside: avoid; background-color: #f8fafc; }
+    .pdf-card-title { font-size: 16px; font-weight: bold; color: #0f172a; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; display: flex; justify-content: space-between; }
+    .pdf-meta { font-size: 12px; color: #334155; margin-bottom: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    
+    .pdf-img-container { display: flex; gap: 15px; justify-content: space-between; margin-top: 10px; }
+    .pdf-img-box { flex: 1; text-align: center; background: #ffffff; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px; }
+    .pdf-img-box h4 { font-size: 13px; margin-bottom: 6px; color: #475569; }
+    .pdf-img-box img { width: 100%; height: 210px; object-fit: cover; border-radius: 4px; border: 1px solid #cbd5e1; }
+    .pdf-img-box .no-img { height: 210px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; color: #94a3b8; font-size: 12px; border-radius: 4px; }
   </style>
 </head>
 <body>
@@ -234,7 +233,7 @@
           <div class="page-header">
             <h1 class="page-title">Maintenance Requests</h1>
             <div class="header-actions">
-              <!-- Export Selected to PDF Button -->
+              <!-- Export Direct PDF Download Button -->
               <button class="btn btn-green" onclick="exportMaintenancePDF()">📄 Export Selected PDF</button>
               <button class="btn btn-green" onclick="openModal('modal-new-request')">+ New Request</button>
             </div>
@@ -243,7 +242,7 @@
             <table>
               <thead>
                 <tr>
-                  <th class="col-hide-print" style="text-align:center; width: 40px;">
+                  <th style="text-align:center; width: 40px;">
                     <input type="checkbox" id="select-all-maint" onchange="toggleSelectAllMaintenance(this)">
                   </th>
                   <th>Assign Person</th>
@@ -253,8 +252,8 @@
                   <th>Before Image</th>
                   <th>After Image</th>
                   <th>Status</th>
-                  <th class="col-hide-print">Notify</th>
-                  <th class="col-hide-print">Actions</th>
+                  <th>Notify</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody id="maintenance-table-body"></tbody>
@@ -308,6 +307,15 @@
 
       </div>
     </div>
+  </div>
+
+  <!-- HIDDEN CONTAINER FOR GENERATING PDF REPORT -->
+  <div id="pdf-report-template">
+    <div class="pdf-header">
+      <h1>Maintenance Report</h1>
+      <p id="pdf-generated-date">Generated on: -</p>
+    </div>
+    <div id="pdf-cards-container"></div>
   </div>
 
   <!-- MODALS -->
@@ -840,7 +848,6 @@
       XLSX.writeFile(workbook, "LK_Ang_Dormitory_Residents.xlsx");
     }
 
-    // --- EXCEL IMPORT LOGIC ---
     function handleExcelImport(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -1073,7 +1080,7 @@
       }
     }
 
-    // --- CHECKBOX & PDF EXPORT LOGIC FOR MAINTENANCE ---
+    // --- CHECKBOX & DIRECT PDF EXPORT LOGIC FOR MAINTENANCE ---
     function toggleSelectAllMaintenance(master) {
       const checkboxes = document.querySelectorAll('.row-checkbox');
       checkboxes.forEach(cb => cb.checked = master.checked);
@@ -1081,30 +1088,78 @@
 
     function exportMaintenancePDF() {
       const checkboxes = document.querySelectorAll('.row-checkbox');
-      const selectedRows = Array.from(checkboxes).filter(cb => cb.checked);
+      const selectedKeys = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
 
-      if (selectedRows.length === 0) {
-        alert("PDF ထုတ်ယူလိုသော Request များကို Checkbox တွင် အနည်းဆုံး ၁ ခု ရွေးချယ်ပေးပါ!");
+      if (selectedKeys.length === 0) {
+        alert("PDF ထုတ်ယူလိုသော Maintenance Request များကို Checkbox တွင် အနည်းဆုံး ၁ ခု ရွေးချယ်ပေးပါ!");
         return;
       }
 
-      // Hide unselected rows temporarily for print mode
-      checkboxes.forEach(cb => {
-        const tr = cb.closest('tr');
-        if (!cb.checked) {
-          tr.classList.add('unselected-for-print');
-        } else {
-          tr.classList.remove('unselected-for-print');
-        }
+      const cardsContainer = document.getElementById('pdf-cards-container');
+      cardsContainer.innerHTML = ''; // Reset container
+
+      document.getElementById('pdf-generated-date').innerText = `Generated on: ${new Date().toLocaleString()}`;
+
+      // Build comparative side-by-side view for selected items
+      selectedKeys.forEach(key => {
+        const req = maintenanceRequests[key];
+        if (!req) return;
+
+        const card = document.createElement('div');
+        card.className = 'pdf-card';
+
+        const beforeImgHtml = req.beforeImg 
+          ? `<img src="${req.beforeImg}">` 
+          : `<div class="no-img">No Before Image</div>`;
+
+        const afterImgHtml = req.afterImg 
+          ? `<img src="${req.afterImg}">` 
+          : `<div class="no-img">Image Not Uploaded Yet</div>`;
+
+        card.innerHTML = `
+          <div class="pdf-card-title">
+            <span>📍 Location: ${req.location}</span>
+            <span style="font-size:12px; font-weight:normal; color:#2563eb;">Status: ${req.status}</span>
+          </div>
+          <div class="pdf-meta">
+            <div><b>Assigned To:</b> ${req.assignPerson} (${req.assignEmail})</div>
+            <div><b>Created By:</b> ${req.createdByName || '-'} (${req.createdDate || '-'})</div>
+            <div style="grid-column: span 2;"><b>Description:</b> ${req.desc}</div>
+            ${req.completedDate ? `<div style="grid-column: span 2; color:#16a34a;"><b>Completed On:</b> ${req.completedDate} by ${req.completedByName || '-'}</div>` : ''}
+          </div>
+          <div class="pdf-img-container">
+            <div class="pdf-img-box">
+              <h4>📷 Before Maintenance (${req.createdDate || 'N/A'})</h4>
+              ${beforeImgHtml}
+            </div>
+            <div class="pdf-img-box">
+              <h4>✅ After Maintenance (${req.completedDate || 'Pending'})</h4>
+              ${afterImgHtml}
+            </div>
+          </div>
+        `;
+        cardsContainer.appendChild(card);
       });
 
-      // Open Print Dialog (Save as PDF)
-      window.print();
+      // HTML2PDF Configurations for Direct Download
+      const element = document.getElementById('pdf-report-template');
+      element.style.display = 'block'; // Make visible temporarily for capturing
 
-      // Reset visibility after print window closes
-      checkboxes.forEach(cb => {
-        const tr = cb.closest('tr');
-        tr.classList.remove('unselected-for-print');
+      const opt = {
+        margin:       10,
+        filename:     `Maintenance_Report_${new Date().toISOString().slice(0,10)}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, logging: false },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      // Generate and Download PDF automatically
+      html2pdf().set(opt).from(element).save().then(() => {
+        element.style.display = 'none'; // Hide again after generating
+      }).catch(err => {
+        console.error("PDF Export Error:", err);
+        element.style.display = 'none';
+        alert("PDF ထုတ်ရာတွင် အမှားအယွင်းရှိနေပါသည်။");
       });
     }
 
@@ -1113,7 +1168,6 @@
       if (!tbody) return;
       tbody.innerHTML = '';
 
-      // Reset master checkbox
       const masterCb = document.getElementById('select-all-maint');
       if (masterCb) masterCb.checked = false;
 
@@ -1135,7 +1189,7 @@
         tr.setAttribute('data-key', key);
 
         tr.innerHTML = `
-          <td class="col-hide-print" style="text-align:center;">
+          <td style="text-align:center;">
             <input type="checkbox" class="row-checkbox" value="${key}">
           </td>
           <td><b>${req.assignPerson}</b><br><span style="font-size:0.75rem; color:#94a3b8;">${req.assignEmail}</span></td>
@@ -1155,10 +1209,10 @@
           </td>
 
           <td><span class="badge ${badgeClass}">${req.status}</span></td>
-          <td class="col-hide-print">
+          <td>
             <button class="btn btn-secondary" style="padding:4px 8px; font-size:0.75rem;" onclick="sendNotificationEmail('${req.assignPerson}', '${req.assignEmail}', '${req.location}', '${req.desc}')">⚡ Resend Email</button>
           </td>
-          <td class="col-hide-print" style="display:flex; gap:6px;">
+          <td style="display:flex; gap:6px;">
             <button class="btn btn-warning" style="padding:4px 8px; font-size:0.75rem;" onclick="openUpdateModal('${key}')">Edit / Update</button>
             <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="deleteMaintenanceRecord('${key}')">Delete</button>
           </td>
