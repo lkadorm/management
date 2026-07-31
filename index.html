@@ -1101,7 +1101,7 @@
       const selectedKeys = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
 
       if (selectedKeys.length === 0) {
-        alert("PDF ထုတ်ယူလိုသော Maintenance Request များကို Checkbox တွင် အနည်းဆုံး ၁ ခု ရွေးချယ်ပေးပါ!");
+        alert("Please select at least 1 Maintenance Request in the checkbox for which you want to export a PDF.");
         return;
       }
 
