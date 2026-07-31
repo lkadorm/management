@@ -5,10 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>L K Ang Dormitory Management System (Real-time)</title>
 
-  <!-- SheetJS Library for Excel Export -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
-  <!-- SheetJS Library (Excel ဖတ်ရန်) -->
+  <!-- SheetJS Library for Excel Export & Import -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <!-- EmailJS SDK Integration -->
@@ -46,7 +43,7 @@
     .btn { padding: 9px 16px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; font-size: 0.875rem; transition: background-color 0.2s; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
     .btn-primary { background-color: #2563eb; color: #fff; } .btn-primary:hover { background-color: #1d4ed8; }
     .btn-green { background-color: #16a34a; color: #fff; } .btn-green:hover { background-color: #15803d; }
-    .btn-excel { background-color: #10b981; color: #fff; } .btn-excel:hover { background-color: #059669; }
+    .btn-excel { background-color: #16a34a; color: #fff; } .btn-excel:hover { background-color: #15803d; }
     .btn-secondary { background-color: #334155; color: #fff; } .btn-secondary:hover { background-color: #475569; }
     .btn-warning { background-color: #d97706; color: #fff; } .btn-warning:hover { background-color: #b45309; }
     .btn-danger { background-color: #dc2626; color: #fff; } .btn-danger:hover { background-color: #b91c1c; }
@@ -72,7 +69,7 @@
     .content-container { padding: 32px; flex: 1; }
     .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
     .page-title { font-size: 1.5rem; font-weight: 700; }
-    .header-actions { display: flex; gap: 10px; }
+    .header-actions { display: flex; gap: 10px; align-items: center; }
 
     /* --- TABLES --- */
     .table-container { width: 100%; overflow-x: auto; border-radius: 8px; border: 1px solid #1e293b; }
@@ -175,13 +172,18 @@
         <div id="tab-residents">
           <div class="page-header">
             <h1 class="page-title">Resident Records</h1>
+            
+            <!-- BUTTON HEADER (3 Green Buttons Alignment) -->
             <div class="header-actions">
               <button class="btn btn-green" onclick="openNewResidentModal()">+ New Resident</button>
+              
               <input type="file" id="excel-file-input" accept=".xlsx, .xls" style="display: none;" onchange="handleExcelImport(event)" />
-              <button class="btn btn-success" onclick="document.getElementById('excel-file-input').click()">📁 Import Excel</button>
-              <button class="btn btn-excel" onclick="exportResidentsToExcel()">📊 Export to Excel</button>
+              <button class="btn btn-green" onclick="document.getElementById('excel-file-input').click()">📁 Import Excel</button>
+              
+              <button class="btn btn-green" onclick="exportResidentsToExcel()">📊 Export to Excel</button>
             </div>
           </div>
+          
           <div class="table-container">
             <table>
               <thead>
@@ -513,18 +515,16 @@
 
   <!-- JAVASCRIPT WITH FIREBASE INTEGRATION -->
   <script>
-    const CC_EMAIL = "zayarmm88@gmail.com";
-
-    // 1. FIREBASE CONFIGURATION (ဒီနေရာတွင် အဆင့် ၂ မှ ကူးလာသော မိမိ၏ Config ဖြင့် အစားထိုးပါ)
+    // 1. FIREBASE CONFIGURATION
     const firebaseConfig = {
-  apiKey: "AIzaSyDCaQSp7pW3ooVmFmuBhKHxejQbAm21els",
-  authDomain: "lkang-dorm-system.firebaseapp.com",
-  databaseURL: "https://lkang-dorm-system-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "lkang-dorm-system",
-  storageBucket: "lkang-dorm-system.firebasestorage.app",
-  messagingSenderId: "800307565045",
-  appId: "1:800307565045:web:6940821bc0841a3172d0bc"
-};
+      apiKey: "AIzaSyDCaQSp7pW3ooVmFmuBhKHxejQbAm21els",
+      authDomain: "lkang-dorm-system.firebaseapp.com",
+      databaseURL: "https://lkang-dorm-system-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "lkang-dorm-system",
+      storageBucket: "lkang-dorm-system.firebasestorage.app",
+      messagingSenderId: "800307565045",
+      appId: "1:800307565045:web:6940821bc0841a3172d0bc"
+    };
 
     // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
@@ -542,7 +542,6 @@
       // 1. Sync Users
       db.ref('users').on('value', (snapshot) => {
         users = snapshot.val() || {};
-        // Default Admin ထည့်သွင်းခြင်း (မရှိသေးပါက)
         if (Object.keys(users).length === 0) {
           db.ref('users').push({ name: "Default Admin", email: "admin@lkang.com", password: "admin123", role: "Admin" });
         }
@@ -645,7 +644,9 @@
       document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
 
       document.getElementById(`tab-${tab}`).classList.remove('hidden');
-      event.currentTarget.classList.add('active');
+      if (event && event.currentTarget) {
+        event.currentTarget.classList.add('active');
+      }
     }
 
     // --- MODALS ---
@@ -658,7 +659,7 @@
       openModal('modal-image-viewer');
     }
 
-    // --- RESIDENTS ---
+    // --- RESIDENTS LOGIC ---
     function openNewResidentModal() {
       document.getElementById('modal-resident-title').innerText = "Add New Resident Record";
       document.getElementById('res-submit-btn').innerText = "Save Resident";
@@ -689,17 +690,17 @@
       document.getElementById('res-edit-key').value = key;
 
       document.getElementById('res-photo-input').value = '';
-      document.getElementById('res-id').value = res.id;
-      document.getElementById('res-name').value = res.name;
-      document.getElementById('res-wp').value = res.wpNo;
-      document.getElementById('res-wp-expiry').value = res.wpExpiry;
-      document.getElementById('res-nationality').value = res.nationality;
-      document.getElementById('res-company').value = res.company;
-      document.getElementById('res-bed').value = res.bedNo;
-      document.getElementById('res-card').value = res.cardNo;
-      document.getElementById('res-food').value = res.foodOrder;
-      document.getElementById('res-checkin').value = res.checkIn;
-      document.getElementById('res-checkout').value = res.checkOut === '-' ? '' : res.checkOut;
+      document.getElementById('res-id').value = res.id || '';
+      document.getElementById('res-name').value = res.name || '';
+      document.getElementById('res-wp').value = res.wpNo || '';
+      document.getElementById('res-wp-expiry').value = res.wpExpiry || '';
+      document.getElementById('res-nationality').value = res.nationality || '';
+      document.getElementById('res-company').value = res.company || '';
+      document.getElementById('res-bed').value = res.bedNo || '';
+      document.getElementById('res-card').value = res.cardNo || '';
+      document.getElementById('res-food').value = res.foodOrder || 'Yes';
+      document.getElementById('res-checkin').value = res.checkIn || '';
+      document.getElementById('res-checkout').value = (res.checkOut === '-' ? '' : res.checkOut) || '';
 
       openModal('modal-resident');
     }
@@ -739,7 +740,7 @@
         reader.onload = function() { processSave(reader.result); };
         reader.readAsDataURL(photoInput.files[0]);
       } else {
-        const existingPhoto = editKey ? residents[editKey].photo : "";
+        const existingPhoto = editKey && residents[editKey] ? residents[editKey].photo : "";
         processSave(existingPhoto);
       }
     }
@@ -764,18 +765,18 @@
 
         tr.innerHTML = `
           <td>${photoHtml}</td>
-          <td><b>${res.id}</b></td>
-          <td>${res.name}</td>
-          <td>${res.wpNo}</td>
-          <td>${res.wpExpiry}</td>
-          <td>${res.nationality}</td>
-          <td>${res.company}</td>
-          <td>${res.bedNo}</td>
-          <td>${res.cardNo}</td>
-          <td>${res.foodOrder}</td>
-          <td>${res.checkIn}</td>
-          <td>${res.checkOut}</td>
-          <td style="display:flex; gap:6px; margin-top:8px;">
+          <td><b>${res.id || '-'}</b></td>
+          <td>${res.name || '-'}</td>
+          <td>${res.wpNo || '-'}</td>
+          <td>${res.wpExpiry || '-'}</td>
+          <td>${res.nationality || '-'}</td>
+          <td>${res.company || '-'}</td>
+          <td>${res.bedNo || '-'}</td>
+          <td>${res.cardNo || '-'}</td>
+          <td>${res.foodOrder || '-'}</td>
+          <td>${res.checkIn || '-'}</td>
+          <td>${res.checkOut || '-'}</td>
+          <td style="display:flex; gap:6px;">
             <button class="btn btn-warning" style="padding:4px 8px; font-size:0.75rem;" onclick="openEditResidentModal('${key}')">Edit</button>
             <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="deleteResident('${key}')">Delete</button>
           </td>
@@ -792,17 +793,17 @@
       }
 
       const excelData = list.map(r => ({
-        "Resident ID": r.id,
-        "Name": r.name,
-        "WP No.": r.wpNo,
-        "WP Expiry": r.wpExpiry,
-        "Nationality": r.nationality,
-        "Company Name": r.company,
-        "Bed No.": r.bedNo,
-        "Access Card No.": r.cardNo,
-        "Food Order": r.foodOrder,
-        "Check-in Date": r.checkIn,
-        "Check-out Date": r.checkOut
+        "Resident ID": r.id || '',
+        "Name": r.name || '',
+        "WP No.": r.wpNo || '',
+        "WP Expiry": r.wpExpiry || '',
+        "Nationality": r.nationality || '',
+        "Company Name": r.company || '',
+        "Bed No.": r.bedNo || '',
+        "Access Card No.": r.cardNo || '',
+        "Food Order": r.foodOrder || 'No',
+        "Check-in Date": r.checkIn || '',
+        "Check-out Date": r.checkOut || '-'
       }));
 
       const worksheet = XLSX.utils.json_to_sheet(excelData);
@@ -811,164 +812,157 @@
       XLSX.writeFile(workbook, "LK_Ang_Dormitory_Residents.xlsx");
     }
 
+    // --- EXCEL IMPORT LOGIC ---
     function handleExcelImport(event) {
-  const file = event.target.files[0];
-  if (!file) return;
+      const file = event.target.files[0];
+      if (!file) return;
 
-  const reader = new FileReader();
+      const reader = new FileReader();
 
-  reader.onload = function (e) {
-    try {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
+      reader.onload = function (e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
 
-      // ပထမဆုံး Sheet ကို ယူသုံးမည်
-      const firstSheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[firstSheetName];
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-      // Sheet ကို JSON Array အဖြစ် ပြောင်းလဲခြင်း
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+          if (jsonData.length === 0) {
+            alert("Excel file ထဲတွင် Data မရှိပါ။");
+            return;
+          }
 
-      if (jsonData.length === 0) {
-        alert("Excel file ထဲတွင် Data မရှိပါ။");
-        return;
-      }
+          const updates = {};
+          let count = 0;
 
-      console.log("Imported Excel Data:", jsonData);
+          jsonData.forEach((row) => {
+            const newRefKey = db.ref('residents').push().key;
 
-      // Firebase သို့ အုပ်စုလိုက် သိမ်းဆည်းရန် Object ပြင်ဆင်ခြင်း
-      const updates = {};
-      let count = 0;
+            // Mapping Excel Headers to Firebase Realtime Database Structure
+            updates['residents/' + newRefKey] = {
+              id: row['Resident ID'] || row['residentId'] || row['id'] || `LKAD-${Math.floor(1000 + Math.random() * 9000)}`,
+              name: row['Name'] || row['name'] || "N/A",
+              wpNo: row['WP No.'] || row['WP No'] || row['wpNo'] || "N/A",
+              wpExpiry: row['WP Expiry'] || row['wpExpiry'] || "N/A",
+              nationality: row['Nationality'] || row['nationality'] || "N/A",
+              company: row['Company Name'] || row['company'] || "N/A",
+              bedNo: row['Bed No.'] || row['Bed No'] || row['bedNo'] || "N/A",
+              cardNo: row['Access Card No.'] || row['Access Card No'] || row['cardNo'] || "N/A",
+              foodOrder: row['Food Order'] || row['foodOrder'] || "No",
+              checkIn: row['Check-in Date'] || row['checkIn'] || new Date().toISOString().split('T')[0],
+              checkOut: row['Check-out Date'] || row['checkOut'] || "-",
+              photo: row['Photo'] || ""
+            };
+            count++;
+          });
 
-      jsonData.forEach((row) => {
-        // Firebase Push Key အသစ် ရယူခြင်း
-        const newRefKey = db.ref('residents').push().key;
+          db.ref().update(updates)
+            .then(() => {
+              alert(`Resident ${count} ယောက်၏ Data ကို အောင်မြင်စွာ Import လုပ်ပြီးပါပြီ!`);
+              event.target.value = '';
+            })
+            .catch((err) => {
+              console.error("Import Error:", err);
+              alert("Data မသိမ်းနိုင်ပါ။ Error: " + err.message);
+            });
 
-        // Excel Column နာမည်များနှင့် ကိုက်ညီအောင် Data Mapping လုပ်ခြင်း
-        // (Excel ထဲက Column Header နာမည်များနှင့် အတိအကျ တူရပါမည်)
-        updates['residents/' + newRefKey] = {
-          residentId: row['Resident ID'] || row['residentId'] || `LKAD-${Math.floor(1000 + Math.random() * 9000)}`,
-          name: row['Name'] || row['name'] || "N/A",
-          wpNo: row['WP No'] || row['wpNo'] || "N/A",
-          wpExpiry: row['WP Expiry'] || row['wpExpiry'] || "N/A",
-          nationality: row['Nationality'] || row['nationality'] || "N/A",
-          companyName: row['Company Name'] || row['companyName'] || "N/A",
-          bedNo: row['Bed No'] || row['bedNo'] || "N/A",
-          accessCardNo: row['Access Card No'] || row['accessCardNo'] || "N/A",
-          foodOrder: row['Food Order'] || row['foodOrder'] || "No",
-          checkInDate: row['Check-in Date'] || row['checkInDate'] || new Date().toISOString().split('T')[0],
-          checkOutDate: row['Check-out Date'] || row['checkOutDate'] || "-",
-          photo: row['Photo'] || ""
-        };
-        count++;
-      });
+        } catch (err) {
+          console.error("Excel Processing Error:", err);
+          alert("Excel ဖိုင် ဖတ်ရသည်မှာ အဆင်မပြေပါ။ ဖိုင် Format မှန်မမှန် ပြန်စစ်ပါ။");
+        }
+      };
 
-      // Firebase သို့ Database အသစ်များ Update ပြုလုပ်ခြင်း
-      db.ref().update(updates)
-        .then(() => {
-          alert(`Resident ${count} ယောက်၏ Data ကို အောင်မြင်စွာ Import လုပ်ပြီးပါပြီ!`);
-          // File Input ကို ပြန်ရှင်းမည်
-          event.target.value = '';
-        })
-        .catch((err) => {
-          console.error("Import Error:", err);
-          alert("Data မသိမ်းနိုင်ပါ။ Error: " + err.message);
-        });
-
-    } catch (err) {
-      console.error("Excel Processing Error:", err);
-      alert("Excel ဖိုင် ဖတ်ရသည်မှာ အဆင်မပြေပါ။ ဖိုင် Format မှန်မမှန် ပြန်စစ်ပါ။");
+      reader.readAsArrayBuffer(file);
     }
-  };
-
-  reader.readAsArrayBuffer(file);
-}
 
     // --- MAINTENANCE SYSTEM & EMAILJS ---
     function submitMaintenanceRequest(e) {
-  e.preventDefault();
-  const selectEl = document.getElementById('req-assign-person');
-  const assignEmail = selectEl.value; 
-  const assignPerson = selectEl.options[selectEl.selectedIndex].getAttribute('data-name'); 
-  const location = document.getElementById('req-location').value;
-  const desc = document.getElementById('req-desc').value;
-  const fileInput = document.getElementById('req-before-img');
+      e.preventDefault();
+      const selectEl = document.getElementById('req-assign-person');
+      const assignEmail = selectEl.value; 
+      const assignPerson = selectEl.options[selectEl.selectedIndex].getAttribute('data-name'); 
+      const location = document.getElementById('req-location').value;
+      const desc = document.getElementById('req-desc').value;
+      const fileInput = document.getElementById('req-before-img');
 
-  const creatorName = currentUser ? currentUser.name : "System User";
-  const creatorEmail = currentUser ? currentUser.email : "";
-  
-  // လက်ရှိ ရက်စွဲ သိမ်းဆည်းခြင်း (DD/MM/YYYY)
-  const todayStr = new Date().toLocaleDateString('en-GB');
+      const creatorName = currentUser ? currentUser.name : "System User";
+      const creatorEmail = currentUser ? currentUser.email : "";
+      const todayStr = new Date().toLocaleDateString('en-GB');
 
-  const reader = new FileReader();
-  reader.onload = function() {
-    const newReq = {
-      assignPerson, 
-      assignEmail, 
-      createdByName: creatorName, 
-      createdByEmail: creatorEmail,
-      location, 
-      desc, 
-      beforeImg: reader.result, 
-      createdDate: todayStr, // Before Date သိမ်းသွားမည်
-      afterImg: '', 
-      completedDate: '', // အစတွင် အလွတ်ထားမည်
-      completedByName: '',
-      status: 'Pending'
-    };
+      const reader = new FileReader();
+      reader.onload = function() {
+        const newReq = {
+          assignPerson, 
+          assignEmail, 
+          createdByName: creatorName, 
+          createdByEmail: creatorEmail,
+          location, 
+          desc, 
+          beforeImg: reader.result, 
+          createdDate: todayStr,
+          afterImg: '', 
+          completedDate: '', 
+          completedByName: '',
+          status: 'Pending'
+        };
 
-    db.ref('maintenance').push(newReq);
-    closeModal('modal-new-request');
-    sendNotificationEmail(assignPerson, assignEmail, location, desc);
-  };
+        db.ref('maintenance').push(newReq);
+        closeModal('modal-new-request');
+        sendNotificationEmail(assignPerson, assignEmail, location, desc);
+      };
 
-  if (fileInput.files[0]) reader.readAsDataURL(fileInput.files[0]);
-}
+      if (fileInput.files[0]) reader.readAsDataURL(fileInput.files[0]);
+    }
 
     function sendNotificationEmail(personName, email, location, desc) {
       if (!email) return;
       const senderName = currentUser ? currentUser.name : "System User";
 
       emailjs.send('service_94a1xtp', 'template_ik9p9kc', {
-        to_name: personName, to_email: email, cc_email: CC_EMAIL,
-        sender_name: senderName, location, description: desc
-      }).then(() => alert(`Email sent to ${personName}`));
+        to_name: personName, 
+        to_email: email, 
+        sender_name: senderName, 
+        location: location, 
+        description: desc
+      }).then(() => alert(`Email sent to ${personName}`))
+        .catch(err => console.error("Email error:", err));
     }
 
     function sendCompletionEmail(req) {
-  // 1. နာမည်နှင့် ရက်စွဲများ သီးသန့် ထုတ်ယူခြင်း
-  const requestorName = req.createdByName || req.requestorName || "Requestor";
-  const technicianName = req.completedByName || (typeof currentUser !== 'undefined' && currentUser ? currentUser.name : req.assignPerson) || "Technician";
+      try {
+        const requestorName = req.createdByName || req.requestorName || "Requestor";
+        const technicianName = req.completedByName || (currentUser ? currentUser.name : req.assignPerson) || "Technician";
 
-  const todayStr = new Date().toLocaleDateString('en-GB'); 
-  const beforeDate = req.createdDate || "N/A";
-  const afterDate = req.completedDate || todayStr;
+        const todayStr = new Date().toLocaleDateString('en-GB'); 
+        const beforeDate = req.createdDate || "N/A";
+        const afterDate = req.completedDate || todayStr;
 
-  // ⚠️ 413 ERROR မတက်စေရန်: req.beforeImg နှင့် req.afterImg များကို လုံးဝ မထည့်ပါနှင့်!
-  // စာသား အဖြစ်သာ တိကျစွာ Cast လုပ်ပြီး ထည့်ပါမည်။
-  const safePayload = {
-    requestor_name: String(requestorName),
-    technician_name: String(technicianName),
-    location: String(req.location || "N/A"),
-    description: String(req.desc || req.resolution || "Completed / Resolved"),
-    before_date: String(beforeDate),
-    after_date: String(afterDate),
-    to_email: String(req.createdByEmail || req.assignEmail || "maung@lkangco.sg"),
-    };
+        const safePayload = {
+          requestor_name: String(requestorName),
+          technician_name: String(technicianName),
+          location: String(req.location || "N/A"),
+          description: String(req.desc || req.resolution || "Completed / Resolved"),
+          before_date: String(beforeDate),
+          after_date: String(afterDate),
+          to_email: String(req.createdByEmail || req.assignEmail || "maung@lkangco.sg")
+        };
 
-  console.log("=== Clean Payload Sending (No Heavy Base64) ===", safePayload);
+        console.log("=== Clean Payload Sending ===", safePayload);
 
-  // EmailJS သို့ ပို့ဆောင်ခြင်း
-  emailjs.send('service_94a1xtp', 'template_h6xz4dc', safePayload)
-    .then((response) => {
-      console.log('EMAILJS SUCCESS!', response.status, response.text);
-      alert(`Completion email sent successfully to ${requestorName}!`);
-    })
-    .catch((error) => {
-      console.error('EMAILJS FAILED...', error);
-      alert("Failed to send completion email. Check console.");
-    });
-}
+        emailjs.send('service_94a1xtp', 'template_h6xz4dc', safePayload)
+          .then((response) => {
+            console.log('EMAILJS SUCCESS!', response.status, response.text);
+            alert(`Completion email sent successfully to ${requestorName}!`);
+          })
+          .catch((error) => {
+            console.error('EMAILJS FAILED...', error);
+            alert("Failed to send completion email. Check console.");
+          });
+      } catch (err) {
+        console.error("Error in sendCompletionEmail:", err);
+      }
+    }
 
     function openUpdateModal(key) {
       const req = maintenanceRequests[key];
@@ -1001,55 +995,53 @@
     }
 
     function saveMaintenanceUpdate(e) {
-  e.preventDefault();
-  const key = document.getElementById('update-req-key').value;
-  const selectEl = document.getElementById('update-assign-person');
-  const assignEmail = selectEl.value;
-  const assignPerson = selectEl.options[selectEl.selectedIndex].getAttribute('data-name');
-  let status = document.getElementById('update-status').value;
-  const fileInput = document.getElementById('req-after-img');
+      e.preventDefault();
+      const key = document.getElementById('update-req-key').value;
+      const selectEl = document.getElementById('update-assign-person');
+      const assignEmail = selectEl.value;
+      const assignPerson = selectEl.options[selectEl.selectedIndex].getAttribute('data-name');
+      let status = document.getElementById('update-status').value;
+      const fileInput = document.getElementById('req-after-img');
 
-  const target = maintenanceRequests[key];
-  if (!target) return;
+      const target = maintenanceRequests[key];
+      if (!target) return;
 
-  const previousStatus = target.status;
-  const todayStr = new Date().toLocaleDateString('en-GB');
-  const techName = currentUser ? currentUser.name : assignPerson;
+      const previousStatus = target.status;
+      const todayStr = new Date().toLocaleDateString('en-GB');
+      const techName = currentUser ? currentUser.name : assignPerson;
 
-  if (fileInput.files[0]) {
-    const reader = new FileReader();
-    reader.onload = function() {
-      const updateData = {
-        assignPerson, 
-        assignEmail, 
-        afterImg: reader.result, 
-        completedDate: todayStr, // After Date သိမ်းမည်
-        completedByName: techName, // ပြင်ဆင်သူ နာမည်
-        status: 'Resolved'
-      };
-      
-      db.ref('maintenance/' + key).update(updateData);
-      closeModal('modal-update-request');
-      
-      // Update ဖြစ်သွားသော Data အသစ်ဖြင့် Email ပို့မည်
-      sendCompletionEmail({ ...target, ...updateData });
-    };
-    reader.readAsDataURL(fileInput.files[0]);
-  } else {
-    const updateData = { assignPerson, assignEmail, status };
-    if (status === 'Resolved' && !target.completedDate) {
-      updateData.completedDate = todayStr;
-      updateData.completedByName = techName;
+      if (fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function() {
+          const updateData = {
+            assignPerson, 
+            assignEmail, 
+            afterImg: reader.result, 
+            completedDate: todayStr,
+            completedByName: techName,
+            status: 'Resolved'
+          };
+          
+          db.ref('maintenance/' + key).update(updateData);
+          closeModal('modal-update-request');
+          sendCompletionEmail({ ...target, ...updateData });
+        };
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        const updateData = { assignPerson, assignEmail, status };
+        if (status === 'Resolved' && !target.completedDate) {
+          updateData.completedDate = todayStr;
+          updateData.completedByName = techName;
+        }
+        
+        db.ref('maintenance/' + key).update(updateData);
+        closeModal('modal-update-request');
+
+        if (status === 'Resolved' && previousStatus !== 'Resolved') {
+          sendCompletionEmail({ ...target, ...updateData });
+        }
+      }
     }
-    
-    db.ref('maintenance/' + key).update(updateData);
-    closeModal('modal-update-request');
-
-    if (status === 'Resolved' && previousStatus !== 'Resolved') {
-      sendCompletionEmail({ ...target, ...updateData });
-    }
-  }
-}
 
     function deleteMaintenanceRecord(key) {
       if (confirm('Are you sure you want to delete this record?')) {
@@ -1058,64 +1050,61 @@
     }
 
     function renderMaintenanceTable() {
-  const tbody = document.getElementById('maintenance-table-body');
-  if (!tbody) return;
-  tbody.innerHTML = '';
+      const tbody = document.getElementById('maintenance-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
 
-  Object.keys(maintenanceRequests).forEach((key) => {
-    const req = maintenanceRequests[key];
-    let badgeClass = 'badge-pending';
-    if (req.status === 'In Progress') badgeClass = 'badge-progress';
-    if (req.status === 'Resolved') badgeClass = 'badge-resolved';
+      Object.keys(maintenanceRequests).forEach((key) => {
+        const req = maintenanceRequests[key];
+        let badgeClass = 'badge-pending';
+        if (req.status === 'In Progress') badgeClass = 'badge-progress';
+        if (req.status === 'Resolved') badgeClass = 'badge-resolved';
 
-    // Before Date & After Date Display Format
-    const beforeDateHtml = req.createdDate 
-      ? `<div style="font-size:0.75rem; color:#94a3b8; margin-top:4px;">📅 ${req.createdDate}</div>` 
-      : '';
-      
-    const afterDateHtml = req.completedDate 
-      ? `<div style="font-size:0.75rem; color:#86efac; margin-top:4px;">✅ ${req.completedDate}</div>` 
-      : '';
+        const beforeDateHtml = req.createdDate 
+          ? `<div style="font-size:0.75rem; color:#94a3b8; margin-top:4px;">📅 ${req.createdDate}</div>` 
+          : '';
+          
+        const afterDateHtml = req.completedDate 
+          ? `<div style="font-size:0.75rem; color:#86efac; margin-top:4px;">✅ ${req.completedDate}</div>` 
+          : '';
 
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><b>${req.assignPerson}</b><br><span style="font-size:0.75rem; color:#94a3b8;">${req.assignEmail}</span></td>
-      <td><b>${req.createdByName || '-'}</b></td>
-      <td>${req.location}</td>
-      <td>${req.desc}</td>
-      
-      <!-- BEFORE IMAGE + DATE -->
-      <td style="text-align:center;">
-        <img src="${req.beforeImg}" class="img-preview" onclick="viewFullImage('${req.beforeImg}')" alt="Before">
-        ${beforeDateHtml}
-      </td>
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><b>${req.assignPerson}</b><br><span style="font-size:0.75rem; color:#94a3b8;">${req.assignEmail}</span></td>
+          <td><b>${req.createdByName || '-'}</b></td>
+          <td>${req.location}</td>
+          <td>${req.desc}</td>
+          
+          <td style="text-align:center;">
+            <img src="${req.beforeImg}" class="img-preview" onclick="viewFullImage('${req.beforeImg}')" alt="Before">
+            ${beforeDateHtml}
+          </td>
 
-      <!-- AFTER IMAGE + DATE -->
-      <td style="text-align:center;">
-        ${req.afterImg 
-          ? `<img src="${req.afterImg}" class="img-preview" onclick="viewFullImage('${req.afterImg}')" alt="After">${afterDateHtml}` 
-          : '<span style="color:#64748b;">Not Uploaded</span>'}
-      </td>
+          <td style="text-align:center;">
+            ${req.afterImg 
+              ? `<img src="${req.afterImg}" class="img-preview" onclick="viewFullImage('${req.afterImg}')" alt="After">${afterDateHtml}` 
+              : '<span style="color:#64748b;">Not Uploaded</span>'}
+          </td>
 
-      <td><span class="badge ${badgeClass}">${req.status}</span></td>
-      <td>
-        <button class="btn btn-secondary" style="padding:4px 8px; font-size:0.75rem;" onclick="sendNotificationEmail('${req.assignPerson}', '${req.assignEmail}', '${req.location}', '${req.desc}')">⚡ Resend Email</button>
-      </td>
-      <td style="display:flex; gap:6px; margin-top:8px;">
-        <button class="btn btn-warning" style="padding:4px 8px; font-size:0.75rem;" onclick="openUpdateModal('${key}')">Edit / Update</button>
-        <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="deleteMaintenanceRecord('${key}')">Delete</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
+          <td><span class="badge ${badgeClass}">${req.status}</span></td>
+          <td>
+            <button class="btn btn-secondary" style="padding:4px 8px; font-size:0.75rem;" onclick="sendNotificationEmail('${req.assignPerson}', '${req.assignEmail}', '${req.location}', '${req.desc}')">⚡ Resend Email</button>
+          </td>
+          <td style="display:flex; gap:6px;">
+            <button class="btn btn-warning" style="padding:4px 8px; font-size:0.75rem;" onclick="openUpdateModal('${key}')">Edit / Update</button>
+            <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="deleteMaintenanceRecord('${key}')">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
 
     // --- CHECKLIST LOGIC ---
     function submitChecklist(e) {
       e.preventDefault();
       const item = {
         date: new Date().toLocaleDateString(),
-        inspector: currentUser.name,
+        inspector: currentUser ? currentUser.name : "Inspector",
         block: document.getElementById('chk-block').value,
         fire: document.getElementById('chk-fire').value,
         clean: document.getElementById('chk-clean').value,
