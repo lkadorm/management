@@ -858,44 +858,32 @@
     }
 
     function sendCompletionEmail(req) {
-  // 1. Data များ ထုတ်ယူခြင်း
   const requestorName = req.createdByName || req.requestorName || "Requestor";
-  const technicianName = (typeof currentUser !== 'undefined' && currentUser && currentUser.name) 
-                          ? currentUser.name 
-                          : (req.assignPerson || req.technicianName || "Technician");
+  const technicianName = req.completedByName || (typeof currentUser !== 'undefined' && currentUser ? currentUser.name : req.assignPerson) || "Technician";
 
   const todayStr = new Date().toLocaleDateString('en-GB'); 
-  const beforeDate = req.createdDate || req.beforeDate || "N/A";
-  const afterDate = req.completedDate || req.afterDate || todayStr;
+  const beforeDate = req.createdDate || "N/A";
+  const afterDate = req.completedDate || todayStr;
 
-  const beforeImg = req.beforeImg || "";
-  const afterImg = req.afterImg || "";
-
-  console.log("=== EmailJS Sending Payload ===");
-  console.log("Requestor:", requestorName);
-  console.log("Technician:", technicianName);
-
+  // ⚠️ 413 Error မတက်စေရန် ပုံ Base64 များကို မပို့တော့ဘဲ Message ပို့မည်
   const templateParams = {
     requestor_name: requestorName,
     technician_name: technicianName,
     location: req.location || "N/A",
-    description: req.desc || req.resolution || "Completed / Resolved",
+    description: req.desc || "Completed / Resolved",
     before_date: beforeDate,
     after_date: afterDate,
-    before_image_url: beforeImg,
-    after_image_url: afterImg,
     to_email: req.createdByEmail || req.assignEmail || "maung@lkangco.sg"
   };
 
-  // ⚠️ TEMPLATE ID ကို 'template_ik9p9kc' သို့မဟုတ် မိမိ EmailJS ထဲက တကယ့် Template ID ဖြင့် အစားထိုးပါ
   emailjs.send('service_94a1xtp', 'template_h6xz4dc', templateParams)
     .then((response) => {
       console.log('SUCCESS!', response.status, response.text);
-      alert("Completion email sent successfully!");
+      alert(`Completion email sent successfully to ${requestorName}!`);
     })
     .catch((error) => {
-      console.error('FAILED...', error);
-      alert("Failed to send completion email. Check F12 Console for details.");
+      console.error('EMAILJS ERROR:', error);
+      alert("Email Send Failed: " + (error.text || "Status 413 / Limit Exceeded"));
     });
 }
 
