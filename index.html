@@ -97,19 +97,42 @@
 
     .row-checkbox, #select-all-maint { cursor: pointer; width: 16px; height: 16px; accent-color: #16a34a; }
 
-    /* --- UPDATED PDF TEMPLATE STYLES --- */
-    #pdf-report-template { display: none; background: #ffffff; color: #000000; padding: 25px; width: 790px; font-family: Arial, sans-serif; }
-    .pdf-header { text-align: center; border-bottom: 2px solid #2563eb; padding-bottom: 12px; margin-bottom: 20px; }
+    /* --- UPDATED PDF TEMPLATE STYLES (CENTERED & FULL BORDER FIX) --- */
+    #pdf-report-template { 
+        display: none; 
+        background: #ffffff; 
+        color: #000000; 
+        padding: 20px; 
+        width: 100%; 
+        max-width: 790px; 
+        margin: 0 auto; /* Center ကျစေရန် */
+        box-sizing: border-box; 
+        font-family: Arial, sans-serif; 
+    }
+
+    .pdf-header { 
+        text-align: center; 
+        border-bottom: 2px solid #2563eb; 
+        padding-bottom: 12px; 
+        margin-bottom: 20px; 
+    }
     .pdf-header h1 { font-size: 24px; color: #1e3a8a; text-transform: uppercase; margin-bottom: 4px; }
     .pdf-header p { font-size: 12px; color: #64748b; }
     
-    /* Solid Border Added to Card */
-    .pdf-card { border: 2px solid #334155; border-radius: 8px; padding: 16px; margin-bottom: 20px; page-break-inside: avoid; background-color: #f8fafc; }
+    /* Border မပြတ်အောင် width: 100% နှင့် box-sizing ထည့်ထားပါသည် */
+    .pdf-card { 
+        border: 2px solid #334155; 
+        border-radius: 8px; 
+        padding: 16px; 
+        margin-bottom: 20px; 
+        page-break-inside: avoid; 
+        background-color: #f8fafc; 
+        width: 100%;
+        box-sizing: border-box;
+    }
     
-    /* Flex alignment fix for Title & Status */
     .pdf-card-title { font-size: 16px; font-weight: bold; color: #0f172a; margin-bottom: 10px; border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
     
-    /* PDF Status Badges */
     .pdf-status-badge { font-size: 11px; font-weight: bold; padding: 4px 10px; border-radius: 6px; display: inline-block; }
     .pdf-status-resolved { background-color: #dcfce7; color: #15803d; border: 1px solid #86efac; }
     .pdf-status-pending { background-color: #ffedd5; color: #c2410c; border: 1px solid #fdba74; }
@@ -117,11 +140,37 @@
 
     .pdf-meta { font-size: 12px; color: #334155; margin-bottom: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
     
-    .pdf-img-container { display: flex; gap: 15px; justify-content: space-between; margin-top: 10px; }
-    .pdf-img-box { flex: 1; text-align: center; background: #ffffff; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; }
+    .pdf-img-container { display: flex; gap: 15px; justify-content: space-between; margin-top: 10px; width: 100%; }
+    .pdf-img-box { flex: 1; text-align: center; background: #ffffff; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; box-sizing: border-box; }
     .pdf-img-box h4 { font-size: 13px; margin-bottom: 6px; color: #475569; }
     .pdf-img-box img { width: 100%; height: 210px; object-fit: cover; border-radius: 4px; border: 1px solid #cbd5e1; }
     .pdf-img-box .no-img { height: 210px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; color: #94a3b8; font-size: 12px; border-radius: 4px; }
+
+    /* PDF Print ထုတ်စဉ် Center တည့်တည့်ကျပြီး Border မပြတ်စေရန် Print Settings */
+    @page {
+        size: A4 portrait;
+        margin: 10mm;
+    }
+
+    @media print {
+        body {
+            background-color: #ffffff !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        #pdf-report-template {
+            display: block !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 auto !important;
+            padding: 0 !important;
+        }
+        .pdf-card {
+            border: 2px solid #334155 !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+    }
   </style>
 </head>
 <body>
