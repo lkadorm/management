@@ -857,64 +857,113 @@
       }).then(() => alert(`Email sent to ${personName}`));
     }
 
-    function sendCompletionEmail(req) {
-  // ၁။ နာမည်များနှင့် စာသားများ ထုတ်ယူခြင်း
+    // ၃။ Completion Email ပို့သည့် Function (Clean Data Only)
+function sendCompletionEmail(req) {
   const requestorName = req.createdByName || req.requestorName || "Requestor";
-  const technicianName = req.completedByName || (typeof currentUser !== 'undefined' && currentUser ? currentUser.name : req.assignPerson) || "Technician";
-
+  const technicianName = req.completedByName || req.assignPerson || "Technician";
   const todayStr = new Date().toLocaleDateString('en-GB'); 
-  const beforeDate = req.createdDate || "N/A";
-  const afterDate = req.completedDate || todayStr;
 
-  // ⚠️ 413 Error မတက်စေရန်: ပုံ (Base64 String) များ လုံးဝ မပါဝင်ဘဲ
-  // စာသား သက်သက်ကိုသာ Object အသစ်တစ်ခု ပြုလုပ်၍ ပို့မည်
+  // 413 Error မတက်စေရန် စာသား သီးသန့်သာ ပို့မည်
   const safePayload = {
     requestor_name: String(requestorName),
     technician_name: String(technicianName),
     location: String(req.location || "N/A"),
     description: String(req.desc || req.resolution || "Completed / Resolved"),
-    before_date: String(beforeDate),
-    after_date: String(afterDate),
+    before_date: String(req.createdDate || "N/A"),
+    after_date: String(req.completedDate || todayStr),
     to_email: String(req.createdByEmail || req.assignEmail || "maung@lkangco.sg")
   };
 
-  console.log("=== Clean Payload Sending ===", safePayload);
+  console.log("=== Sending EmailJS Payload ===", safePayload);
 
-  // EmailJS သို့ ပို့ဆောင်ခြင်း
-  // (မှတ်ချက်- 'template_ik9p9kc' နေရာတွင် မိမိ EmailJS Dashboard ထဲမှ Template ID အမှန် ထည့်ပေးပါ)
   emailjs.send('service_94a1xtp', 'template_h6xz4dc', safePayload)
     .then((response) => {
       console.log('EMAILJS SUCCESS!', response.status, response.text);
-      alert(`Completion email sent successfully!`);
+      alert(`Status updated to Resolved & Email sent to ${requestorName}!`);
     })
     .catch((error) => {
       console.error('EMAILJS FAILED...', error);
-      alert("Failed to send email. Check console.");
+      alert("Status updated to Resolved, but Email sending failed. Check console.");
     });
 }
 
     
-    function openUpdateModal(key) {
-      const req = maintenanceRequests[key];
-      if (!req) return;
+    // ၁။ Modal ပွင့်သည့် Function (Form Event Binding ရှင်းလင်းထားသည်)
+function openUpdateModal(key) {
+  const req = maintenanceRequests[key];
+  if (!req) return;
 
-      document.getElementById('update-req-key').value = key;
-      document.getElementById('update-assign-person').value = req.assignEmail;
-      document.getElementById('update-status').value = req.status;
-      document.getElementById('req-after-img').value = '';
+  document.getElementById('update-req-key').value = key;
+  document.getElementById('update-status').value = req.status || 'Pending';
+  document.getElementById('req-after-img').value = ''; // File Input ရှင်းမည်
 
-      const previewContainer = document.getElementById('after-img-preview-container');
-      const previewImg = document.getElementById('update-after-preview');
+  // Assign Person Dropdown ရွေးပေးခြင်း
+  const selectEl = document.getElementById('update-assign-person');
+  if (selectEl && req.assignEmail) {
+    selectEl.value = req.assignEmail;
+  }
 
-      if (req.afterImg) {
-        previewImg.src = req.afterImg;
-        previewContainer.classList.remove('hidden');
+  // Modal ဖွင့်မည်
+  document.getElementById('modal-update-request').style.display = 'block';
+}
+
+// ၂။ Save Changes နှိပ်သည့် Event (Form Submit ကို တစ်နေရာတည်းတွင် ချိန်တွယ်ခြင်း)
+document.getElementById('form-update-request').onsubmit = function(e) {
+  e.preventDefault();
+  
+  const key = document.getElementById('update-req-key').value;
+  const selectEl = document.getElementById('update-assign-person');
+  const assignEmail = selectEl.value;
+  const assignPerson = selectEl.options[selectEl.selectedIndex].getAttribute('data-name');
+  let status = document.getElementById('update-status').value;
+  const fileInput = document.getElementById('req-after-img');
+
+  const target = maintenanceRequests[key];
+  if (!target) return;
+
+  const previousStatus = target.status;
+  const todayStr = new Date().toLocaleDateString('en-GB');
+  const techName = (typeof currentUser !== 'undefined' && currentUser && currentUser.name) ? currentUser.name : assignPerson;
+
+  // ပုံ အသစ်တင်ထားပါက Status ကို Auto 'Resolved' ပြောင်းမည်
+  if (fileInput.files[0]) {
+    status = 'Resolved';
+  }
+
+  const updateData = {
+    assignPerson: assignPerson,
+    assignEmail: assignEmail,
+    status: status
+  };
+
+  if (status === 'Resolved') {
+    updateData.completedDate = target.completedDate || todayStr;
+    updateData.completedByName = techName;
+  }
+
+  // Save Button ခဏ Lock ချမည် (Double Click ကာကွယ်ရန်)
+  const saveBtn = e.target.querySelector('button[type="submit"]');
+  if (saveBtn) saveBtn.disabled = true;
+
+  // Firebase သို့ သိမ်းဆည်းမည်
+  db.ref('maintenance/' + key).update(updateData)
+    .then(() => {
+      if (saveBtn) saveBtn.disabled = false;
+      closeModal('modal-update-request');
+
+      // Status 'Resolved' ဖြစ်သွားပါက Email ပို့မည်
+      if (status === 'Resolved' && previousStatus !== 'Resolved') {
+        sendCompletionEmail({ ...target, ...updateData });
       } else {
-        previewContainer.classList.add('hidden');
+        alert("Update saved successfully!");
       }
-
-      openModal('modal-update-request');
-    }
+    })
+    .catch((err) => {
+      if (saveBtn) saveBtn.disabled = false;
+      console.error("Firebase Update Error:", err);
+      alert("Failed to save changes.");
+    });
+};
 
     function removeAfterImage() {
       const key = document.getElementById('update-req-key').value;
