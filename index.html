@@ -399,44 +399,39 @@
     </div>
   </div>
 
-  <div id="modal-update-request" class="modal hidden">
-    <div class="modal-content">
-      <h2 style="margin-bottom:16px;">Update Request Details</h2>
-      <form onsubmit="saveMaintenanceUpdate(event)">
-        <input type="hidden" id="update-req-key">
-        
-        <div class="form-group">
-          <label>Assign Person Name</label>
-          <select id="update-assign-person" class="form-select" required>
-            <option value="maung@lkangco.sg" data-name="Maung">Maung (maung@lkangco.sg)</option>
-            <option value="lkadorm@gmail.com" data-name="Zia">Zia (lkadorm@gmail.com)</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Status</label>
-          <select id="update-status" class="form-select">
-            <option value="Pending">Pending</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Resolved">Resolved</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>After Image (Upload Fixed Photo)</label>
-          <input type="file" id="req-after-img" class="form-input" accept="image/*">
-        </div>
-        <div id="after-img-preview-container" class="hidden" style="margin-top: 10px; border: 1px dashed #334155; padding: 10px; border-radius: 6px; text-align: center;">
-          <p style="font-size:0.8rem; color:#cbd5e1; margin-bottom:6px;">Current After Image:</p>
-          <img id="update-after-preview" src="" class="img-preview" style="width:80px; height:80px;" alt="After Preview">
-          <br>
-          <button type="button" class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem; margin-top:8px;" onclick="removeAfterImage()">🗑️ Delete Image</button>
-        </div>
-        <div style="display:flex; gap:10px; margin-top:20px;">
-          <button type="submit" class="btn btn-primary">Save Changes</button>
-          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-update-request')">Cancel</button>
-        </div>
-      </form>
-    </div>
+ <!-- Modal Update Request -->
+<div id="modal-update-request" class="modal">
+  <div class="modal-content">
+    <h3>Update Request Details</h3>
+
+    <!-- ⬇️ ဒီနေရာမှာ အောက်က FORM CODE ကို အစားထိုး/ထည့်ပေးရပါမည် ⬇️ -->
+    <form id="form-update-request">
+      <input type="hidden" id="update-req-key" />
+
+      <label>Assign Person Name</label>
+      <select id="update-assign-person" class="form-control">
+        <!-- သင့် Dropdown Options များ -->
+      </select>
+
+      <label>Status</label>
+      <select id="update-status" class="form-control">
+        <option value="Pending">Pending</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Resolved">Resolved</option>
+      </select>
+
+      <label>After Image (Upload Fixed Photo)</label>
+      <input type="file" id="req-after-img" accept="image/*" class="form-control" />
+
+      <div class="modal-buttons" style="margin-top: 15px;">
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-update-request')">Cancel</button>
+      </div>
+    </form>
+    <!-- ⬆️ ဒီအထိ ဖြစ်ပါတယ် ⬆️ -->
+
   </div>
+</div>
 
   <div id="modal-new-checklist" class="modal hidden">
     <div class="modal-content">
