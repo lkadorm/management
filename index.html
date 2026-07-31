@@ -91,6 +91,28 @@
     .image-viewer-content { background: transparent; border: none; display: flex; flex-direction: column; align-items: center; position: relative; }
     .full-image { max-width: 85vw; max-height: 85vh; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); border: 2px solid #334155; }
     .close-img-btn { position: absolute; top: -40px; right: 0; background: #ef4444; color: white; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+
+    /* Custom Checkbox Styling */
+    .row-checkbox, #select-all-maint { cursor: pointer; width: 16px; height: 16px; accent-color: #16a34a; }
+
+    /* --- PRINT / PDF STYLING --- */
+    @media print {
+      body { background-color: #ffffff !important; color: #000000 !important; }
+      .sidebar, .navbar, .header-actions, .modal, .no-print { display: none !important; }
+      #app-container { display: block !important; }
+      .main-wrapper { margin: 0 !important; padding: 0 !important; }
+      .content-container { padding: 0 !important; }
+      .table-container { border: none !important; overflow: visible !important; }
+      table { border-collapse: collapse !important; width: 100% !important; font-size: 10pt !important; color: #000000 !important; }
+      th, td { border: 1px solid #cccccc !important; padding: 8px !important; color: #000000 !important; white-space: normal !important; }
+      th { background-color: #f1f5f9 !important; color: #000000 !important; }
+      .img-preview { width: 60px !important; height: 60px !important; border: 1px solid #999 !important; }
+      .badge { border: 1px solid #000 !important; color: #000 !important; background: transparent !important; }
+      /* Hide Unselected Rows during Print */
+      tr.unselected-for-print { display: none !important; }
+      /* Hide action & checkbox columns during print */
+      .col-hide-print { display: none !important; }
+    }
   </style>
 </head>
 <body>
@@ -173,7 +195,6 @@
           <div class="page-header">
             <h1 class="page-title">Resident Records</h1>
             
-            <!-- BUTTON HEADER (3 Green Buttons Alignment) -->
             <div class="header-actions">
               <button class="btn btn-green" onclick="openNewResidentModal()">+ New Resident</button>
               
@@ -212,12 +233,19 @@
         <div id="tab-maintenance" class="hidden">
           <div class="page-header">
             <h1 class="page-title">Maintenance Requests</h1>
-            <button class="btn btn-green" onclick="openModal('modal-new-request')">+ New Request</button>
+            <div class="header-actions">
+              <!-- Export Selected to PDF Button -->
+              <button class="btn btn-green" onclick="exportMaintenancePDF()">📄 Export Selected PDF</button>
+              <button class="btn btn-green" onclick="openModal('modal-new-request')">+ New Request</button>
+            </div>
           </div>
           <div class="table-container">
             <table>
               <thead>
                 <tr>
+                  <th class="col-hide-print" style="text-align:center; width: 40px;">
+                    <input type="checkbox" id="select-all-maint" onchange="toggleSelectAllMaintenance(this)">
+                  </th>
                   <th>Assign Person</th>
                   <th>Created By</th>
                   <th>Location / Room</th>
@@ -225,8 +253,8 @@
                   <th>Before Image</th>
                   <th>After Image</th>
                   <th>Status</th>
-                  <th>Notify</th>
-                  <th>Actions</th>
+                  <th class="col-hide-print">Notify</th>
+                  <th class="col-hide-print">Actions</th>
                 </tr>
               </thead>
               <tbody id="maintenance-table-body"></tbody>
@@ -592,8 +620,8 @@
         document.getElementById('login-card').classList.add('hidden');
         document.getElementById('register-card').classList.remove('hidden');
       } else {
-        document.getElementById('register-card').classList.add('hidden');
-        document.getElementById('login-card').classList.remove('hidden');
+        document.getElementById('register-card').classList.remove('hidden');
+        document.getElementById('login-card').classList.add('hidden');
       }
     }
 
@@ -839,7 +867,6 @@
           jsonData.forEach((row) => {
             const newRefKey = db.ref('residents').push().key;
 
-            // Mapping Excel Headers to Firebase Realtime Database Structure
             updates['residents/' + newRefKey] = {
               id: row['Resident ID'] || row['residentId'] || row['id'] || `LKAD-${Math.floor(1000 + Math.random() * 9000)}`,
               name: row['Name'] || row['name'] || "N/A",
@@ -948,11 +975,8 @@
           to_email: String(req.createdByEmail || req.assignEmail || "maung@lkangco.sg")
         };
 
-        console.log("=== Clean Payload Sending ===", safePayload);
-
         emailjs.send('service_94a1xtp', 'template_h6xz4dc', safePayload)
           .then((response) => {
-            console.log('EMAILJS SUCCESS!', response.status, response.text);
             alert(`Completion email sent successfully to ${requestorName}!`);
           })
           .catch((error) => {
@@ -1049,10 +1073,49 @@
       }
     }
 
+    // --- CHECKBOX & PDF EXPORT LOGIC FOR MAINTENANCE ---
+    function toggleSelectAllMaintenance(master) {
+      const checkboxes = document.querySelectorAll('.row-checkbox');
+      checkboxes.forEach(cb => cb.checked = master.checked);
+    }
+
+    function exportMaintenancePDF() {
+      const checkboxes = document.querySelectorAll('.row-checkbox');
+      const selectedRows = Array.from(checkboxes).filter(cb => cb.checked);
+
+      if (selectedRows.length === 0) {
+        alert("PDF ထုတ်ယူလိုသော Request များကို Checkbox တွင် အနည်းဆုံး ၁ ခု ရွေးချယ်ပေးပါ!");
+        return;
+      }
+
+      // Hide unselected rows temporarily for print mode
+      checkboxes.forEach(cb => {
+        const tr = cb.closest('tr');
+        if (!cb.checked) {
+          tr.classList.add('unselected-for-print');
+        } else {
+          tr.classList.remove('unselected-for-print');
+        }
+      });
+
+      // Open Print Dialog (Save as PDF)
+      window.print();
+
+      // Reset visibility after print window closes
+      checkboxes.forEach(cb => {
+        const tr = cb.closest('tr');
+        tr.classList.remove('unselected-for-print');
+      });
+    }
+
     function renderMaintenanceTable() {
       const tbody = document.getElementById('maintenance-table-body');
       if (!tbody) return;
       tbody.innerHTML = '';
+
+      // Reset master checkbox
+      const masterCb = document.getElementById('select-all-maint');
+      if (masterCb) masterCb.checked = false;
 
       Object.keys(maintenanceRequests).forEach((key) => {
         const req = maintenanceRequests[key];
@@ -1069,7 +1132,12 @@
           : '';
 
         const tr = document.createElement('tr');
+        tr.setAttribute('data-key', key);
+
         tr.innerHTML = `
+          <td class="col-hide-print" style="text-align:center;">
+            <input type="checkbox" class="row-checkbox" value="${key}">
+          </td>
           <td><b>${req.assignPerson}</b><br><span style="font-size:0.75rem; color:#94a3b8;">${req.assignEmail}</span></td>
           <td><b>${req.createdByName || '-'}</b></td>
           <td>${req.location}</td>
@@ -1087,10 +1155,10 @@
           </td>
 
           <td><span class="badge ${badgeClass}">${req.status}</span></td>
-          <td>
+          <td class="col-hide-print">
             <button class="btn btn-secondary" style="padding:4px 8px; font-size:0.75rem;" onclick="sendNotificationEmail('${req.assignPerson}', '${req.assignEmail}', '${req.location}', '${req.desc}')">⚡ Resend Email</button>
           </td>
-          <td style="display:flex; gap:6px;">
+          <td class="col-hide-print" style="display:flex; gap:6px;">
             <button class="btn btn-warning" style="padding:4px 8px; font-size:0.75rem;" onclick="openUpdateModal('${key}')">Edit / Update</button>
             <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="deleteMaintenanceRecord('${key}')">Delete</button>
           </td>
