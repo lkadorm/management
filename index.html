@@ -399,7 +399,7 @@
     </div>
   </div>
 
- <div id="modal-update-request" class="modal hidden">
+  <div id="modal-update-request" class="modal hidden">
     <div class="modal-content">
       <h2 style="margin-bottom:16px;">Update Request Details</h2>
       <form onsubmit="saveMaintenanceUpdate(event)">
@@ -508,18 +508,18 @@
 
   <!-- JAVASCRIPT WITH FIREBASE INTEGRATION -->
   <script>
-    const CC_EMAIL = "zayarmm88@gmail.com";
+    const CC_EMAIL = "hlang@lkang.com.sg";
 
     // 1. FIREBASE CONFIGURATION (ဒီနေရာတွင် အဆင့် ၂ မှ ကူးလာသော မိမိ၏ Config ဖြင့် အစားထိုးပါ)
     const firebaseConfig = {
-  apiKey: "AIzaSyDCaQSp7pW3ooVmFmuBhKHxejQbAm21els",
-  authDomain: "lkang-dorm-system.firebaseapp.com",
-  databaseURL: "https://lkang-dorm-system-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "lkang-dorm-system",
-  storageBucket: "lkang-dorm-system.firebasestorage.app",
-  messagingSenderId: "800307565045",
-  appId: "1:800307565045:web:6940821bc0841a3172d0bc"
-};
+      apiKey: "YOUR_FIREBASE_CONFIG_HERE",
+      authDomain: "YOUR_FIREBASE_CONFIG_HERE",
+      databaseURL: "YOUR_FIREBASE_CONFIG_HERE",
+      projectId: "YOUR_FIREBASE_CONFIG_HERE",
+      storageBucket: "YOUR_FIREBASE_CONFIG_HERE",
+      messagingSenderId: "YOUR_FIREBASE_CONFIG_HERE",
+      appId: "YOUR_FIREBASE_CONFIG_HERE"
+    };
 
     // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
@@ -808,44 +808,31 @@
 
     // --- MAINTENANCE SYSTEM & EMAILJS ---
     function submitMaintenanceRequest(e) {
-  e.preventDefault();
-  const selectEl = document.getElementById('req-assign-person');
-  const assignEmail = selectEl.value; 
-  const assignPerson = selectEl.options[selectEl.selectedIndex].getAttribute('data-name'); 
-  const location = document.getElementById('req-location').value;
-  const desc = document.getElementById('req-desc').value;
-  const fileInput = document.getElementById('req-before-img');
+      e.preventDefault();
+      const selectEl = document.getElementById('req-assign-person');
+      const assignEmail = selectEl.value; 
+      const assignPerson = selectEl.options[selectEl.selectedIndex].getAttribute('data-name'); 
+      const location = document.getElementById('req-location').value;
+      const desc = document.getElementById('req-desc').value;
+      const fileInput = document.getElementById('req-before-img');
 
-  const creatorName = currentUser ? currentUser.name : "System User";
-  const creatorEmail = currentUser ? currentUser.email : "";
-  
-  // လက်ရှိ ရက်စွဲ သိမ်းဆည်းခြင်း (DD/MM/YYYY)
-  const todayStr = new Date().toLocaleDateString('en-GB');
+      const creatorName = currentUser ? currentUser.name : "System User";
+      const creatorEmail = currentUser ? currentUser.email : "";
 
-  const reader = new FileReader();
-  reader.onload = function() {
-    const newReq = {
-      assignPerson, 
-      assignEmail, 
-      createdByName: creatorName, 
-      createdByEmail: creatorEmail,
-      location, 
-      desc, 
-      beforeImg: reader.result, 
-      createdDate: todayStr, // Before Date သိမ်းသွားမည်
-      afterImg: '', 
-      completedDate: '', // အစတွင် အလွတ်ထားမည်
-      completedByName: '',
-      status: 'Pending'
-    };
+      const reader = new FileReader();
+      reader.onload = function() {
+        const newReq = {
+          assignPerson, assignEmail, createdByName: creatorName, createdByEmail: creatorEmail,
+          location, desc, beforeImg: reader.result, afterImg: '', status: 'Pending'
+        };
 
-    db.ref('maintenance').push(newReq);
-    closeModal('modal-new-request');
-    sendNotificationEmail(assignPerson, assignEmail, location, desc);
-  };
+        db.ref('maintenance').push(newReq);
+        closeModal('modal-new-request');
+        sendNotificationEmail(assignPerson, assignEmail, location, desc);
+      };
 
-  if (fileInput.files[0]) reader.readAsDataURL(fileInput.files[0]);
-}
+      if (fileInput.files[0]) reader.readAsDataURL(fileInput.files[0]);
+    }
 
     function sendNotificationEmail(personName, email, location, desc) {
       if (!email) return;
@@ -857,113 +844,38 @@
       }).then(() => alert(`Email sent to ${personName}`));
     }
 
-    // ၃။ Completion Email ပို့သည့် Function (Clean Data Only)
-function sendCompletionEmail(req) {
-  const requestorName = req.createdByName || req.requestorName || "Requestor";
-  const technicianName = req.completedByName || req.assignPerson || "Technician";
-  const todayStr = new Date().toLocaleDateString('en-GB'); 
+    function sendCompletionEmail(req) {
+      const recipientEmail = req.createdByEmail || req.assignEmail;
+      const recipientName = req.createdByName || "Assigner";
 
-  // 413 Error မတက်စေရန် စာသား သီးသန့်သာ ပို့မည်
-  const safePayload = {
-    requestor_name: String(requestorName),
-    technician_name: String(technicianName),
-    location: String(req.location || "N/A"),
-    description: String(req.desc || req.resolution || "Completed / Resolved"),
-    before_date: String(req.createdDate || "N/A"),
-    after_date: String(req.completedDate || todayStr),
-    to_email: String(req.createdByEmail || req.assignEmail || "maung@lkangco.sg")
-  };
+      emailjs.send('service_94a1xtp', 'template_h6xz4dc', {
+        to_name: recipientName, to_email: recipientEmail, cc_email: CC_EMAIL,
+        sender_name: currentUser ? currentUser.name : req.assignPerson,
+        location: req.location, description: `COMPLETED / RESOLVED: ${req.desc}`
+      }).then(() => alert(`Completion email sent to ${recipientName}`));
+    }
 
-  console.log("=== Sending EmailJS Payload ===", safePayload);
+    function openUpdateModal(key) {
+      const req = maintenanceRequests[key];
+      if (!req) return;
 
-  emailjs.send('service_94a1xtp', 'template_h6xz4dc', safePayload)
-    .then((response) => {
-      console.log('EMAILJS SUCCESS!', response.status, response.text);
-      alert(`Status updated to Resolved & Email sent to ${requestorName}!`);
-    })
-    .catch((error) => {
-      console.error('EMAILJS FAILED...', error);
-      alert("Status updated to Resolved, but Email sending failed. Check console.");
-    });
-}
+      document.getElementById('update-req-key').value = key;
+      document.getElementById('update-assign-person').value = req.assignEmail;
+      document.getElementById('update-status').value = req.status;
+      document.getElementById('req-after-img').value = '';
 
-    
-    // ၁။ Modal ပွင့်သည့် Function (Form Event Binding ရှင်းလင်းထားသည်)
-function openUpdateModal(key) {
-  const req = maintenanceRequests[key];
-  if (!req) return;
+      const previewContainer = document.getElementById('after-img-preview-container');
+      const previewImg = document.getElementById('update-after-preview');
 
-  document.getElementById('update-req-key').value = key;
-  document.getElementById('update-status').value = req.status || 'Pending';
-  document.getElementById('req-after-img').value = ''; // File Input ရှင်းမည်
-
-  // Assign Person Dropdown ရွေးပေးခြင်း
-  const selectEl = document.getElementById('update-assign-person');
-  if (selectEl && req.assignEmail) {
-    selectEl.value = req.assignEmail;
-  }
-
-  // Modal ဖွင့်မည်
-  document.getElementById('modal-update-request').style.display = 'block';
-}
-
-// ၂။ Save Changes နှိပ်သည့် Event (Form Submit ကို တစ်နေရာတည်းတွင် ချိန်တွယ်ခြင်း)
-document.getElementById('form-update-request').onsubmit = function(e) {
-  e.preventDefault();
-  
-  const key = document.getElementById('update-req-key').value;
-  const selectEl = document.getElementById('update-assign-person');
-  const assignEmail = selectEl.value;
-  const assignPerson = selectEl.options[selectEl.selectedIndex].getAttribute('data-name');
-  let status = document.getElementById('update-status').value;
-  const fileInput = document.getElementById('req-after-img');
-
-  const target = maintenanceRequests[key];
-  if (!target) return;
-
-  const previousStatus = target.status;
-  const todayStr = new Date().toLocaleDateString('en-GB');
-  const techName = (typeof currentUser !== 'undefined' && currentUser && currentUser.name) ? currentUser.name : assignPerson;
-
-  // ပုံ အသစ်တင်ထားပါက Status ကို Auto 'Resolved' ပြောင်းမည်
-  if (fileInput.files[0]) {
-    status = 'Resolved';
-  }
-
-  const updateData = {
-    assignPerson: assignPerson,
-    assignEmail: assignEmail,
-    status: status
-  };
-
-  if (status === 'Resolved') {
-    updateData.completedDate = target.completedDate || todayStr;
-    updateData.completedByName = techName;
-  }
-
-  // Save Button ခဏ Lock ချမည် (Double Click ကာကွယ်ရန်)
-  const saveBtn = e.target.querySelector('button[type="submit"]');
-  if (saveBtn) saveBtn.disabled = true;
-
-  // Firebase သို့ သိမ်းဆည်းမည်
-  db.ref('maintenance/' + key).update(updateData)
-    .then(() => {
-      if (saveBtn) saveBtn.disabled = false;
-      closeModal('modal-update-request');
-
-      // Status 'Resolved' ဖြစ်သွားပါက Email ပို့မည်
-      if (status === 'Resolved' && previousStatus !== 'Resolved') {
-        sendCompletionEmail({ ...target, ...updateData });
+      if (req.afterImg) {
+        previewImg.src = req.afterImg;
+        previewContainer.classList.remove('hidden');
       } else {
-        alert("Update saved successfully!");
+        previewContainer.classList.add('hidden');
       }
-    })
-    .catch((err) => {
-      if (saveBtn) saveBtn.disabled = false;
-      console.error("Firebase Update Error:", err);
-      alert("Failed to save changes.");
-    });
-};
+
+      openModal('modal-update-request');
+    }
 
     function removeAfterImage() {
       const key = document.getElementById('update-req-key').value;
@@ -974,54 +886,38 @@ document.getElementById('form-update-request').onsubmit = function(e) {
     }
 
     function saveMaintenanceUpdate(e) {
-  e.preventDefault();
-  const key = document.getElementById('update-req-key').value;
-  const selectEl = document.getElementById('update-assign-person');
-  const assignEmail = selectEl.value;
-  const assignPerson = selectEl.options[selectEl.selectedIndex].getAttribute('data-name');
-  let status = document.getElementById('update-status').value;
-  const fileInput = document.getElementById('req-after-img');
+      e.preventDefault();
+      const key = document.getElementById('update-req-key').value;
+      const selectEl = document.getElementById('update-assign-person');
+      const assignEmail = selectEl.value;
+      const assignPerson = selectEl.options[selectEl.selectedIndex].getAttribute('data-name');
+      let status = document.getElementById('update-status').value;
+      const fileInput = document.getElementById('req-after-img');
 
-  const target = maintenanceRequests[key];
-  if (!target) return;
+      const target = maintenanceRequests[key];
+      if (!target) return;
 
-  const previousStatus = target.status;
-  const todayStr = new Date().toLocaleDateString('en-GB');
-  const techName = currentUser ? currentUser.name : assignPerson;
+      const previousStatus = target.status;
 
-  if (fileInput.files[0]) {
-    // ပုံကို Compress လုပ်ပြီးမှ သိမ်းမည်/ပို့မည်
-    compressImage(fileInput.files[0], function(compressedBase64) {
-      const updateData = {
-        assignPerson, 
-        assignEmail, 
-        afterImg: compressedBase64, 
-        completedDate: todayStr,
-        completedByName: techName,
-        status: 'Resolved'
-      };
-      
-      db.ref('maintenance/' + key).update(updateData);
-      closeModal('modal-update-request');
-      
-      // Email ပို့ခြင်း
-      sendCompletionEmail({ ...target, ...updateData });
-    });
-  } else {
-    const updateData = { assignPerson, assignEmail, status };
-    if (status === 'Resolved' && !target.completedDate) {
-      updateData.completedDate = todayStr;
-      updateData.completedByName = techName;
+      if (fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function() {
+          db.ref('maintenance/' + key).update({
+            assignPerson, assignEmail, afterImg: reader.result, status: 'Resolved'
+          });
+          closeModal('modal-update-request');
+          sendCompletionEmail(target);
+        };
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        db.ref('maintenance/' + key).update({ assignPerson, assignEmail, status });
+        closeModal('modal-update-request');
+
+        if (status === 'Resolved' && previousStatus !== 'Resolved') {
+          sendCompletionEmail(target);
+        }
+      }
     }
-    
-    db.ref('maintenance/' + key).update(updateData);
-    closeModal('modal-update-request');
-
-    if (status === 'Resolved' && previousStatus !== 'Resolved') {
-      sendCompletionEmail({ ...target, ...updateData });
-    }
-  }
-}
 
     function deleteMaintenanceRecord(key) {
       if (confirm('Are you sure you want to delete this record?')) {
@@ -1030,57 +926,36 @@ document.getElementById('form-update-request').onsubmit = function(e) {
     }
 
     function renderMaintenanceTable() {
-  const tbody = document.getElementById('maintenance-table-body');
-  if (!tbody) return;
-  tbody.innerHTML = '';
+      const tbody = document.getElementById('maintenance-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
 
-  Object.keys(maintenanceRequests).forEach((key) => {
-    const req = maintenanceRequests[key];
-    let badgeClass = 'badge-pending';
-    if (req.status === 'In Progress') badgeClass = 'badge-progress';
-    if (req.status === 'Resolved') badgeClass = 'badge-resolved';
+      Object.keys(maintenanceRequests).forEach((key) => {
+        const req = maintenanceRequests[key];
+        let badgeClass = 'badge-pending';
+        if (req.status === 'In Progress') badgeClass = 'badge-progress';
+        if (req.status === 'Resolved') badgeClass = 'badge-resolved';
 
-    // Before Date & After Date Display Format
-    const beforeDateHtml = req.createdDate 
-      ? `<div style="font-size:0.75rem; color:#94a3b8; margin-top:4px;">📅 ${req.createdDate}</div>` 
-      : '';
-      
-    const afterDateHtml = req.completedDate 
-      ? `<div style="font-size:0.75rem; color:#86efac; margin-top:4px;">✅ ${req.completedDate}</div>` 
-      : '';
-
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><b>${req.assignPerson}</b><br><span style="font-size:0.75rem; color:#94a3b8;">${req.assignEmail}</span></td>
-      <td><b>${req.createdByName || '-'}</b></td>
-      <td>${req.location}</td>
-      <td>${req.desc}</td>
-      
-      <!-- BEFORE IMAGE + DATE -->
-      <td style="text-align:center;">
-        <img src="${req.beforeImg}" class="img-preview" onclick="viewFullImage('${req.beforeImg}')" alt="Before">
-        ${beforeDateHtml}
-      </td>
-
-      <!-- AFTER IMAGE + DATE -->
-      <td style="text-align:center;">
-        ${req.afterImg 
-          ? `<img src="${req.afterImg}" class="img-preview" onclick="viewFullImage('${req.afterImg}')" alt="After">${afterDateHtml}` 
-          : '<span style="color:#64748b;">Not Uploaded</span>'}
-      </td>
-
-      <td><span class="badge ${badgeClass}">${req.status}</span></td>
-      <td>
-        <button class="btn btn-secondary" style="padding:4px 8px; font-size:0.75rem;" onclick="sendNotificationEmail('${req.assignPerson}', '${req.assignEmail}', '${req.location}', '${req.desc}')">⚡ Resend Email</button>
-      </td>
-      <td style="display:flex; gap:6px; margin-top:8px;">
-        <button class="btn btn-warning" style="padding:4px 8px; font-size:0.75rem;" onclick="openUpdateModal('${key}')">Edit / Update</button>
-        <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="deleteMaintenanceRecord('${key}')">Delete</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><b>${req.assignPerson}</b><br><span style="font-size:0.75rem; color:#94a3b8;">${req.assignEmail}</span></td>
+          <td><b>${req.createdByName || '-'}</b></td>
+          <td>${req.location}</td>
+          <td>${req.desc}</td>
+          <td><img src="${req.beforeImg}" class="img-preview" onclick="viewFullImage('${req.beforeImg}')" alt="Before"></td>
+          <td>${req.afterImg ? `<img src="${req.afterImg}" class="img-preview" onclick="viewFullImage('${req.afterImg}')" alt="After">` : '<span style="color:#64748b;">Not Uploaded</span>'}</td>
+          <td><span class="badge ${badgeClass}">${req.status}</span></td>
+          <td>
+            <button class="btn btn-secondary" style="padding:4px 8px; font-size:0.75rem;" onclick="sendNotificationEmail('${req.assignPerson}', '${req.assignEmail}', '${req.location}', '${req.desc}')">⚡ Resend Email</button>
+          </td>
+          <td style="display:flex; gap:6px; margin-top:8px;">
+            <button class="btn btn-warning" style="padding:4px 8px; font-size:0.75rem;" onclick="openUpdateModal('${key}')">Edit / Update</button>
+            <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="deleteMaintenanceRecord('${key}')">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
 
     // --- CHECKLIST LOGIC ---
     function submitChecklist(e) {
