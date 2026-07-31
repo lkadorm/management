@@ -508,11 +508,11 @@
 
   <!-- JAVASCRIPT WITH FIREBASE INTEGRATION -->
   <script>
-    const CC_EMAIL = "zayarmm88@gmail.com";
+    const CC_EMAIL = "hlang@lkang.com.sg";
 
     // 1. FIREBASE CONFIGURATION (ဒီနေရာတွင် အဆင့် ၂ မှ ကူးလာသော မိမိ၏ Config ဖြင့် အစားထိုးပါ)
     const firebaseConfig = {
-      apiKey: "AIzaSyDCaQSp7pW3ooVmFmuBhKHxejQbAm21els",
+  apiKey: "AIzaSyDCaQSp7pW3ooVmFmuBhKHxejQbAm21els",
   authDomain: "lkang-dorm-system.firebaseapp.com",
   databaseURL: "https://lkang-dorm-system-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "lkang-dorm-system",
@@ -858,30 +858,53 @@
     }
 
     function sendCompletionEmail(req) {
-  // စစချင်း Request တင်ခဲ့သူ (Requestor)
-  const requestorName = req.createdByName || "Requestor";
-  const requestorEmail = req.createdByEmail || req.assignEmail;
+  // ၁။ နာမည်များ ထုတ်ယူခြင်း
+  const requestorName = req.createdByName || req.requestorName || "Requestor";
+  const technicianName = (typeof currentUser !== 'undefined' && currentUser && currentUser.name) 
+                          ? currentUser.name 
+                          : (req.assignPerson || req.technicianName || "Technician");
 
-  // ပြင်ဆင်ပြီး After Image တင်ပေးခဲ့သူ (Technician)
-  const technicianName = req.completedByName || (currentUser ? currentUser.name : req.assignPerson);
+  // ၂။ ရက်စွဲများ ထုတ်ယူခြင်း (မရှိပါက လက်ရှိရက်စွဲ သို့မဟုတ် N/A ပြရန်)
+  const todayStr = new Date().toLocaleDateString('en-GB'); // DD/MM/YYYY Format
+  const beforeDate = req.createdDate || req.beforeDate || "N/A";
+  const afterDate = req.completedDate || req.afterDate || todayStr;
 
-  emailjs.send('service_94a1xtp', 'template_h6xz4dc', {
-    to_name: requestorName,
+  // ၃။ Image Data များ (Base64 သို့မဟုတ် Image URL)
+  const beforeImg = req.beforeImg || req.beforeImageUrl || "";
+  const afterImg = req.afterImg || req.afterImageUrl || "";
+
+  // ⚠️ Browser Console (F12) တွင် Data ဝင်မဝင် စစ်ဆေးရန် Log ထုတ်ကြည့်ခြင်း
+  console.log("=== EmailJS Sending Payload ===");
+  console.log("Requestor:", requestorName);
+  console.log("Technician:", technicianName);
+  console.log("Before Date:", beforeDate);
+  console.log("After Date:", afterDate);
+  console.log("Before Image Length:", beforeImg.length);
+  console.log("After Image Length:", afterImg.length);
+
+  // ၄။ EmailJS သို့ ပို့မည့် Params (Template ထဲက {{ ... }} နာမည်များနှင့် အတိအကျ တူရမည်)
+  const templateParams = {
     requestor_name: requestorName,
-    to_email: requestorEmail,
-    cc_email: CC_EMAIL,
     technician_name: technicianName,
-    location: req.location,
-    description: req.desc,
-    before_date: req.createdDate || "N/A",
-    after_date: req.completedDate || new Date().toLocaleDateString('en-GB'),
-    before_image_url: req.beforeImg || "",
-    after_image_url: req.afterImg || ""
-  }).then(() => {
-    alert(`Completion email sent to ${requestorName}`);
-  }).catch((err) => {
-    console.error("EmailJS Error:", err);
-  });
+    location: req.location || "N/A",
+    description: req.desc || req.resolution || "Completed / Resolved",
+    before_date: beforeDate,
+    after_date: afterDate,
+    before_image_url: beforeImg,
+    after_image_url: afterImg,
+    to_email: req.createdByEmail || req.assignEmail || "maung@lkangco.sg"
+  };
+
+  // ၅။ ပို့ဆောင်ခြင်း
+  emailjs.send('service_94a1xtp', 'template_h6xz4dc', templateParams)
+    .then((response) => {
+      console.log('SUCCESS!', response.status, response.text);
+      alert("Completion email sent successfully!");
+    })
+    .catch((error) => {
+      console.error('FAILED...', error);
+      alert("Failed to send email. Check browser console for details.");
+    });
 }
 
     function openUpdateModal(key) {
@@ -971,61 +994,7 @@
       }
     }
 
-    function saveMaintenanceUpdate(e) {
-  e.preventDefault();
-  const key = document.getElementById('update-req-key').value;
-  const selectEl = document.getElementById('update-assign-person');
-  const assignEmail = selectEl.value;
-  const assignPerson = selectEl.options[selectEl.selectedIndex].getAttribute('data-name');
-  let status = document.getElementById('update-status').value;
-  const fileInput = document.getElementById('req-after-img');
-
-  const target = maintenanceRequests[key];
-  if (!target) return;
-
-  const previousStatus = target.status;
-  const todayStr = new Date().toLocaleDateString('en-GB');
-  const techName = currentUser ? currentUser.name : assignPerson;
-
-  if (fileInput.files[0]) {
-    const reader = new FileReader();
-    reader.onload = function() {
-      const updateData = {
-        assignPerson, 
-        assignEmail, 
-        afterImg: reader.result, 
-        completedDate: todayStr, // After Date သိမ်းမည်
-        completedByName: techName, // ပြင်ဆင်သူ နာမည်
-        status: 'Resolved'
-      };
-      
-      db.ref('maintenance/' + key).update(updateData);
-      closeModal('modal-update-request');
-      
-      // Update ဖြစ်သွားသော Data အသစ်ဖြင့် Email ပို့မည်
-      sendCompletionEmail({ ...target, ...updateData });
-    };
-    reader.readAsDataURL(fileInput.files[0]);
-  } else {
-    const updateData = { assignPerson, assignEmail, status };
-    if (status === 'Resolved' && !target.completedDate) {
-      updateData.completedDate = todayStr;
-      updateData.completedByName = techName;
-    }
-    
-    db.ref('maintenance/' + key).update(updateData);
-    closeModal('modal-update-request');
-
-    if (status === 'Resolved' && previousStatus !== 'Resolved') {
-      sendCompletionEmail({ ...target, ...updateData });
-    }
-  }
-}
-(ဂ) renderMaintenanceTable Function ကို ပြင်ရန်
-(Web Page ပေါ်ရှိ Table ထဲတွင် ပုံများ၏ အောက်၌ ရက်စွဲများ ဖော်ပြပေးရန်)
-
-JavaScript
-function renderMaintenanceTable() {
+    function renderMaintenanceTable() {
   const tbody = document.getElementById('maintenance-table-body');
   if (!tbody) return;
   tbody.innerHTML = '';
