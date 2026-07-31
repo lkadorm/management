@@ -8,6 +8,9 @@
   <!-- SheetJS Library for Excel Export -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
+  <!-- SheetJS Library (Excel ဖတ်ရန်) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
   <!-- EmailJS SDK Integration -->
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
@@ -174,6 +177,8 @@
             <h1 class="page-title">Resident Records</h1>
             <div class="header-actions">
               <button class="btn btn-green" onclick="openNewResidentModal()">+ New Resident</button>
+              <input type="file" id="excel-file-input" accept=".xlsx, .xls" style="display: none;" onchange="handleExcelImport(event)" />
+              <button class="btn btn-success" onclick="document.getElementById('excel-file-input').click()">📁 Import Excel</button>
               <button class="btn btn-excel" onclick="exportResidentsToExcel()">📊 Export to Excel</button>
             </div>
           </div>
@@ -805,6 +810,79 @@
       XLSX.utils.book_append_sheet(workbook, worksheet, "Resident Records");
       XLSX.writeFile(workbook, "LK_Ang_Dormitory_Residents.xlsx");
     }
+
+    function handleExcelImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function (e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+
+      // ပထမဆုံး Sheet ကို ယူသုံးမည်
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+
+      // Sheet ကို JSON Array အဖြစ် ပြောင်းလဲခြင်း
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      if (jsonData.length === 0) {
+        alert("Excel file ထဲတွင် Data မရှိပါ။");
+        return;
+      }
+
+      console.log("Imported Excel Data:", jsonData);
+
+      // Firebase သို့ အုပ်စုလိုက် သိမ်းဆည်းရန် Object ပြင်ဆင်ခြင်း
+      const updates = {};
+      let count = 0;
+
+      jsonData.forEach((row) => {
+        // Firebase Push Key အသစ် ရယူခြင်း
+        const newRefKey = db.ref('residents').push().key;
+
+        // Excel Column နာမည်များနှင့် ကိုက်ညီအောင် Data Mapping လုပ်ခြင်း
+        // (Excel ထဲက Column Header နာမည်များနှင့် အတိအကျ တူရပါမည်)
+        updates['residents/' + newRefKey] = {
+          residentId: row['Resident ID'] || row['residentId'] || `LKAD-${Math.floor(1000 + Math.random() * 9000)}`,
+          name: row['Name'] || row['name'] || "N/A",
+          wpNo: row['WP No'] || row['wpNo'] || "N/A",
+          wpExpiry: row['WP Expiry'] || row['wpExpiry'] || "N/A",
+          nationality: row['Nationality'] || row['nationality'] || "N/A",
+          companyName: row['Company Name'] || row['companyName'] || "N/A",
+          bedNo: row['Bed No'] || row['bedNo'] || "N/A",
+          accessCardNo: row['Access Card No'] || row['accessCardNo'] || "N/A",
+          foodOrder: row['Food Order'] || row['foodOrder'] || "No",
+          checkInDate: row['Check-in Date'] || row['checkInDate'] || new Date().toISOString().split('T')[0],
+          checkOutDate: row['Check-out Date'] || row['checkOutDate'] || "-",
+          photo: row['Photo'] || ""
+        };
+        count++;
+      });
+
+      // Firebase သို့ Database အသစ်များ Update ပြုလုပ်ခြင်း
+      db.ref().update(updates)
+        .then(() => {
+          alert(`Resident ${count} ယောက်၏ Data ကို အောင်မြင်စွာ Import လုပ်ပြီးပါပြီ!`);
+          // File Input ကို ပြန်ရှင်းမည်
+          event.target.value = '';
+        })
+        .catch((err) => {
+          console.error("Import Error:", err);
+          alert("Data မသိမ်းနိုင်ပါ။ Error: " + err.message);
+        });
+
+    } catch (err) {
+      console.error("Excel Processing Error:", err);
+      alert("Excel ဖိုင် ဖတ်ရသည်မှာ အဆင်မပြေပါ။ ဖိုင် Format မှန်မမှန် ပြန်စစ်ပါ။");
+    }
+  };
+
+  reader.readAsArrayBuffer(file);
+}
 
     // --- MAINTENANCE SYSTEM & EMAILJS ---
     function submitMaintenanceRequest(e) {
