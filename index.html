@@ -858,52 +858,37 @@
     }
 
     function sendCompletionEmail(req) {
-  // ၁။ နာမည်များ ထုတ်ယူခြင်း
+  // 1. နာမည်နှင့် ရက်စွဲများ သီးသန့် ထုတ်ယူခြင်း
   const requestorName = req.createdByName || req.requestorName || "Requestor";
-  const technicianName = (typeof currentUser !== 'undefined' && currentUser && currentUser.name) 
-                          ? currentUser.name 
-                          : (req.assignPerson || req.technicianName || "Technician");
+  const technicianName = req.completedByName || (typeof currentUser !== 'undefined' && currentUser ? currentUser.name : req.assignPerson) || "Technician";
 
-  // ၂။ ရက်စွဲများ ထုတ်ယူခြင်း (မရှိပါက လက်ရှိရက်စွဲ သို့မဟုတ် N/A ပြရန်)
-  const todayStr = new Date().toLocaleDateString('en-GB'); // DD/MM/YYYY Format
-  const beforeDate = req.createdDate || req.beforeDate || "N/A";
-  const afterDate = req.completedDate || req.afterDate || todayStr;
+  const todayStr = new Date().toLocaleDateString('en-GB'); 
+  const beforeDate = req.createdDate || "N/A";
+  const afterDate = req.completedDate || todayStr;
 
-  // ၃။ Image Data များ (Base64 သို့မဟုတ် Image URL)
-  const beforeImg = req.beforeImg || req.beforeImageUrl || "";
-  const afterImg = req.afterImg || req.afterImageUrl || "";
-
-  // ⚠️ Browser Console (F12) တွင် Data ဝင်မဝင် စစ်ဆေးရန် Log ထုတ်ကြည့်ခြင်း
-  console.log("=== EmailJS Sending Payload ===");
-  console.log("Requestor:", requestorName);
-  console.log("Technician:", technicianName);
-  console.log("Before Date:", beforeDate);
-  console.log("After Date:", afterDate);
-  console.log("Before Image Length:", beforeImg.length);
-  console.log("After Image Length:", afterImg.length);
-
-  // ၄။ EmailJS သို့ ပို့မည့် Params (Template ထဲက {{ ... }} နာမည်များနှင့် အတိအကျ တူရမည်)
-  const templateParams = {
-    requestor_name: requestorName,
-    technician_name: technicianName,
-    location: req.location || "N/A",
-    description: req.desc || req.resolution || "Completed / Resolved",
-    before_date: beforeDate,
-    after_date: afterDate,
-    before_image_url: beforeImg,
-    after_image_url: afterImg,
-    to_email: req.createdByEmail || req.assignEmail || "maung@lkangco.sg"
+  // ⚠️ 413 ERROR မတက်စေရန်: req.beforeImg နှင့် req.afterImg များကို လုံးဝ မထည့်ပါနှင့်!
+  // စာသား အဖြစ်သာ တိကျစွာ Cast လုပ်ပြီး ထည့်ပါမည်။
+  const safePayload = {
+    requestor_name: String(requestorName),
+    technician_name: String(technicianName),
+    location: String(req.location || "N/A"),
+    description: String(req.desc || req.resolution || "Completed / Resolved"),
+    before_date: String(beforeDate),
+    after_date: String(afterDate),
+    to_email: String(req.createdByEmail || req.assignEmail || "maung@lkangco.sg")
   };
 
-  // ၅။ ပို့ဆောင်ခြင်း
-  emailjs.send('service_94a1xtp', 'template_h6xz4dc', templateParams)
+  console.log("=== Clean Payload Sending (No Heavy Base64) ===", safePayload);
+
+  // EmailJS သို့ ပို့ဆောင်ခြင်း
+  emailjs.send('service_94a1xtp', 'template_h6xz4dc', safePayload)
     .then((response) => {
-      console.log('SUCCESS!', response.status, response.text);
-      alert("Completion email sent successfully!");
+      console.log('EMAILJS SUCCESS!', response.status, response.text);
+      alert(`Completion email sent successfully to ${requestorName}!`);
     })
     .catch((error) => {
-      console.error('FAILED...', error);
-      alert("Failed to send email. Check browser console for details.");
+      console.error('EMAILJS FAILED...', error);
+      alert("Failed to send completion email. Check console.");
     });
 }
 
