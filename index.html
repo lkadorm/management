@@ -858,14 +858,16 @@
     }
 
     function sendCompletionEmail(req) {
+  // ၁။ နာမည်များ ထုတ်ယူခြင်း
   const requestorName = req.createdByName || req.requestorName || "Requestor";
   const technicianName = req.completedByName || (typeof currentUser !== 'undefined' && currentUser ? currentUser.name : req.assignPerson) || "Technician";
 
+  // ၂။ ရက်စွဲများ ထုတ်ယူခြင်း
   const todayStr = new Date().toLocaleDateString('en-GB'); 
   const beforeDate = req.createdDate || "N/A";
   const afterDate = req.completedDate || todayStr;
 
-  // ⚠️ 413 Error မတက်စေရန် ပုံ Base64 များကို မပို့တော့ဘဲ Message ပို့မည်
+  // ⚠️ 413 (Payload Too Large) မဖြစ်စေရန် EmailJS သို့ ပုံ (Base64) များကို လုံးဝ မပို့ဘဲ စာသားနှင့် ရက်စွဲများသာ ပို့မည်
   const templateParams = {
     requestor_name: requestorName,
     technician_name: technicianName,
@@ -876,47 +878,21 @@
     to_email: req.createdByEmail || req.assignEmail || "maung@lkangco.sg"
   };
 
+  console.log("=== Sending Lightweight Payload (No Images) ===", templateParams);
+
+  // EmailJS ပို့ဆောင်ခြင်း (Template ID ကို မိမိ၏ တကယ့် ID ပြောင်းပါ)
   emailjs.send('service_94a1xtp', 'template_h6xz4dc', templateParams)
     .then((response) => {
       console.log('SUCCESS!', response.status, response.text);
       alert(`Completion email sent successfully to ${requestorName}!`);
     })
     .catch((error) => {
-      console.error('EMAILJS ERROR:', error);
-      alert("Email Send Failed: " + (error.text || "Status 413 / Limit Exceeded"));
+      console.error('FAILED...', error);
+      alert("Failed to send email. Check browser console for details.");
     });
 }
 
-    // Image Size လျှော့ပေးသည့် Helper Function
-function compressImage(file, callback) {
-  const maxWidth = 600; // ပုံအကျယ်ကို Max 600px ပဲထားမည်
-  const reader = new FileReader();
-  reader.readAsDataURL(file);
-  reader.onload = function(event) {
-    const img = new Image();
-    img.src = event.target.result;
-    img.onload = function() {
-      const canvas = document.createElement('canvas');
-      let width = img.width;
-      let height = img.height;
-
-      if (width > maxWidth) {
-        height = Math.round((height * maxWidth) / width);
-        width = maxWidth;
-      }
-
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, width, height);
-
-      // Quality 70% ဖြင့် Compression လုပ်ခြင်း
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-      callback(dataUrl);
-    };
-  };
-}
-
+    
     function openUpdateModal(key) {
       const req = maintenanceRequests[key];
       if (!req) return;
