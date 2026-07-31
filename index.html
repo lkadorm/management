@@ -875,8 +875,9 @@
     description: String(req.desc || req.resolution || "Completed / Resolved"),
     before_date: String(beforeDate),
     after_date: String(afterDate),
-    to_email: String(req.createdByEmail || req.assignEmail || "maung@lkangco.sg")
-  };
+    to_email: String(req.createdByEmail || req.assignEmail || "maung@lkangco.sg"),
+    cc_email: String(targetCcEmail) // CC Email သီးသန့်
+    };
 
   console.log("=== Clean Payload Sending (No Heavy Base64) ===", safePayload);
 
