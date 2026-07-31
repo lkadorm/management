@@ -858,30 +858,53 @@
     }
 
     function sendCompletionEmail(req) {
-  // စစချင်း Request တင်ခဲ့သူ (Requestor)
-  const requestorName = req.createdByName || "Requestor";
-  const requestorEmail = req.createdByEmail || req.assignEmail;
+  // ၁။ နာမည်များ ထုတ်ယူခြင်း
+  const requestorName = req.createdByName || req.requestorName || "Requestor";
+  const technicianName = (typeof currentUser !== 'undefined' && currentUser && currentUser.name) 
+                          ? currentUser.name 
+                          : (req.assignPerson || req.technicianName || "Technician");
 
-  // ပြင်ဆင်ပြီး After Image တင်ပေးခဲ့သူ (Technician)
-  const technicianName = req.completedByName || (currentUser ? currentUser.name : req.assignPerson);
+  // ၂။ ရက်စွဲများ ထုတ်ယူခြင်း (မရှိပါက လက်ရှိရက်စွဲ သို့မဟုတ် N/A ပြရန်)
+  const todayStr = new Date().toLocaleDateString('en-GB'); // DD/MM/YYYY Format
+  const beforeDate = req.createdDate || req.beforeDate || "N/A";
+  const afterDate = req.completedDate || req.afterDate || todayStr;
 
-  emailjs.send('service_94a1xtp', 'template_h6xz4dc', {
-    to_name: requestorName,
+  // ၃။ Image Data များ (Base64 သို့မဟုတ် Image URL)
+  const beforeImg = req.beforeImg || req.beforeImageUrl || "";
+  const afterImg = req.afterImg || req.afterImageUrl || "";
+
+  // ⚠️ Browser Console (F12) တွင် Data ဝင်မဝင် စစ်ဆေးရန် Log ထုတ်ကြည့်ခြင်း
+  console.log("=== EmailJS Sending Payload ===");
+  console.log("Requestor:", requestorName);
+  console.log("Technician:", technicianName);
+  console.log("Before Date:", beforeDate);
+  console.log("After Date:", afterDate);
+  console.log("Before Image Length:", beforeImg.length);
+  console.log("After Image Length:", afterImg.length);
+
+  // ၄။ EmailJS သို့ ပို့မည့် Params (Template ထဲက {{ ... }} နာမည်များနှင့် အတိအကျ တူရမည်)
+  const templateParams = {
     requestor_name: requestorName,
-    to_email: requestorEmail,
-    cc_email: CC_EMAIL,
     technician_name: technicianName,
-    location: req.location,
-    description: req.desc,
-    before_date: req.createdDate || "N/A",
-    after_date: req.completedDate || new Date().toLocaleDateString('en-GB'),
-    before_image_url: req.beforeImg || "",
-    after_image_url: req.afterImg || ""
-  }).then(() => {
-    alert(`Completion email sent to ${requestorName}`);
-  }).catch((err) => {
-    console.error("EmailJS Error:", err);
-  });
+    location: req.location || "N/A",
+    description: req.desc || req.resolution || "Completed / Resolved",
+    before_date: beforeDate,
+    after_date: afterDate,
+    before_image_url: beforeImg,
+    after_image_url: afterImg,
+    to_email: req.createdByEmail || req.assignEmail || "maung@lkangco.sg"
+  };
+
+  // ၅။ ပို့ဆောင်ခြင်း
+  emailjs.send('service_94a1xtp', 'template_h6xz4dc', templateParams)
+    .then((response) => {
+      console.log('SUCCESS!', response.status, response.text);
+      alert("Completion email sent successfully!");
+    })
+    .catch((error) => {
+      console.error('FAILED...', error);
+      alert("Failed to send email. Check browser console for details.");
+    });
 }
 
     function openUpdateModal(key) {
