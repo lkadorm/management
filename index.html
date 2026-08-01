@@ -16,7 +16,6 @@
 
   <!-- Firebase SDKs (v9 Compat Mode) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <script type="text/javascript">
@@ -332,6 +331,7 @@
                   <th>Inspector Name</th>
                   <th>Remarks</th>
                   <th>Attachment</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody id="checklist-table-body"></tbody>
@@ -536,10 +536,13 @@
     </div>
   </div>
 
+  <!-- CHECKLIST MODAL (NEW / EDIT) -->
   <div id="modal-new-checklist" class="modal hidden">
     <div class="modal-content">
-      <h2 style="margin-bottom:16px;">Dormitory Inspection Records</h2>
+      <h2 id="chk-modal-title" style="margin-bottom:16px;">Dormitory Inspection Record</h2>
       <form onsubmit="submitChecklist(event)">
+        <input type="hidden" id="chk-edit-key" value="">
+
         <!-- Remarks Field -->
         <div class="form-group">
           <label>Remarks</label>
@@ -547,13 +550,14 @@
         </div>
 
         <!-- PDF File Upload Field -->
-        <div class="form-group">
+        <div class="form-group" id="chk-file-group">
           <label>Attachment (PDF File)</label>
-          <input type="file" id="chk-file" class="form-input" accept="application/pdf" required>
+          <input type="file" id="chk-file" class="form-input" accept="application/pdf">
+          <p id="chk-file-hint" style="font-size:0.75rem; color:#94a3b8; margin-top:4px; display:none;"></p>
         </div>
 
         <div style="display:flex; gap:10px; margin-top:20px;">
-          <button type="submit" class="btn btn-green">Submit Inspection</button>
+          <button type="submit" id="chk-submit-btn" class="btn btn-green">Submit Inspection</button>
           <button type="button" class="btn btn-secondary" onclick="closeModal('modal-new-checklist')">Cancel</button>
         </div>
       </form>
@@ -730,7 +734,19 @@
     }
 
     // --- MODALS ---
-    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function openModal(id) { 
+      if (id === 'modal-new-checklist') {
+        document.getElementById('chk-modal-title').innerText = "Dormitory Inspection Record";
+        document.getElementById('chk-submit-btn').innerText = "Submit Inspection";
+        document.getElementById('chk-edit-key').value = "";
+        document.getElementById('chk-remarks').value = "";
+        document.getElementById('chk-file').value = "";
+        document.getElementById('chk-file').required = true;
+        document.getElementById('chk-file-hint').style.display = "none";
+      }
+      document.getElementById(id).classList.remove('hidden'); 
+    }
+    
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
     function viewFullImage(imgSrc) {
@@ -1266,55 +1282,110 @@
       });
     }
 
-    // --- CHECKLIST LOGIC (FULLY FIXED & FIREBASE ONLY) ---
+    // --- CHECKLIST LOGIC (WITH EDIT & DELETE FEATURES) ---
+
+    function openEditChecklistModal(key) {
+      const item = checklists[key];
+      if (!item) return;
+
+      document.getElementById('chk-modal-title').innerText = "Edit Checklist Record";
+      document.getElementById('chk-submit-btn').innerText = "Update Record";
+      document.getElementById('chk-edit-key').value = key;
+      document.getElementById('chk-remarks').value = item.remarks || "";
+      
+      const fileInput = document.getElementById('chk-file');
+      fileInput.value = "";
+      fileInput.required = false; // Edit လုပ်ချိန် PDF မဖြစ်မနေ အသစ်တင်ရန် မလိုပါ
+
+      const fileHint = document.getElementById('chk-file-hint');
+      fileHint.innerText = item.fileName ? `Current File: ${item.fileName} (Leave empty to keep current file)` : '';
+      fileHint.style.display = item.fileName ? "block" : "none";
+
+      openModal('modal-new-checklist');
+    }
+
+    function deleteChecklistRecord(key) {
+      if (confirm('Are you sure you want to delete this inspection record?')) {
+        db.ref('checklists/' + key).remove();
+      }
+    }
 
     function submitChecklist(e) {
       e.preventDefault();
 
+      const editKey = document.getElementById('chk-edit-key').value;
       const fileInput = document.getElementById('chk-file');
       const remarksInput = document.getElementById('chk-remarks');
+      const remarksVal = remarksInput ? remarksInput.value : '';
 
-      if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+      // Create အသစ်ပြုလုပ်ချိန် File မဖြစ်မနေ စစ်ဆေးခြင်း
+      if (!editKey && (!fileInput || !fileInput.files || fileInput.files.length === 0)) {
         alert("Please select a PDF file!");
         return;
       }
 
-      const file = fileInput.files[0];
-      const remarksVal = remarksInput ? remarksInput.value : '';
+      const saveToFirebase = (fileData, fileName) => {
+        if (editKey) {
+          // Edit Update
+          const updateObj = {
+            remarks: remarksVal || '-'
+          };
+          if (fileData) {
+            updateObj.fileData = fileData;
+            updateObj.fileName = fileName;
+          }
 
-      // 2MB Limit စစ်ခြင်း
-      if (file.size > 2097152) {
-        alert("PDF File Size သည် 2MB ထက် မပိုရပါခင်ဗျာ။");
-        return;
-      }
+          db.ref('checklists/' + editKey).update(updateObj, function(error) {
+            if (error) {
+              alert("Update Error: " + error.message);
+            } else {
+              closeModal('modal-new-checklist');
+            }
+          });
+        } else {
+          // Create New
+          const item = {
+            date: new Date().toLocaleDateString('en-GB') + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+            inspector: (typeof currentUser !== 'undefined' && currentUser && currentUser.name) ? currentUser.name : "Inspector",
+            remarks: remarksVal || '-',
+            fileName: fileName,
+            fileData: fileData
+          };
 
-      const reader = new FileReader();
-      
-      reader.onerror = function() {
-        alert("File ဖတ်ရှုရာတွင် အမှားအယွင်းရှိပါသည်!");
+          db.ref('checklists').push(item, function(error) {
+            if (error) {
+              alert("Firebase Save Error: " + error.message);
+            } else {
+              e.target.reset();
+              closeModal('modal-new-checklist');
+            }
+          });
+        }
       };
 
-      reader.onload = function(evt) {
-        const item = {
-          date: new Date().toLocaleDateString('en-GB') + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-          inspector: (typeof currentUser !== 'undefined' && currentUser && currentUser.name) ? currentUser.name : "Inspector",
-          remarks: remarksVal || '-',
-          fileName: file.name,
-          fileData: evt.target.result
+      if (fileInput.files && fileInput.files[0]) {
+        const file = fileInput.files[0];
+
+        // 2MB Limit စစ်ခြင်း
+        if (file.size > 2097152) {
+          alert("PDF File Size သည် 2MB ထက် မပိုရပါခင်ဗျာ။");
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onerror = function() {
+          alert("File ဖတ်ရှုရာတွင် အမှားအယွင်းရှိပါသည်!");
         };
 
-        // Firebase Realtime Database သို့ ပို့ခြင်း
-        db.ref('checklists').push(item, function(error) {
-          if (error) {
-            alert("Firebase Save Error: " + error.message);
-          } else {
-            e.target.reset();
-            closeModal('modal-new-checklist');
-          }
-        });
-      };
+        reader.onload = function(evt) {
+          saveToFirebase(evt.target.result, file.name);
+        };
 
-      reader.readAsDataURL(file);
+        reader.readAsDataURL(file);
+      } else {
+        // PDF ဖိုင် အသစ်မပြောင်းပါက Remarks သာ Update လုပ်မည်
+        saveToFirebase(null, null);
+      }
     }
 
     function renderChecklistTable(dataObj) {
@@ -1326,12 +1397,13 @@
       const data = dataObj || checklists;
 
       if (!data || Object.keys(data).length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#94a3b8;">No inspection records found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8;">No inspection records found.</td></tr>';
         return;
       }
 
       // Firebase မှ ရလာသော Data များကို Table ထဲ ထည့်ခြင်း
-      Object.values(data).reverse().forEach(c => {
+      Object.keys(data).reverse().forEach(key => {
+        const c = data[key];
         const tr = document.createElement('tr');
         
         const downloadBtn = c.fileData 
@@ -1343,6 +1415,10 @@
           <td>${c.inspector || '-'}</td>
           <td>${c.remarks || '-'}</td>
           <td>${downloadBtn}</td>
+          <td style="display:flex; gap:6px;">
+            <button class="btn btn-warning" style="padding:4px 8px; font-size:0.75rem;" onclick="openEditChecklistModal('${key}')">Edit</button>
+            <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="deleteChecklistRecord('${key}')">Delete</button>
+          </td>
         `;
         tbody.appendChild(tr);
       });
