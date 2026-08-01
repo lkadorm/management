@@ -644,8 +644,8 @@
 
       // 4. Sync Checklist
       db.ref('checklists').on('value', (snapshot) => {
-        checklists = snapshot.val() || {};
-        renderChecklistTable();
+      checklists = snapshot.val() || {};
+      renderChecklistTable(); 
       });
 
       // Refresh Auto-Login
@@ -1273,66 +1273,74 @@
     }
 
     // --- CHECKLIST LOGIC ---
-    function submitChecklist(e) {
-      e.preventDefault();
+    // --- CHECKLIST LOGIC (SAFE FILE UPLOAD) ---
+function submitChecklist(e) {
+  e.preventDefault();
 
-      const fileInput = document.getElementById('chk-file');
-      const file = fileInput ? fileInput.files[0] : null;
-      const remarksVal = document.getElementById('chk-remarks').value;
+  const fileInput = document.getElementById('chk-file');
+  const file = fileInput ? fileInput.files[0] : null;
+  const remarksVal = document.getElementById('chk-remarks').value;
 
-      if (!file) {
-        alert("Please select a PDF file!");
-        return;
-      }
+  if (!file) {
+    alert("Please select a PDF file!");
+    return;
+  }
 
-      // PDF ဖိုင်ကို Base64 DataURL ပြောင်းပြီး Firebase သို့ သိမ်းခြင်း
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        const item = {
-          date: new Date().toLocaleDateString(),
-          inspector: currentUser ? currentUser.name : "Inspector",
-          remarks: remarksVal || '-',
-          fileName: file.name,
-          fileData: evt.target.result // PDF Data String
-        };
+  // 1MB (1,048,576 Bytes) ထက်ကျော်ရင် သတိပေးချက်ထုတ်မည်
+  if (file.size > 1048576) {
+    alert("PDF File Size သည် 1MB ထက် မပိုရပါ (Firebase Database Limit ကြောင့်ပါ)။ ကျေးဇူးပြု၍ Size သေးသော PDF ကို ရွေးချယ်ပေးပါခင်ဗျာ။");
+    return;
+  }
 
-        db.ref('checklists').push(item);
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const item = {
+      date: new Date().toLocaleDateString(),
+      inspector: typeof currentUser !== 'undefined' && currentUser ? currentUser.name : "Inspector",
+      remarks: remarksVal || '-',
+      fileName: file.name,
+      fileData: evt.target.result
+    };
 
-        // Form Reset & Modal Close
+    db.ref('checklists').push(item, function(error) {
+      if (error) {
+        alert("Data သိမ်းဆည်းရာတွင် အမှားအယွင်းရှိပါသည်: " + error.message);
+      } else {
         e.target.reset();
         closeModal('modal-new-checklist');
-      };
+      }
+    });
+  };
 
-      reader.readAsDataURL(file);
-    }
+  reader.readAsDataURL(file);
+}
 
     function renderChecklistTable() {
-      const tbody = document.getElementById('checklist-table-body');
-      if (!tbody) return;
-      tbody.innerHTML = '';
+  const tbody = document.getElementById('checklist-table-body');
+  if (!tbody) return;
+  tbody.innerHTML = '';
 
-      if (!checklists || Object.keys(checklists).length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#94a3b8;">No records found</td></tr>';
-        return;
-      }
+  if (typeof checklists === 'undefined' || !checklists || Object.keys(checklists).length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#94a3b8;">No records found</td></tr>';
+    return;
+  }
 
-      Object.values(checklists).forEach(c => {
-        const tr = document.createElement('tr');
-        
-        // Attachment Download Button ပါဝင်သည့် Column
-        const downloadBtn = c.fileData 
-          ? `<a href="${c.fileData}" download="${c.fileName || 'Inspection_Report.pdf'}" class="btn btn-primary" style="padding: 4px 10px; font-size: 0.75rem;">📥 Download PDF</a>`
-          : '-';
+  Object.values(checklists).forEach(c => {
+    const tr = document.createElement('tr');
+    
+    const downloadBtn = c.fileData 
+      ? `<a href="${c.fileData}" download="${c.fileName || 'Inspection_Report.pdf'}" class="btn btn-primary" style="padding: 4px 10px; font-size: 0.75rem;">📥 Download PDF</a>`
+      : '-';
 
-        tr.innerHTML = `
-          <td>${c.date}</td>
-          <td>${c.inspector}</td>
-          <td>${c.remarks || '-'}</td>
-          <td>${downloadBtn}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
+    tr.innerHTML = `
+      <td>${c.date}</td>
+      <td>${c.inspector}</td>
+      <td>${c.remarks || '-'}</td>
+      <td>${downloadBtn}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
 
     // Local Storage သို့မဟုတ် Data ထိန်းသိမ်းရန် Array
 let checklistRecords = JSON.parse(localStorage.getItem('checklist_records')) || [];
