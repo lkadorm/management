@@ -924,7 +924,7 @@
           const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
           if (jsonData.length === 0) {
-            alert("Excel file ထဲတွင် Data မရှိပါ။");
+            alert("There is no data in the Excel file.");
             return;
           }
 
@@ -953,17 +953,17 @@
 
           db.ref().update(updates)
             .then(() => {
-              alert(`Resident ${count} ယောက်၏ Data ကို အောင်မြင်စွာ Import လုပ်ပြီးပါပြီ!`);
+              alert(`Data for ${count} residents has been successfully imported.`);
               event.target.value = '';
             })
             .catch((err) => {
               console.error("Import Error:", err);
-              alert("Data မသိမ်းနိုင်ပါ။ Error: " + err.message);
+              alert("Unable to save data. Error: " + err.message);
             });
 
         } catch (err) {
           console.error("Excel Processing Error:", err);
-          alert("Excel ဖိုင် ဖတ်ရသည်မှာ အဆင်မပြေပါ။ ဖိုင် Format မှန်မမှန် ပြန်စစ်ပါ။");
+          alert("Excel file cannot be read. Please check the file format.");
         }
       };
 
@@ -1220,7 +1220,7 @@
       }).catch(err => {
         console.error("PDF Export Error:", err);
         element.style.display = 'none';
-        alert("PDF ထုတ်ရာတွင် အမှားအယွင်းရှိနေပါသည်။");
+        alert("There was an error generating the PDF.");
       });
     }
 
@@ -1368,13 +1368,13 @@
 
         // 2MB Limit စစ်ခြင်း
         if (file.size > 2097152) {
-          alert("PDF File Size သည် 2MB ထက် မပိုရပါခင်ဗျာ။");
+          alert("PDF file size cannot exceed 2MB.");
           return;
         }
 
         const reader = new FileReader();
         reader.onerror = function() {
-          alert("File ဖတ်ရှုရာတွင် အမှားအယွင်းရှိပါသည်!");
+          alert("Error reading file!");
         };
 
         reader.onload = function(evt) {
