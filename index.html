@@ -16,6 +16,7 @@
 
   <!-- Firebase SDKs (v9 Compat Mode) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <script type="text/javascript">
@@ -97,7 +98,7 @@
 
     .row-checkbox, #select-all-maint { cursor: pointer; width: 16px; height: 16px; accent-color: #16a34a; }
 
-    /* --- UPDATED PDF TEMPLATE STYLES (CENTERED & FULL BORDER FIX) --- */
+    /* --- UPDATED PDF TEMPLATE STYLES --- */
     #pdf-report-template { 
         display: none; 
         background: #ffffff; 
@@ -105,7 +106,7 @@
         padding: 20px; 
         width: 100%; 
         max-width: 790px; 
-        margin: 0 auto; /* Center ကျစေရန် */
+        margin: 0 auto;
         box-sizing: border-box; 
         font-family: Arial, sans-serif; 
     }
@@ -119,7 +120,6 @@
     .pdf-header h1 { font-size: 24px; color: #1e3a8a; text-transform: uppercase; margin-bottom: 4px; }
     .pdf-header p { font-size: 12px; color: #64748b; }
     
-    /* Border မပြတ်အောင် width: 100% နှင့် box-sizing ထည့်ထားပါသည် */
     .pdf-card { 
         border: 2px solid #334155; 
         border-radius: 8px; 
@@ -146,7 +146,6 @@
     .pdf-img-box img { width: 100%; height: 210px; object-fit: cover; border-radius: 4px; border: 1px solid #cbd5e1; }
     .pdf-img-box .no-img { height: 210px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; color: #94a3b8; font-size: 12px; border-radius: 4px; }
 
-    /* PDF Print ထုတ်စဉ် Center တည့်တည့်ကျပြီး Border မပြတ်စေရန် Print Settings */
     @page {
         size: A4 portrait;
         margin: 10mm;
@@ -292,7 +291,6 @@
           <div class="page-header">
             <h1 class="page-title">Maintenance Requests</h1>
             <div class="header-actions">
-              <!-- Export Direct PDF Download Button -->
               <button class="btn btn-green" onclick="exportMaintenancePDF()">📄 Export Selected PDF</button>
               <button class="btn btn-green" onclick="openModal('modal-new-request')">+ New Request</button>
             </div>
@@ -320,26 +318,26 @@
           </div>
         </div>
 
-  
+        <!-- TAB 3: CHECKLIST -->
         <div id="tab-checklist" class="hidden">
-  <div class="page-header">
-    <h1 class="page-title">Dormitory Inspection Records</h1>
-    <button class="btn btn-green" onclick="openModal('modal-new-checklist')">+ Submit Checklist</button>
-  </div>
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Inspector Name</th>
-          <th>Remarks</th>
-          <th>Attachment</th>
-        </tr>
-      </thead>
-      <tbody id="checklist-table-body"></tbody>
-    </table>
-  </div>
-</div>
+          <div class="page-header">
+            <h1 class="page-title">Dormitory Inspection Records</h1>
+            <button class="btn btn-green" onclick="openModal('modal-new-checklist')">+ Submit Checklist</button>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Inspector Name</th>
+                  <th>Remarks</th>
+                  <th>Attachment</th>
+                </tr>
+              </thead>
+              <tbody id="checklist-table-body"></tbody>
+            </table>
+          </div>
+        </div>
 
         <!-- TAB 4: USERS -->
         <div id="tab-users" class="hidden">
@@ -539,28 +537,28 @@
   </div>
 
   <div id="modal-new-checklist" class="modal hidden">
-  <div class="modal-content">
-    <h2 style="margin-bottom:16px;">Dormitory Inspection Records</h2>
-    <form onsubmit="submitChecklist(event)">
-      <!-- Remarks Field -->
-      <div class="form-group">
-        <label>Remarks</label>
-        <textarea id="chk-remarks" class="form-textarea" rows="3" placeholder="Enter remarks..."></textarea>
-      </div>
+    <div class="modal-content">
+      <h2 style="margin-bottom:16px;">Dormitory Inspection Records</h2>
+      <form onsubmit="submitChecklist(event)">
+        <!-- Remarks Field -->
+        <div class="form-group">
+          <label>Remarks</label>
+          <textarea id="chk-remarks" class="form-textarea" rows="3" placeholder="Enter remarks..."></textarea>
+        </div>
 
-      <!-- PDF File Upload Field -->
-      <div class="form-group">
-        <label>Attachment (PDF File)</label>
-        <input type="file" id="chk-file" class="form-input" accept="application/pdf" required>
-      </div>
+        <!-- PDF File Upload Field -->
+        <div class="form-group">
+          <label>Attachment (PDF File)</label>
+          <input type="file" id="chk-file" class="form-input" accept="application/pdf" required>
+        </div>
 
-      <div style="display:flex; gap:10px; margin-top:20px;">
-        <button type="submit" class="btn btn-green">Submit Inspection</button>
-        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-new-checklist')">Cancel</button>
-      </div>
-    </form>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+          <button type="submit" class="btn btn-green">Submit Inspection</button>
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-new-checklist')">Cancel</button>
+        </div>
+      </form>
+    </div>
   </div>
-</div>
 
   <div id="modal-user" class="modal hidden">
     <div class="modal-content">
@@ -644,8 +642,8 @@
 
       // 4. Sync Checklist
       db.ref('checklists').on('value', (snapshot) => {
-      checklists = snapshot.val() || {};
-      renderChecklistTable(); 
+        checklists = snapshot.val() || {};
+        renderChecklistTable(checklists); 
       });
 
       // Refresh Auto-Login
@@ -1142,11 +1140,10 @@
       }
 
       const cardsContainer = document.getElementById('pdf-cards-container');
-      cardsContainer.innerHTML = ''; // Reset container
+      cardsContainer.innerHTML = '';
 
       document.getElementById('pdf-generated-date').innerText = `Generated on: ${new Date().toLocaleString()}`;
 
-      // Build comparative side-by-side view for selected items
       selectedKeys.forEach(key => {
         const req = maintenanceRequests[key];
         if (!req) return;
@@ -1162,7 +1159,6 @@
           ? `<img src="${req.afterImg}">` 
           : `<div class="no-img">Image Not Uploaded Yet</div>`;
 
-        // Dynamic Badge for PDF Export
         let pdfBadgeClass = 'pdf-status-pending';
         if (req.status === 'In Progress') pdfBadgeClass = 'pdf-status-progress';
         if (req.status === 'Resolved') pdfBadgeClass = 'pdf-status-resolved';
@@ -1192,9 +1188,8 @@
         cardsContainer.appendChild(card);
       });
 
-      // HTML2PDF Configurations for Direct Download
       const element = document.getElementById('pdf-report-template');
-      element.style.display = 'block'; // Make visible temporarily for capturing
+      element.style.display = 'block';
 
       const opt = {
         margin:       10,
@@ -1204,9 +1199,8 @@
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
 
-      // Generate and Download PDF automatically
       html2pdf().set(opt).from(element).save().then(() => {
-        element.style.display = 'none'; // Hide again after generating
+        element.style.display = 'none';
       }).catch(err => {
         console.error("PDF Export Error:", err);
         element.style.display = 'none';
@@ -1272,184 +1266,88 @@
       });
     }
 
-    // --- CHECKLIST LOGIC (100% WORKING FIX) ---
+    // --- CHECKLIST LOGIC (FULLY FIXED & FIREBASE ONLY) ---
 
-// 1. Database မှ Data အသစ် ရတိုင်း Table ကို Auto ပြန်ဆွဲပေးမည်
-db.ref('checklists').on('value', (snapshot) => {
-  const data = snapshot.val() || {};
-  renderChecklistTable(data);
-});
+    function submitChecklist(e) {
+      e.preventDefault();
 
-// 2. Submit Logic
-function submitChecklist(e) {
-  e.preventDefault();
+      const fileInput = document.getElementById('chk-file');
+      const remarksInput = document.getElementById('chk-remarks');
 
-  const fileInput = document.getElementById('chk-file');
-  const remarksInput = document.getElementById('chk-remarks');
-
-  if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-    alert("Please select a PDF file!");
-    return;
-  }
-
-  const file = fileInput.files[0];
-  const remarksVal = remarksInput ? remarksInput.value : '';
-
-  // 2MB Limit စစ်ခြင်း
-  if (file.size > 2097152) {
-    alert("PDF File Size သည် 2MB ထက် မပိုရပါခင်ဗျာ။");
-    return;
-  }
-
-  const reader = new FileReader();
-  
-  reader.onerror = function() {
-    alert("File ဖတ်ရှုရာတွင် အမှားအယွင်းရှိပါသည်!");
-  };
-
-  reader.onload = function(evt) {
-    const item = {
-      date: new Date().toLocaleDateString('en-GB'),
-      inspector: (typeof currentUser !== 'undefined' && currentUser && currentUser.name) ? currentUser.name : "Inspector",
-      remarks: remarksVal || '-',
-      fileName: file.name,
-      fileData: evt.target.result
-    };
-
-    // Firebase ထဲ သို့ သိမ်းခြင်း
-    db.ref('checklists').push(item, function(error) {
-      if (error) {
-        alert("Firebase Save Error: " + error.message);
-      } else {
-        // အောင်မြင်ပါက Form ရှင်းပြီး Modal ပိတ်မည်
-        e.target.reset();
-        if (typeof closeModal === 'function') {
-          closeModal('modal-new-checklist');
-        } else {
-          document.getElementById('modal-new-checklist').classList.add('hidden');
-        }
+      if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        alert("Please select a PDF file!");
+        return;
       }
-    });
-  };
 
-  reader.readAsDataURL(file);
-}
+      const file = fileInput.files[0];
+      const remarksVal = remarksInput ? remarksInput.value : '';
 
-// 3. Render Table Logic
-function renderChecklistTable(dataObj) {
-  const tbody = document.getElementById('checklist-table-body');
-  if (!tbody) return;
-  
-  tbody.innerHTML = '';
+      // 2MB Limit စစ်ခြင်း
+      if (file.size > 2097152) {
+        alert("PDF File Size သည် 2MB ထက် မပိုရပါခင်ဗျာ။");
+        return;
+      }
 
-  if (!dataObj || Object.keys(dataObj).length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#94a3b8;">No inspection records found.</td></tr>';
-    return;
-  }
+      const reader = new FileReader();
+      
+      reader.onerror = function() {
+        alert("File ဖတ်ရှုရာတွင် အမှားအယွင်းရှိပါသည်!");
+      };
 
-  // Data များကို ဇယားထဲ ထည့်ခြင်း
-  Object.values(dataObj).reverse().forEach(c => {
-    const tr = document.createElement('tr');
-    
-    const downloadBtn = c.fileData 
-      ? `<a href="${c.fileData}" download="${c.fileName || 'Report.pdf'}" class="btn btn-primary" style="padding: 4px 10px; font-size: 0.75rem;">📥 Download PDF</a>`
-      : '-';
+      reader.onload = function(evt) {
+        const item = {
+          date: new Date().toLocaleDateString('en-GB') + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+          inspector: (typeof currentUser !== 'undefined' && currentUser && currentUser.name) ? currentUser.name : "Inspector",
+          remarks: remarksVal || '-',
+          fileName: file.name,
+          fileData: evt.target.result
+        };
 
-    tr.innerHTML = `
-      <td>${c.date || '-'}</td>
-      <td>${c.inspector || '-'}</td>
-      <td>${c.remarks || '-'}</td>
-      <td>${downloadBtn}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
+        // Firebase Realtime Database သို့ ပို့ခြင်း
+        db.ref('checklists').push(item, function(error) {
+          if (error) {
+            alert("Firebase Save Error: " + error.message);
+          } else {
+            e.target.reset();
+            closeModal('modal-new-checklist');
+          }
+        });
+      };
 
-// 👇👇👇 ဒီနေရာမှာ အမှတ် (၃) ကို ထည့်ပေးရပါမယ် 👇👇👇
-if (typeof db !== 'undefined' && db.ref) {
-  db.ref('checklists').on('value', (snapshot) => {
-    checklists = snapshot.val() || {};
-    renderChecklistTable(); // Firebase မှ Data တက်လာပါက Table ကို Auto Update လုပ်မည်
-  });
-}
+      reader.readAsDataURL(file);
+    }
 
-    // Local Storage သို့မဟုတ် Data ထိန်းသိမ်းရန် Array
-let checklistRecords = JSON.parse(localStorage.getItem('checklist_records')) || [];
+    function renderChecklistTable(dataObj) {
+      const tbody = document.getElementById('checklist-table-body');
+      if (!tbody) return;
+      
+      tbody.innerHTML = '';
 
-// 1. Submit လုပ်သည့်အခါ File ကို ဖတ်ပြီး Data သိမ်းခြင်း
-function handleChecklistSubmit(event) {
-  event.preventDefault();
+      const data = dataObj || checklists;
 
-  const remarks = document.getElementById('checklist-remarks').value;
-  const fileInput = document.getElementById('checklist-file');
-  const file = fileInput.files[0];
+      if (!data || Object.keys(data).length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#94a3b8;">No inspection records found.</td></tr>';
+        return;
+      }
 
-  if (!file) {
-    alert("Please select a PDF file!");
-    return;
-  }
+      // Firebase မှ ရလာသော Data များကို Table ထဲ ထည့်ခြင်း
+      Object.values(data).reverse().forEach(c => {
+        const tr = document.createElement('tr');
+        
+        const downloadBtn = c.fileData 
+          ? `<a href="${c.fileData}" download="${c.fileName || 'Inspection_Report.pdf'}" class="btn btn-primary" style="padding: 4px 10px; font-size: 0.75rem;">📥 Download PDF</a>`
+          : '-';
 
-  // Current Logged-in User သို့မဟုတ် Default Name
-  const submittedBy = window.currentUser ? window.currentUser.name : "Admin"; 
-  const submittedDate = new Date().toLocaleDateString('en-GB') + ' ' + new Date().toLocaleTimeString();
+        tr.innerHTML = `
+          <td>${c.date || '-'}</td>
+          <td>${c.inspector || '-'}</td>
+          <td>${c.remarks || '-'}</td>
+          <td>${downloadBtn}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
 
-  // PDF File ကို Base64 Format ဖြင့် ဖတ်ခြင်း (Download ပြန်ဆွဲရန်အတွက်)
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const fileDataUrl = e.target.result;
-
-    const newRecord = {
-      id: Date.now(),
-      date: submittedDate,
-      by: submittedBy,
-      remarks: remarks,
-      fileName: file.name,
-      fileData: fileDataUrl
-    };
-
-    checklistRecords.unshift(newRecord);
-    localStorage.setItem('checklist_records', JSON.stringify(checklistRecords));
-
-    // Form ကို Reset လုပ်ပြီး Table ပြန် Render လုပ်ခြင်း
-    document.getElementById('checklist-form').reset();
-    closeModal('modal-new-checklist');
-    renderChecklistTable();
-  };
-
-  reader.readAsDataURL(file);
-}
-
-// 2. Table ထဲသို့ Data များ ထည့်သွင်းပြသခြင်း
-function renderChecklistTable() {
-  const tbody = document.getElementById('checklist-table-body');
-  if (!tbody) return;
-
-  tbody.innerHTML = '';
-
-  if (checklistRecords.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#94a3b8;">No inspection records found.</td></tr>`;
-    return;
-  }
-
-  checklistRecords.forEach(record => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${record.date}</td>
-      <td>${record.by}</td>
-      <td>${record.remarks}</td>
-      <td>
-        <a href="${record.fileData}" download="${record.fileName}" class="btn btn-primary" style="padding: 4px 10px; font-size: 0.75rem;">
-          📥 Download PDF
-        </a>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-// Page စဖွင့်ချိန်တွင် Table ကို Render လုပ်ပေးရန် Call ခေါ်ထားပါ
-document.addEventListener('DOMContentLoaded', renderChecklistTable);
-    
     // --- USERS LOGIC ---
     function openNewUserModal() {
       document.getElementById('modal-user-title').innerText = "Add New User";
