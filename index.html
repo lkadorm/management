@@ -1272,42 +1272,62 @@
       });
     }
 
-    // --- CHECKLIST LOGIC ---
-    // --- CHECKLIST LOGIC (SAFE FILE UPLOAD) ---
+    // --- CHECKLIST LOGIC (100% WORKING FIX) ---
+
+// 1. Database မှ Data အသစ် ရတိုင်း Table ကို Auto ပြန်ဆွဲပေးမည်
+db.ref('checklists').on('value', (snapshot) => {
+  const data = snapshot.val() || {};
+  renderChecklistTable(data);
+});
+
+// 2. Submit Logic
 function submitChecklist(e) {
   e.preventDefault();
 
   const fileInput = document.getElementById('chk-file');
-  const file = fileInput ? fileInput.files[0] : null;
-  const remarksVal = document.getElementById('chk-remarks').value;
+  const remarksInput = document.getElementById('chk-remarks');
 
-  if (!file) {
+  if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
     alert("Please select a PDF file!");
     return;
   }
 
-  // 1MB (1,048,576 Bytes) ထက်ကျော်ရင် သတိပေးချက်ထုတ်မည်
-  if (file.size > 1048576) {
-    alert("PDF File Size သည် 1MB ထက် မပိုရပါ (Firebase Database Limit ကြောင့်ပါ)။ ကျေးဇူးပြု၍ Size သေးသော PDF ကို ရွေးချယ်ပေးပါခင်ဗျာ။");
+  const file = fileInput.files[0];
+  const remarksVal = remarksInput ? remarksInput.value : '';
+
+  // 2MB Limit စစ်ခြင်း
+  if (file.size > 2097152) {
+    alert("PDF File Size သည် 2MB ထက် မပိုရပါခင်ဗျာ။");
     return;
   }
 
   const reader = new FileReader();
+  
+  reader.onerror = function() {
+    alert("File ဖတ်ရှုရာတွင် အမှားအယွင်းရှိပါသည်!");
+  };
+
   reader.onload = function(evt) {
     const item = {
-      date: new Date().toLocaleDateString(),
-      inspector: typeof currentUser !== 'undefined' && currentUser ? currentUser.name : "Inspector",
+      date: new Date().toLocaleDateString('en-GB'),
+      inspector: (typeof currentUser !== 'undefined' && currentUser && currentUser.name) ? currentUser.name : "Inspector",
       remarks: remarksVal || '-',
       fileName: file.name,
       fileData: evt.target.result
     };
 
+    // Firebase ထဲ သို့ သိမ်းခြင်း
     db.ref('checklists').push(item, function(error) {
       if (error) {
-        alert("Data သိမ်းဆည်းရာတွင် အမှားအယွင်းရှိပါသည်: " + error.message);
+        alert("Firebase Save Error: " + error.message);
       } else {
+        // အောင်မြင်ပါက Form ရှင်းပြီး Modal ပိတ်မည်
         e.target.reset();
-        closeModal('modal-new-checklist');
+        if (typeof closeModal === 'function') {
+          closeModal('modal-new-checklist');
+        } else {
+          document.getElementById('modal-new-checklist').classList.add('hidden');
+        }
       }
     });
   };
@@ -1315,95 +1335,29 @@ function submitChecklist(e) {
   reader.readAsDataURL(file);
 }
 
-    function renderChecklistTable() {
+// 3. Render Table Logic
+function renderChecklistTable(dataObj) {
   const tbody = document.getElementById('checklist-table-body');
   if (!tbody) return;
+  
   tbody.innerHTML = '';
 
-  if (typeof checklists === 'undefined' || !checklists || Object.keys(checklists).length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#94a3b8;">No records found</td></tr>';
+  if (!dataObj || Object.keys(dataObj).length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#94a3b8;">No inspection records found.</td></tr>';
     return;
   }
 
-  Object.values(checklists).forEach(c => {
+  // Data များကို ဇယားထဲ ထည့်ခြင်း
+  Object.values(dataObj).reverse().forEach(c => {
     const tr = document.createElement('tr');
     
     const downloadBtn = c.fileData 
-      ? `<a href="${c.fileData}" download="${c.fileName || 'Inspection_Report.pdf'}" class="btn btn-primary" style="padding: 4px 10px; font-size: 0.75rem;">📥 Download PDF</a>`
+      ? `<a href="${c.fileData}" download="${c.fileName || 'Report.pdf'}" class="btn btn-primary" style="padding: 4px 10px; font-size: 0.75rem;">📥 Download PDF</a>`
       : '-';
 
     tr.innerHTML = `
-      <td>${c.date}</td>
-      <td>${c.inspector}</td>
-      <td>${c.remarks || '-'}</td>
-      <td>${downloadBtn}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-    // --- CHECKLIST LOGIC (SAFE FILE UPLOAD) ---
-function submitChecklist(e) {
-  e.preventDefault();
-
-  const fileInput = document.getElementById('chk-file');
-  const file = fileInput ? fileInput.files[0] : null;
-  const remarksVal = document.getElementById('chk-remarks').value;
-
-  if (!file) {
-    alert("Please select a PDF file!");
-    return;
-  }
-
-  // 1MB (1,048,576 Bytes) ထက်ကျော်ရင် သတိပေးချက်ထုတ်မည်
-  if (file.size > 1048576) {
-    alert("PDF File Size သည် 1MB ထက် မပိုရပါ (Firebase Database Limit ကြောင့်ပါ)။ ကျေးဇူးပြု၍ Size သေးသော PDF ကို ရွေးချယ်ပေးပါခင်ဗျာ။");
-    return;
-  }
-
-  const reader = new FileReader();
-  reader.onload = function(evt) {
-    const item = {
-      date: new Date().toLocaleDateString(),
-      inspector: typeof currentUser !== 'undefined' && currentUser ? currentUser.name : "Inspector",
-      remarks: remarksVal || '-',
-      fileName: file.name,
-      fileData: evt.target.result
-    };
-
-    db.ref('checklists').push(item, function(error) {
-      if (error) {
-        alert("Data သိမ်းဆည်းရာတွင် အမှားအယွင်းရှိပါသည်: " + error.message);
-      } else {
-        e.target.reset();
-        closeModal('modal-new-checklist');
-      }
-    });
-  };
-
-  reader.readAsDataURL(file);
-}
-
-function renderChecklistTable() {
-  const tbody = document.getElementById('checklist-table-body');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-
-  if (typeof checklists === 'undefined' || !checklists || Object.keys(checklists).length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#94a3b8;">No records found</td></tr>';
-    return;
-  }
-
-  Object.values(checklists).forEach(c => {
-    const tr = document.createElement('tr');
-    
-    const downloadBtn = c.fileData 
-      ? `<a href="${c.fileData}" download="${c.fileName || 'Inspection_Report.pdf'}" class="btn btn-primary" style="padding: 4px 10px; font-size: 0.75rem;">📥 Download PDF</a>`
-      : '-';
-
-    tr.innerHTML = `
-      <td>${c.date}</td>
-      <td>${c.inspector}</td>
+      <td>${c.date || '-'}</td>
+      <td>${c.inspector || '-'}</td>
       <td>${c.remarks || '-'}</td>
       <td>${downloadBtn}</td>
     `;
