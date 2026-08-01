@@ -1326,10 +1326,12 @@
 
       const saveToFirebase = (fileData, fileName) => {
         if (editKey) {
-          // Edit Update
+          // --- EDIT MODE: Record အသစ် မတိုးဘဲ မူလ Key ကိုပဲ Update လုပ်မည် ---
           const updateObj = {
             remarks: remarksVal || '-'
           };
+          
+          // PDF ဖိုင်အသစ် ရွေးထားမှသာ fileData နဲ့ fileName ကို Update လုပ်မည်
           if (fileData) {
             updateObj.fileData = fileData;
             updateObj.fileName = fileName;
@@ -1339,11 +1341,13 @@
             if (error) {
               alert("Update Error: " + error.message);
             } else {
+              alert("Checklist updated successfully!");
               closeModal('modal-new-checklist');
             }
           });
+
         } else {
-          // Create New
+          // --- NEW MODE: Record အသစ် ထည့်သွင်းမည် ---
           const item = {
             date: new Date().toLocaleDateString('en-GB') + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
             inspector: (typeof currentUser !== 'undefined' && currentUser && currentUser.name) ? currentUser.name : "Inspector",
@@ -1356,6 +1360,7 @@
             if (error) {
               alert("Firebase Save Error: " + error.message);
             } else {
+              alert("Checklist created successfully!");
               e.target.reset();
               closeModal('modal-new-checklist');
             }
@@ -1383,7 +1388,7 @@
 
         reader.readAsDataURL(file);
       } else {
-        // PDF ဖိုင် အသစ်မပြောင်းပါက Remarks သာ Update လုပ်မည်
+        // PDF ဖိုင် အသစ်မပြောင်းဘဲ Remarks သာ Update လုပ်ပါက
         saveToFirebase(null, null);
       }
     }
