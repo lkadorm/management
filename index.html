@@ -330,8 +330,8 @@
     <table>
       <thead>
         <tr>
-          <th>Submitted Date</th>
-          <th>Submitted By</th>
+          <th>Date</th>
+          <th>Inspector Name</th>
           <th>Remarks</th>
           <th>Attachment</th>
         </tr>
@@ -539,28 +539,28 @@
   </div>
 
   <div id="modal-new-checklist" class="modal hidden">
-    <div class="modal-content">
-      <h2 style="margin-bottom:16px;">Dormitory Inspection Records</h2>
-      <form onsubmit="submitChecklist(event)">
-        <!-- Remarks Field -->
-        <div class="form-group">
-          <label>Remarks</label>
-          <textarea id="chk-remarks" class="form-textarea" rows="3" placeholder="Enter remarks or details..." required></textarea>
-        </div>
+  <div class="modal-content">
+    <h2 style="margin-bottom:16px;">Dormitory Inspection Records</h2>
+    <form onsubmit="submitChecklist(event)">
+      <!-- Remarks Field -->
+      <div class="form-group">
+        <label>Remarks</label>
+        <textarea id="chk-remarks" class="form-textarea" rows="3" placeholder="Enter remarks..."></textarea>
+      </div>
 
-        <!-- Attachment Field -->
-        <div class="form-group">
-          <label>Attachment (PDF File)</label>
-          <input type="file" id="chk-file" class="form-input" accept="application/pdf" required>
-        </div>
+      <!-- PDF File Upload Field -->
+      <div class="form-group">
+        <label>Attachment (PDF File)</label>
+        <input type="file" id="chk-file" class="form-input" accept="application/pdf" required>
+      </div>
 
-        <div style="display:flex; gap:10px; margin-top:20px;">
-          <button type="submit" class="btn btn-green">Submit Inspection</button>
-          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-new-checklist')">Cancel</button>
-        </div>
-      </form>
-    </div>
+      <div style="display:flex; gap:10px; margin-top:20px;">
+        <button type="submit" class="btn btn-green">Submit Inspection</button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-new-checklist')">Cancel</button>
+      </div>
+    </form>
   </div>
+</div>
 
   <div id="modal-user" class="modal hidden">
     <div class="modal-content">
@@ -1339,6 +1339,83 @@ function submitChecklist(e) {
       <td>${downloadBtn}</td>
     `;
     tbody.appendChild(tr);
+  });
+}
+
+    // --- CHECKLIST LOGIC (SAFE FILE UPLOAD) ---
+function submitChecklist(e) {
+  e.preventDefault();
+
+  const fileInput = document.getElementById('chk-file');
+  const file = fileInput ? fileInput.files[0] : null;
+  const remarksVal = document.getElementById('chk-remarks').value;
+
+  if (!file) {
+    alert("Please select a PDF file!");
+    return;
+  }
+
+  // 1MB (1,048,576 Bytes) ထက်ကျော်ရင် သတိပေးချက်ထုတ်မည်
+  if (file.size > 1048576) {
+    alert("PDF File Size သည် 1MB ထက် မပိုရပါ (Firebase Database Limit ကြောင့်ပါ)။ ကျေးဇူးပြု၍ Size သေးသော PDF ကို ရွေးချယ်ပေးပါခင်ဗျာ။");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const item = {
+      date: new Date().toLocaleDateString(),
+      inspector: typeof currentUser !== 'undefined' && currentUser ? currentUser.name : "Inspector",
+      remarks: remarksVal || '-',
+      fileName: file.name,
+      fileData: evt.target.result
+    };
+
+    db.ref('checklists').push(item, function(error) {
+      if (error) {
+        alert("Data သိမ်းဆည်းရာတွင် အမှားအယွင်းရှိပါသည်: " + error.message);
+      } else {
+        e.target.reset();
+        closeModal('modal-new-checklist');
+      }
+    });
+  };
+
+  reader.readAsDataURL(file);
+}
+
+function renderChecklistTable() {
+  const tbody = document.getElementById('checklist-table-body');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  if (typeof checklists === 'undefined' || !checklists || Object.keys(checklists).length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#94a3b8;">No records found</td></tr>';
+    return;
+  }
+
+  Object.values(checklists).forEach(c => {
+    const tr = document.createElement('tr');
+    
+    const downloadBtn = c.fileData 
+      ? `<a href="${c.fileData}" download="${c.fileName || 'Inspection_Report.pdf'}" class="btn btn-primary" style="padding: 4px 10px; font-size: 0.75rem;">📥 Download PDF</a>`
+      : '-';
+
+    tr.innerHTML = `
+      <td>${c.date}</td>
+      <td>${c.inspector}</td>
+      <td>${c.remarks || '-'}</td>
+      <td>${downloadBtn}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// 👇👇👇 ဒီနေရာမှာ အမှတ် (၃) ကို ထည့်ပေးရပါမယ် 👇👇👇
+if (typeof db !== 'undefined' && db.ref) {
+  db.ref('checklists').on('value', (snapshot) => {
+    checklists = snapshot.val() || {};
+    renderChecklistTable(); // Firebase မှ Data တက်လာပါက Table ကို Auto Update လုပ်မည်
   });
 }
 
