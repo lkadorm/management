@@ -99,8 +99,11 @@
     .row-checkbox, #select-all-maint, #select-all-res { cursor: pointer; width: 16px; height: 16px; accent-color: #16a34a; }
 
     /* --- PAGINATION STYLES --- */
-    .pagination-container { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding: 12px 16px; background-color: #0f172a; border-radius: 8px; border: 1px solid #1e293b; }
+    .pagination-container { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding: 12px 16px; background-color: #0f172a; border-radius: 8px; border: 1px solid #1e293b; flex-wrap: wrap; gap: 10px; }
     .pagination-info { font-size: 0.85rem; color: #cbd5e1; }
+    .btn-page { padding: 4px 10px; font-size: 0.85rem; background-color: #1e293b; color: #cbd5e1; border: 1px solid #334155; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+    .btn-page:hover:not(.active) { background-color: #3b82f6; color: white; }
+    .btn-page.active { background-color: #2563eb; color: white; border-color: #2563eb; font-weight: bold; cursor: default; }
 
     /* --- UPDATED PDF TEMPLATE STYLES --- */
     #pdf-report-template { 
@@ -300,7 +303,7 @@
             </table>
           </div>
 
-          <!-- Pagination Controls -->
+          <!-- Pagination Controls with Page Numbers -->
           <div class="pagination-container">
             <div>
               <label style="font-size: 0.85rem; color: #cbd5e1; margin-right: 8px;">Rows per page:</label>
@@ -310,12 +313,14 @@
                 <option value="100">100</option>
               </select>
             </div>
+            
+            <!-- Specific Page Number Buttons Here -->
+            <div style="display: flex; gap: 4px; align-items: center;" id="res-page-numbers">
+              <!-- Dynamically Populated via JS -->
+            </div>
+            
             <div class="pagination-info">
               Showing <span id="res-page-info">0-0 of 0</span> records
-            </div>
-            <div style="display: flex; gap: 8px;">
-              <button id="res-prev-btn" class="btn btn-secondary" onclick="changePage(-1)">Previous</button>
-              <button id="res-next-btn" class="btn btn-secondary" onclick="changePage(1)">Next</button>
             </div>
           </div>
 
@@ -805,12 +810,12 @@
     function toggleResidentSort() {
       resSortAsc = !resSortAsc;
       document.getElementById('res-sort-icon').innerText = resSortAsc ? "🔽" : "🔼";
-      currentPage = 1; // Sort ပြောင်းလျှင် Page 1 သို့ ပြန်သွားရန်
+      currentPage = 1; 
       renderResidentsTable();
     }
 
     function handleSearch() {
-      currentPage = 1; // Search ရှာလျှင် Page 1 မှ စပြရန်
+      currentPage = 1; 
       renderResidentsTable();
     }
 
@@ -908,7 +913,6 @@
       }
     }
 
-    // --- Bulk Delete Checkbox Logic ---
     function toggleSelectAllResidents(master) {
       const checkboxes = document.querySelectorAll('.res-row-checkbox');
       checkboxes.forEach(cb => cb.checked = master.checked);
@@ -945,14 +949,19 @@
       renderResidentsTable();
     }
 
-    function changeRowsPerPage() {
-      const select = document.getElementById('res-rows-per-page');
-      rowsPerPage = parseInt(select.value, 10);
-      currentPage = 1; // Reset to page 1 when rows per page changes
+    function goToPage(page) {
+      currentPage = page;
       renderResidentsTable();
     }
 
-    // --- Main Render with Pagination ---
+    function changeRowsPerPage() {
+      const select = document.getElementById('res-rows-per-page');
+      rowsPerPage = parseInt(select.value, 10);
+      currentPage = 1; 
+      renderResidentsTable();
+    }
+
+    // --- Main Render with Numbered Pagination ---
     function renderResidentsTable() {
       const tbody = document.getElementById('resident-table-body');
       if (!tbody) return;
@@ -984,7 +993,6 @@
       const totalRecords = filteredKeys.length;
       const totalPages = Math.ceil(totalRecords / rowsPerPage) || 1;
 
-      // Validate Current Page Boundary
       if (currentPage > totalPages) currentPage = totalPages;
       if (currentPage < 1) currentPage = 1;
 
@@ -992,16 +1000,46 @@
       const endIndex = Math.min(startIndex + rowsPerPage, totalRecords);
       const paginatedKeys = filteredKeys.slice(startIndex, endIndex);
 
-      // Update Pagination UI
+      // --- Rendering Pagination UI (Page Numbers) ---
       const infoSpan = document.getElementById('res-page-info');
       if (infoSpan) {
         infoSpan.innerText = totalRecords === 0 ? '0-0 of 0' : `${startIndex + 1}-${endIndex} of ${totalRecords}`;
       }
 
-      const prevBtn = document.getElementById('res-prev-btn');
-      const nextBtn = document.getElementById('res-next-btn');
-      if (prevBtn) prevBtn.disabled = currentPage === 1;
-      if (nextBtn) nextBtn.disabled = currentPage === totalPages;
+      const pageNumbersContainer = document.getElementById('res-page-numbers');
+      if (pageNumbersContainer) {
+        pageNumbersContainer.innerHTML = '';
+        
+        // Previous Button (Left side of page numbers)
+        const prevDisabled = currentPage === 1 ? 'disabled' : '';
+        pageNumbersContainer.innerHTML += `<button class="btn btn-secondary" onclick="changePage(-1)" ${prevDisabled}>Prev</button>`;
+
+        // Showing a sliding window of page numbers
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, currentPage + 2);
+
+        // Always show first page
+        if (startPage > 1) {
+          pageNumbersContainer.innerHTML += `<button class="btn-page" onclick="goToPage(1)">1</button>`;
+          if (startPage > 2) pageNumbersContainer.innerHTML += `<span style="color:#cbd5e1; padding: 4px;">...</span>`;
+        }
+
+        // Generate specific page buttons
+        for (let i = startPage; i <= endPage; i++) {
+          const activeClass = (i === currentPage) ? 'active' : '';
+          pageNumbersContainer.innerHTML += `<button class="btn-page ${activeClass}" onclick="goToPage(${i})">${i}</button>`;
+        }
+
+        // Always show last page
+        if (endPage < totalPages) {
+          if (endPage < totalPages - 1) pageNumbersContainer.innerHTML += `<span style="color:#cbd5e1; padding: 4px;">...</span>`;
+          pageNumbersContainer.innerHTML += `<button class="btn-page" onclick="goToPage(${totalPages})">${totalPages}</button>`;
+        }
+
+        // Next Button (Right side of page numbers)
+        const nextDisabled = currentPage === totalPages ? 'disabled' : '';
+        pageNumbersContainer.innerHTML += `<button class="btn btn-secondary" onclick="changePage(1)" ${nextDisabled}>Next</button>`;
+      }
 
       // 4. Render the sliced data
       paginatedKeys.forEach((key) => {
