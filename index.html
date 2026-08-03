@@ -70,9 +70,9 @@
     .user-role { font-size: 0.75rem; color: #94a3b8; }
 
     .content-container { padding: 32px; flex: 1; }
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 10px; }
     .page-title { font-size: 1.5rem; font-weight: 700; }
-    .header-actions { display: flex; gap: 10px; align-items: center; }
+    .header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
     /* --- TABLES --- */
     .table-container { width: 100%; overflow-x: auto; border-radius: 8px; border: 1px solid #1e293b; }
@@ -95,7 +95,7 @@
     .full-image { max-width: 85vw; max-height: 85vh; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); border: 2px solid #334155; }
     .close-img-btn { position: absolute; top: -40px; right: 0; background: #ef4444; color: white; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
-    .row-checkbox, #select-all-maint { cursor: pointer; width: 16px; height: 16px; accent-color: #16a34a; }
+    .row-checkbox, #select-all-maint, #select-all-res { cursor: pointer; width: 16px; height: 16px; accent-color: #16a34a; }
 
     /* --- UPDATED PDF TEMPLATE STYLES --- */
     #pdf-report-template { 
@@ -252,6 +252,12 @@
             <h1 class="page-title">Resident Records</h1>
             
             <div class="header-actions">
+              <!-- Search Box -->
+              <input type="text" id="search-resident" class="form-input" placeholder="🔍 Search Name, ID, Bed No..." onkeyup="renderResidentsTable()" style="max-width: 220px; background-color: #172033;">
+              
+              <!-- Bulk Delete Button -->
+              <button class="btn btn-danger" onclick="deleteSelectedResidents()">🗑️ Delete Selected</button>
+              
               <button class="btn btn-green" onclick="openNewResidentModal()">+ New Resident</button>
               
               <input type="file" id="excel-file-input" accept=".xlsx, .xls" style="display: none;" onchange="handleExcelImport(event)" />
@@ -265,12 +271,15 @@
             <table>
               <thead>
                 <tr>
+                  <th style="text-align:center; width: 40px;">
+                    <input type="checkbox" id="select-all-res" onchange="toggleSelectAllResidents(this)">
+                  </th>
                   <th>Photo</th>
                   <th>Resident ID</th>
                   <th>Name</th>
                   <th>WP No.</th>
                   <th>WP Expiry</th>
-                  <th>Batch No.</th> <!-- Added Batch No -->
+                  <th>Batch No.</th>
                   <th>Nationality</th>
                   <th>Company Name</th>
                   <th>Bed No.</th>
@@ -387,40 +396,39 @@
         <div class="form-grid-2">
           <div class="form-group">
             <label>Resident ID</label>
-            <input type="text" id="res-id" class="form-input" placeholder="e.g. RES-001">
+            <input type="text" id="res-id" class="form-input" placeholder="e.g. RES-001" required>
           </div>
           <div class="form-group">
             <label>Name</label>
-            <input type="text" id="res-name" class="form-input">
+            <input type="text" id="res-name" class="form-input" required>
           </div>
           <div class="form-group">
             <label>WP No.</label>
-            <input type="text" id="res-wp" class="form-input">
+            <input type="text" id="res-wp" class="form-input" required>
           </div>
           <div class="form-group">
             <label>WP Expiry Date</label>
-            <input type="date" id="res-wp-expiry" class="form-input">
+            <input type="date" id="res-wp-expiry" class="form-input" required>
           </div>
-          <!-- Added Batch No. -->
           <div class="form-group">
             <label>Batch No.</label>
-            <input type="text" id="res-batch" class="form-input" placeholder="e.g. B-001">
+            <input type="text" id="res-batch" class="form-input" placeholder="e.g. B-001" required>
           </div>
           <div class="form-group">
             <label>Nationality</label>
-            <input type="text" id="res-nationality" class="form-input" placeholder="e.g. Myanmar">
+            <input type="text" id="res-nationality" class="form-input" placeholder="e.g. Myanmar" required>
           </div>
           <div class="form-group">
             <label>Company Name</label>
-            <input type="text" id="res-company" class="form-input">
+            <input type="text" id="res-company" class="form-input" required>
           </div>
           <div class="form-group">
             <label>Bed No.</label>
-            <input type="text" id="res-bed" class="form-input" placeholder="e.g. A-101-B">
+            <input type="text" id="res-bed" class="form-input" placeholder="e.g. A-101-B" required>
           </div>
           <div class="form-group">
             <label>Access Card No.</label>
-            <input type="text" id="res-card" class="form-input">
+            <input type="text" id="res-card" class="form-input" required>
           </div>
           <div class="form-group">
             <label>Food Order</label>
@@ -431,7 +439,7 @@
           </div>
           <div class="form-group">
             <label>Check-in Date</label>
-            <input type="date" id="res-checkin" class="form-input">
+            <input type="date" id="res-checkin" class="form-input" required>
           </div>
         </div>
         <div class="form-group">
@@ -772,7 +780,7 @@
       document.getElementById('res-name').value = '';
       document.getElementById('res-wp').value = '';
       document.getElementById('res-wp-expiry').value = '';
-      document.getElementById('res-batch').value = ''; // Added Batch No reset
+      document.getElementById('res-batch').value = '';
       document.getElementById('res-nationality').value = '';
       document.getElementById('res-company').value = '';
       document.getElementById('res-bed').value = '';
@@ -797,7 +805,7 @@
       document.getElementById('res-name').value = res.name || '';
       document.getElementById('res-wp').value = res.wpNo || '';
       document.getElementById('res-wp-expiry').value = res.wpExpiry || '';
-      document.getElementById('res-batch').value = res.batchNo || ''; // Added Batch No load
+      document.getElementById('res-batch').value = res.batchNo || '';
       document.getElementById('res-nationality').value = res.nationality || '';
       document.getElementById('res-company').value = res.company || '';
       document.getElementById('res-bed').value = res.bedNo || '';
@@ -821,7 +829,7 @@
           name: document.getElementById('res-name').value,
           wpNo: document.getElementById('res-wp').value,
           wpExpiry: document.getElementById('res-wp-expiry').value,
-          batchNo: document.getElementById('res-batch').value, // Added Batch No save
+          batchNo: document.getElementById('res-batch').value,
           nationality: document.getElementById('res-nationality').value,
           company: document.getElementById('res-company').value,
           bedNo: document.getElementById('res-bed').value,
@@ -856,25 +864,74 @@
       }
     }
 
+    // --- Bulk Delete Checkbox Logic ---
+    function toggleSelectAllResidents(master) {
+      const checkboxes = document.querySelectorAll('.res-row-checkbox');
+      checkboxes.forEach(cb => cb.checked = master.checked);
+    }
+
+    function deleteSelectedResidents() {
+      const checkboxes = document.querySelectorAll('.res-row-checkbox');
+      const selectedKeys = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+
+      if (selectedKeys.length === 0) {
+        alert("Please select at least 1 resident to delete.");
+        return;
+      }
+
+      if (confirm(`Are you sure you want to delete ${selectedKeys.length} selected residents?`)) {
+        const updates = {};
+        selectedKeys.forEach(key => {
+          updates['residents/' + key] = null;
+        });
+
+        db.ref().update(updates).then(() => {
+          alert("Selected residents deleted successfully.");
+          const masterCb = document.getElementById('select-all-res');
+          if (masterCb) masterCb.checked = false;
+        }).catch(err => {
+          alert("Error deleting residents: " + err.message);
+        });
+      }
+    }
+
+    // --- Add Search Filter & Checkboxes in Table ---
     function renderResidentsTable() {
       const tbody = document.getElementById('resident-table-body');
       if (!tbody) return;
       tbody.innerHTML = '';
 
+      const masterCb = document.getElementById('select-all-res');
+      if (masterCb) masterCb.checked = false;
+
+      // Get Search Keyword
+      const searchInput = document.getElementById('search-resident');
+      const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+
       Object.keys(residents).forEach((key) => {
         const res = residents[key];
+        
+        // --- SEARCH FEATURE LOGIC ---
+        const searchString = `${res.id} ${res.name} ${res.wpNo} ${res.company} ${res.bedNo} ${res.batchNo} ${res.nationality}`.toLowerCase();
+        if (searchTerm && !searchString.includes(searchTerm)) {
+          return; // Skip rendering this row if it doesn't match search
+        }
+
         const tr = document.createElement('tr');
         const photoHtml = res.photo 
           ? `<img src="${res.photo}" class="img-preview" onclick="viewFullImage('${res.photo}')" alt="Resident">` 
           : `<span style="color:#64748b; font-size:0.75rem;">No Photo</span>`;
 
         tr.innerHTML = `
+          <td style="text-align:center;">
+            <input type="checkbox" class="res-row-checkbox" value="${key}">
+          </td>
           <td>${photoHtml}</td>
           <td><b>${res.id || '-'}</b></td>
           <td>${res.name || '-'}</td>
           <td>${res.wpNo || '-'}</td>
           <td>${res.wpExpiry || '-'}</td>
-          <td>${res.batchNo || '-'}</td> <!-- Added Batch No -->
+          <td>${res.batchNo || '-'}</td>
           <td>${res.nationality || '-'}</td>
           <td>${res.company || '-'}</td>
           <td>${res.bedNo || '-'}</td>
@@ -903,7 +960,7 @@
         "Name": r.name || '',
         "WP No.": r.wpNo || '',
         "WP Expiry": r.wpExpiry || '',
-        "Batch No.": r.batchNo || '', // Added Batch No export
+        "Batch No.": r.batchNo || '',
         "Nationality": r.nationality || '',
         "Company Name": r.company || '',
         "Bed No.": r.bedNo || '',
@@ -919,6 +976,7 @@
       XLSX.writeFile(workbook, "LK_Ang_Dormitory_Residents.xlsx");
     }
 
+    // --- Prevent Duplicates on Import ---
     function handleExcelImport(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -941,16 +999,28 @@
 
           const updates = {};
           let count = 0;
+          let skipCount = 0;
 
           jsonData.forEach((row) => {
+            const rowId = String(row['Resident ID'] || row['residentId'] || row['id'] || `LKAD-${Math.floor(1000 + Math.random() * 9000)}`);
+            const rowName = String(row['Name'] || row['name'] || "N/A");
+
+            // 💥 DUPLICATE CHECK: Skip if Resident ID and Name already exist in database 💥
+            const isDuplicate = Object.values(residents).some(r => r.id === rowId && r.name === rowName);
+
+            if (isDuplicate) {
+              skipCount++;
+              return; // Skip this row and continue to the next one
+            }
+
             const newRefKey = db.ref('residents').push().key;
 
             updates['residents/' + newRefKey] = {
-              id: row['Resident ID'] || row['residentId'] || row['id'] || `LKAD-${Math.floor(1000 + Math.random() * 9000)}`,
-              name: row['Name'] || row['name'] || "N/A",
+              id: rowId,
+              name: rowName,
               wpNo: row['WP No.'] || row['WP No'] || row['wpNo'] || "N/A",
               wpExpiry: row['WP Expiry'] || row['wpExpiry'] || "N/A",
-              batchNo: row['Batch No.'] || row['Batch No'] || row['batchNo'] || "-", // Added Batch No import
+              batchNo: row['Batch No.'] || row['Batch No'] || row['batchNo'] || "-",
               nationality: row['Nationality'] || row['nationality'] || "N/A",
               company: row['Company Name'] || row['company'] || "N/A",
               bedNo: row['Bed No.'] || row['Bed No'] || row['bedNo'] || "N/A",
@@ -963,15 +1033,20 @@
             count++;
           });
 
-          db.ref().update(updates)
-            .then(() => {
-              alert(`Data for ${count} residents has been successfully imported.`);
-              event.target.value = '';
-            })
-            .catch((err) => {
-              console.error("Import Error:", err);
-              alert("Unable to save data. Error: " + err.message);
-            });
+          if (Object.keys(updates).length > 0) {
+            db.ref().update(updates)
+              .then(() => {
+                alert(`Import Successful!\n✅ Uploaded: ${count} New Residents.\n⚠️ Skipped: ${skipCount} Duplicates.`);
+                event.target.value = '';
+              })
+              .catch((err) => {
+                console.error("Import Error:", err);
+                alert("Unable to save data. Error: " + err.message);
+              });
+          } else {
+            alert(`No new data to import.\n⚠️ Skipped: ${skipCount} Duplicate records.`);
+            event.target.value = '';
+          }
 
         } catch (err) {
           console.error("Excel Processing Error:", err);
@@ -1300,7 +1375,7 @@
       const item = checklists[key];
       if (!item) return;
 
-      openModal('modal-new-checklist'); // 💥 Move this up to prevent resetting fields 💥
+      openModal('modal-new-checklist');
 
       document.getElementById('chk-modal-title').innerText = "Edit Checklist Record";
       document.getElementById('chk-submit-btn').innerText = "Update Record";
@@ -1309,7 +1384,7 @@
       
       const fileInput = document.getElementById('chk-file');
       fileInput.value = "";
-      fileInput.required = false; // Edit လုပ်ချိန် PDF မဖြစ်မနေ အသစ်တင်ရန် မလိုပါ
+      fileInput.required = false; 
 
       const fileHint = document.getElementById('chk-file-hint');
       fileHint.innerText = item.fileName ? `Current File: ${item.fileName} (Leave empty to keep current file)` : '';
@@ -1330,7 +1405,6 @@
       const remarksInput = document.getElementById('chk-remarks');
       const remarksVal = remarksInput ? remarksInput.value : '';
 
-      // Create အသစ်ပြုလုပ်ချိန် File မဖြစ်မနေ စစ်ဆေးခြင်း
       if (!editKey && (!fileInput || !fileInput.files || fileInput.files.length === 0)) {
         alert("Please select a PDF file!");
         return;
@@ -1338,12 +1412,10 @@
 
       const saveToFirebase = (fileData, fileName) => {
         if (editKey) {
-          // --- EDIT MODE: Record အသစ် မတိုးဘဲ မူလ Key ကိုပဲ Update လုပ်မည် ---
           const updateObj = {
             remarks: remarksVal || '-'
           };
           
-          // PDF ဖိုင်အသစ် ရွေးထားမှသာ fileData နဲ့ fileName ကို Update လုပ်မည်
           if (fileData) {
             updateObj.fileData = fileData;
             updateObj.fileName = fileName;
@@ -1359,7 +1431,6 @@
           });
 
         } else {
-          // --- NEW MODE: Record အသစ် ထည့်သွင်းမည် ---
           const item = {
             date: new Date().toLocaleDateString('en-GB') + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
             inspector: (typeof currentUser !== 'undefined' && currentUser && currentUser.name) ? currentUser.name : "Inspector",
@@ -1383,7 +1454,6 @@
       if (fileInput.files && fileInput.files[0]) {
         const file = fileInput.files[0];
 
-        // 2MB Limit စစ်ခြင်း
         if (file.size > 2097152) {
           alert("PDF file size cannot exceed 2MB.");
           return;
@@ -1400,7 +1470,6 @@
 
         reader.readAsDataURL(file);
       } else {
-        // PDF ဖိုင် အသစ်မပြောင်းဘဲ Remarks သာ Update လုပ်ပါက
         saveToFirebase(null, null);
       }
     }
@@ -1418,7 +1487,6 @@
         return;
       }
 
-      // Firebase မှ ရလာသော Data များကို Table ထဲ ထည့်ခြင်း
       Object.keys(data).reverse().forEach(key => {
         const c = data[key];
         const tr = document.createElement('tr');
