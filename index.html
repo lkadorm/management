@@ -1411,15 +1411,17 @@
         const c = data[key];
         const tr = document.createElement('tr');
         
-        const downloadBtn = c.fileData 
-          ? `<a href="${c.fileData}" download="${c.fileName || 'Inspection_Report.pdf'}" class="btn btn-primary" style="padding: 4px 10px; font-size: 0.75rem;">📥 Download PDF</a>`
+        // 💥 File Name ပါ ပေါ်လာအောင် ထည့်သွင်းထားသော အပိုင်း 💥
+        const attachmentHtml = c.fileData 
+          ? `<div style="font-size: 0.75rem; color: #93c5fd; margin-bottom: 4px; word-break: break-all;">📄 ${c.fileName || 'Attached_Document.pdf'}</div>
+             <a href="${c.fileData}" download="${c.fileName || 'Inspection_Report.pdf'}" class="btn btn-primary" style="padding: 4px 10px; font-size: 0.75rem;">📥 Download</a>`
           : '-';
 
         tr.innerHTML = `
           <td>${c.date || '-'}</td>
           <td>${c.inspector || '-'}</td>
           <td>${c.remarks || '-'}</td>
-          <td>${downloadBtn}</td>
+          <td>${attachmentHtml}</td>
           <td style="display:flex; gap:6px;">
             <button class="btn btn-warning" style="padding:4px 8px; font-size:0.75rem;" onclick="openEditChecklistModal('${key}')">Edit</button>
             <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="deleteChecklistRecord('${key}')">Delete</button>
