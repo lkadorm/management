@@ -50,6 +50,7 @@
     .btn-secondary { background-color: #334155; color: #fff; } .btn-secondary:hover { background-color: #475569; }
     .btn-warning { background-color: #d97706; color: #fff; } .btn-warning:hover { background-color: #b45309; }
     .btn-danger { background-color: #dc2626; color: #fff; } .btn-danger:hover { background-color: #b91c1c; }
+    .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .auth-toggle { margin-top: 16px; text-align: center; font-size: 0.85rem; color: #94a3b8; }
     .auth-toggle a { color: #3b82f6; text-decoration: none; cursor: pointer; }
@@ -96,6 +97,10 @@
     .close-img-btn { position: absolute; top: -40px; right: 0; background: #ef4444; color: white; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
     .row-checkbox, #select-all-maint, #select-all-res { cursor: pointer; width: 16px; height: 16px; accent-color: #16a34a; }
+
+    /* --- PAGINATION STYLES --- */
+    .pagination-container { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding: 12px 16px; background-color: #0f172a; border-radius: 8px; border: 1px solid #1e293b; }
+    .pagination-info { font-size: 0.85rem; color: #cbd5e1; }
 
     /* --- UPDATED PDF TEMPLATE STYLES --- */
     #pdf-report-template { 
@@ -253,7 +258,7 @@
             
             <div class="header-actions">
               <!-- Search Box -->
-              <input type="text" id="search-resident" class="form-input" placeholder="🔍 Search Name, ID, Bed No..." onkeyup="renderResidentsTable()" style="max-width: 220px; background-color: #172033;">
+              <input type="text" id="search-resident" class="form-input" placeholder="🔍 Search Name, ID, Bed No..." onkeyup="handleSearch()" style="max-width: 220px; background-color: #172033;">
               
               <!-- Bulk Delete Button -->
               <button class="btn btn-danger" onclick="deleteSelectedResidents()">🗑️ Delete Selected</button>
@@ -294,6 +299,26 @@
               <tbody id="resident-table-body"></tbody>
             </table>
           </div>
+
+          <!-- Pagination Controls -->
+          <div class="pagination-container">
+            <div>
+              <label style="font-size: 0.85rem; color: #cbd5e1; margin-right: 8px;">Rows per page:</label>
+              <select id="res-rows-per-page" class="form-select" style="width: auto; display: inline-block; padding: 4px 8px; background-color: #1e293b;" onchange="changeRowsPerPage()">
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+            </div>
+            <div class="pagination-info">
+              Showing <span id="res-page-info">0-0 of 0</span> records
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button id="res-prev-btn" class="btn btn-secondary" onclick="changePage(-1)">Previous</button>
+              <button id="res-next-btn" class="btn btn-secondary" onclick="changePage(1)">Next</button>
+            </div>
+          </div>
+
         </div>
 
         <!-- TAB 2: MAINTENANCE -->
@@ -421,7 +446,7 @@
           </div>
           <div class="form-group">
             <label>Company Name</label>
-            <input type="text" id="res-company" class="form-input" >
+            <input type="text" id="res-company" class="form-input">
           </div>
           <div class="form-group">
             <label>Bed No.</label>
@@ -636,6 +661,11 @@
     let checklists = {};
     let currentUser = JSON.parse(localStorage.getItem('lkang_current_user')) || null;
 
+    // --- Pagination State ---
+    let currentPage = 1;
+    let rowsPerPage = 20;
+    let resSortAsc = true;
+
     // --- REALTIME SYNC LISTENERS ---
     window.addEventListener('DOMContentLoaded', () => {
       // 1. Sync Users
@@ -772,11 +802,15 @@
 
     // --- RESIDENTS LOGIC ---
 
-    // Resident Sort State
-    let resSortAsc = true;
     function toggleResidentSort() {
       resSortAsc = !resSortAsc;
       document.getElementById('res-sort-icon').innerText = resSortAsc ? "🔽" : "🔼";
+      currentPage = 1; // Sort ပြောင်းလျှင် Page 1 သို့ ပြန်သွားရန်
+      renderResidentsTable();
+    }
+
+    function handleSearch() {
+      currentPage = 1; // Search ရှာလျှင် Page 1 မှ စပြရန်
       renderResidentsTable();
     }
 
@@ -905,6 +939,20 @@
       }
     }
 
+    // --- Pagination Actions ---
+    function changePage(step) {
+      currentPage += step;
+      renderResidentsTable();
+    }
+
+    function changeRowsPerPage() {
+      const select = document.getElementById('res-rows-per-page');
+      rowsPerPage = parseInt(select.value, 10);
+      currentPage = 1; // Reset to page 1 when rows per page changes
+      renderResidentsTable();
+    }
+
+    // --- Main Render with Pagination ---
     function renderResidentsTable() {
       const tbody = document.getElementById('resident-table-body');
       if (!tbody) return;
@@ -913,13 +961,18 @@
       const masterCb = document.getElementById('select-all-res');
       if (masterCb) masterCb.checked = false;
 
-      // Search Logic
+      // 1. Search Logic
       const searchInput = document.getElementById('search-resident');
       const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
 
-      // Sorting Logic by Resident ID
-      let keys = Object.keys(residents);
-      keys.sort((a, b) => {
+      let filteredKeys = Object.keys(residents).filter(key => {
+        const res = residents[key];
+        const searchString = `${res.id} ${res.name} ${res.wpNo} ${res.company} ${res.bedNo} ${res.batchNo} ${res.nationality}`.toLowerCase();
+        return !searchTerm || searchString.includes(searchTerm);
+      });
+
+      // 2. Sorting Logic by Resident ID
+      filteredKeys.sort((a, b) => {
         let idA = (residents[a].id || "").toString().toLowerCase();
         let idB = (residents[b].id || "").toString().toLowerCase();
         if (idA < idB) return resSortAsc ? -1 : 1;
@@ -927,15 +980,32 @@
         return 0;
       });
 
-      keys.forEach((key) => {
-        const res = residents[key];
-        
-        // Skip if Search Term does not match
-        const searchString = `${res.id} ${res.name} ${res.wpNo} ${res.company} ${res.bedNo} ${res.batchNo} ${res.nationality}`.toLowerCase();
-        if (searchTerm && !searchString.includes(searchTerm)) {
-          return; 
-        }
+      // 3. Pagination Logic
+      const totalRecords = filteredKeys.length;
+      const totalPages = Math.ceil(totalRecords / rowsPerPage) || 1;
 
+      // Validate Current Page Boundary
+      if (currentPage > totalPages) currentPage = totalPages;
+      if (currentPage < 1) currentPage = 1;
+
+      const startIndex = (currentPage - 1) * rowsPerPage;
+      const endIndex = Math.min(startIndex + rowsPerPage, totalRecords);
+      const paginatedKeys = filteredKeys.slice(startIndex, endIndex);
+
+      // Update Pagination UI
+      const infoSpan = document.getElementById('res-page-info');
+      if (infoSpan) {
+        infoSpan.innerText = totalRecords === 0 ? '0-0 of 0' : `${startIndex + 1}-${endIndex} of ${totalRecords}`;
+      }
+
+      const prevBtn = document.getElementById('res-prev-btn');
+      const nextBtn = document.getElementById('res-next-btn');
+      if (prevBtn) prevBtn.disabled = currentPage === 1;
+      if (nextBtn) nextBtn.disabled = currentPage === totalPages;
+
+      // 4. Render the sliced data
+      paginatedKeys.forEach((key) => {
+        const res = residents[key];
         const tr = document.createElement('tr');
         const photoHtml = res.photo 
           ? `<img src="${res.photo}" class="img-preview" onclick="viewFullImage('${res.photo}')" alt="Resident">` 
@@ -965,6 +1035,10 @@
         `;
         tbody.appendChild(tr);
       });
+
+      if (paginatedKeys.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; padding: 20px; color: #94a3b8;">No records found.</td></tr>`;
+      }
     }
 
     function exportResidentsToExcel() {
