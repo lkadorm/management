@@ -1288,6 +1288,8 @@
       const item = checklists[key];
       if (!item) return;
 
+      openModal('modal-new-checklist'); // 💥 Move this up to prevent resetting fields 💥
+
       document.getElementById('chk-modal-title').innerText = "Edit Checklist Record";
       document.getElementById('chk-submit-btn').innerText = "Update Record";
       document.getElementById('chk-edit-key').value = key;
@@ -1300,8 +1302,6 @@
       const fileHint = document.getElementById('chk-file-hint');
       fileHint.innerText = item.fileName ? `Current File: ${item.fileName} (Leave empty to keep current file)` : '';
       fileHint.style.display = item.fileName ? "block" : "none";
-
-      openModal('modal-new-checklist');
     }
 
     function deleteChecklistRecord(key) {
