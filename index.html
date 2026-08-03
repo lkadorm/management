@@ -270,6 +270,7 @@
                   <th>Name</th>
                   <th>WP No.</th>
                   <th>WP Expiry</th>
+                  <th>Batch No.</th> <!-- Added Batch No -->
                   <th>Nationality</th>
                   <th>Company Name</th>
                   <th>Bed No.</th>
@@ -399,6 +400,11 @@
           <div class="form-group">
             <label>WP Expiry Date</label>
             <input type="date" id="res-wp-expiry" class="form-input" required>
+          </div>
+          <!-- Added Batch No. -->
+          <div class="form-group">
+            <label>Batch No.</label>
+            <input type="text" id="res-batch" class="form-input" placeholder="e.g. B-001" required>
           </div>
           <div class="form-group">
             <label>Nationality</label>
@@ -766,6 +772,7 @@
       document.getElementById('res-name').value = '';
       document.getElementById('res-wp').value = '';
       document.getElementById('res-wp-expiry').value = '';
+      document.getElementById('res-batch').value = ''; // Added Batch No reset
       document.getElementById('res-nationality').value = '';
       document.getElementById('res-company').value = '';
       document.getElementById('res-bed').value = '';
@@ -790,6 +797,7 @@
       document.getElementById('res-name').value = res.name || '';
       document.getElementById('res-wp').value = res.wpNo || '';
       document.getElementById('res-wp-expiry').value = res.wpExpiry || '';
+      document.getElementById('res-batch').value = res.batchNo || ''; // Added Batch No load
       document.getElementById('res-nationality').value = res.nationality || '';
       document.getElementById('res-company').value = res.company || '';
       document.getElementById('res-bed').value = res.bedNo || '';
@@ -813,6 +821,7 @@
           name: document.getElementById('res-name').value,
           wpNo: document.getElementById('res-wp').value,
           wpExpiry: document.getElementById('res-wp-expiry').value,
+          batchNo: document.getElementById('res-batch').value, // Added Batch No save
           nationality: document.getElementById('res-nationality').value,
           company: document.getElementById('res-company').value,
           bedNo: document.getElementById('res-bed').value,
@@ -865,6 +874,7 @@
           <td>${res.name || '-'}</td>
           <td>${res.wpNo || '-'}</td>
           <td>${res.wpExpiry || '-'}</td>
+          <td>${res.batchNo || '-'}</td> <!-- Added Batch No -->
           <td>${res.nationality || '-'}</td>
           <td>${res.company || '-'}</td>
           <td>${res.bedNo || '-'}</td>
@@ -893,6 +903,7 @@
         "Name": r.name || '',
         "WP No.": r.wpNo || '',
         "WP Expiry": r.wpExpiry || '',
+        "Batch No.": r.batchNo || '', // Added Batch No export
         "Nationality": r.nationality || '',
         "Company Name": r.company || '',
         "Bed No.": r.bedNo || '',
@@ -939,6 +950,7 @@
               name: row['Name'] || row['name'] || "N/A",
               wpNo: row['WP No.'] || row['WP No'] || row['wpNo'] || "N/A",
               wpExpiry: row['WP Expiry'] || row['wpExpiry'] || "N/A",
+              batchNo: row['Batch No.'] || row['Batch No'] || row['batchNo'] || "-", // Added Batch No import
               nationality: row['Nationality'] || row['nationality'] || "N/A",
               company: row['Company Name'] || row['company'] || "N/A",
               bedNo: row['Bed No.'] || row['Bed No'] || row['bedNo'] || "N/A",
@@ -1411,7 +1423,6 @@
         const c = data[key];
         const tr = document.createElement('tr');
         
-        // 💥 File Name ပါ ပေါ်လာအောင် ထည့်သွင်းထားသော အပိုင်း 💥
         const attachmentHtml = c.fileData 
           ? `<div style="font-size: 0.75rem; color: #93c5fd; margin-bottom: 4px; word-break: break-all;">📄 ${c.fileName || 'Attached_Document.pdf'}</div>
              <a href="${c.fileData}" download="${c.fileName || 'Inspection_Report.pdf'}" class="btn btn-primary" style="padding: 4px 10px; font-size: 0.75rem;">📥 Download</a>`
