@@ -106,7 +106,7 @@
     .btn-page.active { background-color: #2563eb; color: white; border-color: #2563eb; font-weight: bold; cursor: default; }
 
     /* --- UPDATED PDF TEMPLATE STYLES --- */
-    #pdf-report-template { 
+    #pdf-report-template, #pdf-resident-template { 
         display: none; 
         background: #ffffff; 
         color: #000000; 
@@ -164,7 +164,7 @@
             padding: 0 !important;
             margin: 0 !important;
         }
-        #pdf-report-template {
+        #pdf-report-template, #pdf-resident-template {
             display: block !important;
             width: 100% !important;
             max-width: 100% !important;
@@ -266,6 +266,9 @@
               <!-- Bulk Delete Button -->
               <button class="btn btn-danger" onclick="deleteSelectedResidents()">🗑️ Delete Selected</button>
               
+              <!-- NEW: Export to PDF Button -->
+              <button class="btn btn-green" onclick="exportResidentsPDF()">📄 Export Selected PDF</button>
+
               <button class="btn btn-green" onclick="openNewResidentModal()">+ New Resident</button>
               
               <input type="file" id="excel-file-input" accept=".xlsx, .xls" style="display: none;" onchange="handleExcelImport(event)" />
@@ -405,13 +408,22 @@
     </div>
   </div>
 
-  <!-- HIDDEN CONTAINER FOR GENERATING PDF REPORT -->
+  <!-- HIDDEN CONTAINER FOR GENERATING MAINTENANCE PDF REPORT -->
   <div id="pdf-report-template">
     <div class="pdf-header">
       <h1>Maintenance Report</h1>
       <p id="pdf-generated-date">Generated on: -</p>
     </div>
     <div id="pdf-cards-container"></div>
+  </div>
+
+  <!-- HIDDEN CONTAINER FOR GENERATING RESIDENT PDF REPORT -->
+  <div id="pdf-resident-template">
+    <div class="pdf-header">
+      <h1>Resident Records Report</h1>
+      <p id="pdf-res-generated-date">Generated on: -</p>
+    </div>
+    <div id="pdf-res-cards-container"></div>
   </div>
 
   <!-- MODALS -->
@@ -913,6 +925,7 @@
       }
     }
 
+    // --- Bulk Delete Checkbox Logic ---
     function toggleSelectAllResidents(master) {
       const checkboxes = document.querySelectorAll('.res-row-checkbox');
       checkboxes.forEach(cb => cb.checked = master.checked);
@@ -941,6 +954,80 @@
           alert("Error deleting residents: " + err.message);
         });
       }
+    }
+
+    // --- Export Selected Residents to PDF ---
+    function exportResidentsPDF() {
+      const checkboxes = document.querySelectorAll('.res-row-checkbox');
+      const selectedKeys = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+
+      if (selectedKeys.length === 0) {
+        alert("Please select at least 1 Resident in the checkbox for which you want to export a PDF.");
+        return;
+      }
+
+      const cardsContainer = document.getElementById('pdf-res-cards-container');
+      cardsContainer.innerHTML = '';
+
+      document.getElementById('pdf-res-generated-date').innerText = `Generated on: ${new Date().toLocaleString()}`;
+
+      selectedKeys.forEach(key => {
+        const res = residents[key];
+        if (!res) return;
+
+        const card = document.createElement('div');
+        card.className = 'pdf-card';
+        card.style.display = 'flex';
+        card.style.gap = '20px';
+        card.style.alignItems = 'flex-start';
+
+        const photoHtml = res.photo 
+          ? `<img src="${res.photo}" style="width: 120px; height: 120px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1;">` 
+          : `<div style="width: 120px; height: 120px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 12px; border-radius: 6px; border: 1px solid #cbd5e1;">No Photo</div>`;
+
+        card.innerHTML = `
+          <div>
+            ${photoHtml}
+          </div>
+          <div style="flex: 1;">
+            <div class="pdf-card-title" style="border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 10px;">
+              <span>👤 ${res.name || '-'} (ID: ${res.id || '-'})</span>
+            </div>
+            <div class="pdf-meta" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <div><b>WP No:</b> ${res.wpNo || '-'}</div>
+              <div><b>WP Expiry:</b> ${res.wpExpiry || '-'}</div>
+              <div><b>Batch No:</b> ${res.batchNo || '-'}</div>
+              <div><b>Nationality:</b> ${res.nationality || '-'}</div>
+              <div><b>Company Name:</b> ${res.company || '-'}</div>
+              <div><b>Bed No:</b> ${res.bedNo || '-'}</div>
+              <div><b>Card No:</b> ${res.cardNo || '-'}</div>
+              <div><b>Food Order:</b> ${res.foodOrder || '-'}</div>
+              <div><b>Check-in Date:</b> ${res.checkIn || '-'}</div>
+              <div><b>Check-out Date:</b> ${res.checkOut || '-'}</div>
+            </div>
+          </div>
+        `;
+        cardsContainer.appendChild(card);
+      });
+
+      const element = document.getElementById('pdf-resident-template');
+      element.style.display = 'block';
+
+      const opt = {
+        margin:       10,
+        filename:     `Resident_Records_${new Date().toISOString().slice(0,10)}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, logging: false },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      html2pdf().set(opt).from(element).save().then(() => {
+        element.style.display = 'none';
+      }).catch(err => {
+        console.error("PDF Export Error:", err);
+        element.style.display = 'none';
+        alert("There was an error generating the PDF.");
+      });
     }
 
     // --- Pagination Actions ---
@@ -1010,33 +1097,29 @@
       if (pageNumbersContainer) {
         pageNumbersContainer.innerHTML = '';
         
-        // Previous Button (Left side of page numbers)
+        // Previous Button
         const prevDisabled = currentPage === 1 ? 'disabled' : '';
         pageNumbersContainer.innerHTML += `<button class="btn btn-secondary" onclick="changePage(-1)" ${prevDisabled}>Prev</button>`;
 
-        // Showing a sliding window of page numbers
         let startPage = Math.max(1, currentPage - 2);
         let endPage = Math.min(totalPages, currentPage + 2);
 
-        // Always show first page
         if (startPage > 1) {
           pageNumbersContainer.innerHTML += `<button class="btn-page" onclick="goToPage(1)">1</button>`;
           if (startPage > 2) pageNumbersContainer.innerHTML += `<span style="color:#cbd5e1; padding: 4px;">...</span>`;
         }
 
-        // Generate specific page buttons
         for (let i = startPage; i <= endPage; i++) {
           const activeClass = (i === currentPage) ? 'active' : '';
           pageNumbersContainer.innerHTML += `<button class="btn-page ${activeClass}" onclick="goToPage(${i})">${i}</button>`;
         }
 
-        // Always show last page
         if (endPage < totalPages) {
           if (endPage < totalPages - 1) pageNumbersContainer.innerHTML += `<span style="color:#cbd5e1; padding: 4px;">...</span>`;
           pageNumbersContainer.innerHTML += `<button class="btn-page" onclick="goToPage(${totalPages})">${totalPages}</button>`;
         }
 
-        // Next Button (Right side of page numbers)
+        // Next Button
         const nextDisabled = currentPage === totalPages ? 'disabled' : '';
         pageNumbersContainer.innerHTML += `<button class="btn btn-secondary" onclick="changePage(1)" ${nextDisabled}>Next</button>`;
       }
@@ -1504,7 +1587,7 @@
       const item = checklists[key];
       if (!item) return;
 
-      openModal('modal-new-checklist');
+      openModal('modal-new-checklist'); 
 
       document.getElementById('chk-modal-title').innerText = "Edit Checklist Record";
       document.getElementById('chk-submit-btn').innerText = "Update Record";
