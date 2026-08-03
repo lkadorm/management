@@ -275,7 +275,8 @@
                     <input type="checkbox" id="select-all-res" onchange="toggleSelectAllResidents(this)">
                   </th>
                   <th>Photo</th>
-                  <th>Resident ID</th>
+                  <!-- Sortable Header -->
+                  <th onclick="toggleResidentSort()" style="cursor:pointer; color:#3b82f6;" title="Click to sort by ID">Resident ID <span id="res-sort-icon">🔽</span></th>
                   <th>Name</th>
                   <th>WP No.</th>
                   <th>WP Expiry</th>
@@ -396,39 +397,39 @@
         <div class="form-grid-2">
           <div class="form-group">
             <label>Resident ID</label>
-            <input type="text" id="res-id" class="form-input" placeholder="e.g. RES-001" required>
+            <input type="text" id="res-id" class="form-input" placeholder="e.g. RES-001">
           </div>
           <div class="form-group">
             <label>Name</label>
-            <input type="text" id="res-name" class="form-input" required>
+            <input type="text" id="res-name" class="form-input">
           </div>
           <div class="form-group">
             <label>WP No.</label>
-            <input type="text" id="res-wp" class="form-input" required>
+            <input type="text" id="res-wp" class="form-input">
           </div>
           <div class="form-group">
             <label>WP Expiry Date</label>
-            <input type="date" id="res-wp-expiry" class="form-input" required>
+            <input type="date" id="res-wp-expiry" class="form-input">
           </div>
           <div class="form-group">
             <label>Batch No.</label>
-            <input type="text" id="res-batch" class="form-input" placeholder="e.g. B-001" required>
+            <input type="text" id="res-batch" class="form-input" placeholder="e.g. B-001">
           </div>
           <div class="form-group">
             <label>Nationality</label>
-            <input type="text" id="res-nationality" class="form-input" placeholder="e.g. Myanmar" required>
+            <input type="text" id="res-nationality" class="form-input" placeholder="e.g. Myanmar">
           </div>
           <div class="form-group">
             <label>Company Name</label>
-            <input type="text" id="res-company" class="form-input" required>
+            <input type="text" id="res-company" class="form-input" >
           </div>
           <div class="form-group">
             <label>Bed No.</label>
-            <input type="text" id="res-bed" class="form-input" placeholder="e.g. A-101-B" required>
+            <input type="text" id="res-bed" class="form-input" placeholder="e.g. A-101-B">
           </div>
           <div class="form-group">
             <label>Access Card No.</label>
-            <input type="text" id="res-card" class="form-input" required>
+            <input type="text" id="res-card" class="form-input">
           </div>
           <div class="form-group">
             <label>Food Order</label>
@@ -439,7 +440,7 @@
           </div>
           <div class="form-group">
             <label>Check-in Date</label>
-            <input type="date" id="res-checkin" class="form-input" required>
+            <input type="date" id="res-checkin" class="form-input">
           </div>
         </div>
         <div class="form-group">
@@ -770,6 +771,15 @@
     }
 
     // --- RESIDENTS LOGIC ---
+
+    // Resident Sort State
+    let resSortAsc = true;
+    function toggleResidentSort() {
+      resSortAsc = !resSortAsc;
+      document.getElementById('res-sort-icon').innerText = resSortAsc ? "🔽" : "🔼";
+      renderResidentsTable();
+    }
+
     function openNewResidentModal() {
       document.getElementById('modal-resident-title').innerText = "Add New Resident Record";
       document.getElementById('res-submit-btn').innerText = "Save Resident";
@@ -895,7 +905,6 @@
       }
     }
 
-    // --- Add Search Filter & Checkboxes in Table ---
     function renderResidentsTable() {
       const tbody = document.getElementById('resident-table-body');
       if (!tbody) return;
@@ -904,17 +913,27 @@
       const masterCb = document.getElementById('select-all-res');
       if (masterCb) masterCb.checked = false;
 
-      // Get Search Keyword
+      // Search Logic
       const searchInput = document.getElementById('search-resident');
       const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
 
-      Object.keys(residents).forEach((key) => {
+      // Sorting Logic by Resident ID
+      let keys = Object.keys(residents);
+      keys.sort((a, b) => {
+        let idA = (residents[a].id || "").toString().toLowerCase();
+        let idB = (residents[b].id || "").toString().toLowerCase();
+        if (idA < idB) return resSortAsc ? -1 : 1;
+        if (idA > idB) return resSortAsc ? 1 : -1;
+        return 0;
+      });
+
+      keys.forEach((key) => {
         const res = residents[key];
         
-        // --- SEARCH FEATURE LOGIC ---
+        // Skip if Search Term does not match
         const searchString = `${res.id} ${res.name} ${res.wpNo} ${res.company} ${res.bedNo} ${res.batchNo} ${res.nationality}`.toLowerCase();
         if (searchTerm && !searchString.includes(searchTerm)) {
-          return; // Skip rendering this row if it doesn't match search
+          return; 
         }
 
         const tr = document.createElement('tr');
@@ -976,7 +995,6 @@
       XLSX.writeFile(workbook, "LK_Ang_Dormitory_Residents.xlsx");
     }
 
-    // --- Prevent Duplicates on Import ---
     function handleExcelImport(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -1005,12 +1023,11 @@
             const rowId = String(row['Resident ID'] || row['residentId'] || row['id'] || `LKAD-${Math.floor(1000 + Math.random() * 9000)}`);
             const rowName = String(row['Name'] || row['name'] || "N/A");
 
-            // 💥 DUPLICATE CHECK: Skip if Resident ID and Name already exist in database 💥
             const isDuplicate = Object.values(residents).some(r => r.id === rowId && r.name === rowName);
 
             if (isDuplicate) {
               skipCount++;
-              return; // Skip this row and continue to the next one
+              return; 
             }
 
             const newRefKey = db.ref('residents').push().key;
