@@ -266,7 +266,6 @@
               <!-- Bulk Delete Button -->
               <button class="btn btn-danger" onclick="deleteSelectedResidents()">🗑️ Delete Selected</button>
               
-              <!-- NEW: Export to PDF Button -->
               <button class="btn btn-green" onclick="exportResidentsPDF()">📄 Export Selected PDF</button>
 
               <button class="btn btn-green" onclick="openNewResidentModal()">+ New Resident</button>
@@ -277,6 +276,9 @@
               <button class="btn btn-green" onclick="exportResidentsToExcel()">📊 Export to Excel</button>
             </div>
           </div>
+
+          <!-- SUMMARY STATS CONTAINER -->
+          <div id="resident-stats-container" style="margin-bottom: 20px;"></div>
           
           <div class="table-container">
             <table>
@@ -439,39 +441,39 @@
         <div class="form-grid-2">
           <div class="form-group">
             <label>Resident ID</label>
-            <input type="text" id="res-id" class="form-input" placeholder="e.g. RES-001">
+            <input type="text" id="res-id" class="form-input" placeholder="e.g. RES-001" required>
           </div>
           <div class="form-group">
             <label>Name</label>
-            <input type="text" id="res-name" class="form-input">
+            <input type="text" id="res-name" class="form-input" required>
           </div>
           <div class="form-group">
             <label>WP No.</label>
-            <input type="text" id="res-wp" class="form-input">
+            <input type="text" id="res-wp" class="form-input" required>
           </div>
           <div class="form-group">
             <label>WP Expiry Date</label>
-            <input type="date" id="res-wp-expiry" class="form-input">
+            <input type="date" id="res-wp-expiry" class="form-input" required>
           </div>
           <div class="form-group">
             <label>Batch No.</label>
-            <input type="text" id="res-batch" class="form-input" placeholder="e.g. B-001">
+            <input type="text" id="res-batch" class="form-input" placeholder="e.g. B-001" required>
           </div>
           <div class="form-group">
             <label>Nationality</label>
-            <input type="text" id="res-nationality" class="form-input" placeholder="e.g. Myanmar">
+            <input type="text" id="res-nationality" class="form-input" placeholder="e.g. Myanmar" required>
           </div>
           <div class="form-group">
             <label>Company Name</label>
-            <input type="text" id="res-company" class="form-input">
+            <input type="text" id="res-company" class="form-input" required>
           </div>
           <div class="form-group">
             <label>Bed No.</label>
-            <input type="text" id="res-bed" class="form-input" placeholder="e.g. A-101-B">
+            <input type="text" id="res-bed" class="form-input" placeholder="e.g. A-101-B" required>
           </div>
           <div class="form-group">
             <label>Access Card No.</label>
-            <input type="text" id="res-card" class="form-input">
+            <input type="text" id="res-card" class="form-input" required>
           </div>
           <div class="form-group">
             <label>Food Order</label>
@@ -482,7 +484,7 @@
           </div>
           <div class="form-group">
             <label>Check-in Date</label>
-            <input type="date" id="res-checkin" class="form-input">
+            <input type="date" id="res-checkin" class="form-input" required>
           </div>
         </div>
         <div class="form-group">
@@ -697,6 +699,7 @@
       // 2. Sync Residents
       db.ref('residents').on('value', (snapshot) => {
         residents = snapshot.val() || {};
+        renderResidentStats(); // 💥 UPDATED: Render Stats dynamically 💥
         renderResidentsTable();
       });
 
@@ -817,7 +820,61 @@
       openModal('modal-image-viewer');
     }
 
-    // --- RESIDENTS LOGIC ---
+    // --- RESIDENTS LOGIC & STATS ---
+
+    // 💥 NEW: Render Statistics Feature 💥
+    function renderResidentStats() {
+      const statsContainer = document.getElementById('resident-stats-container');
+      if (!statsContainer) return;
+
+      const resArray = Object.values(residents);
+      const totalKeyIn = resArray.length;
+
+      let actualNamesCount = 0;
+      const companyCounts = {};
+
+      resArray.forEach(res => {
+        // Count actual names (Ignore empty, -, N/A)
+        const name = (res.name || "").trim();
+        if (name !== "" && name !== "-" && name.toLowerCase() !== "n/a") {
+          actualNamesCount++;
+        }
+
+        // Count by company
+        let comp = (res.company || "").trim();
+        if (comp === "" || comp === "-" || comp.toLowerCase() === "n/a") {
+          comp = "Unknown / Unassigned";
+        }
+        companyCounts[comp] = (companyCounts[comp] || 0) + 1;
+      });
+
+      // Build Company List HTML
+      let companyHtml = '';
+      Object.keys(companyCounts).sort().forEach(c => {
+         companyHtml += `<div style="background: #1e293b; padding: 10px 15px; border-radius: 8px; font-size: 0.85rem; border: 1px solid #334155; display:flex; align-items:center; gap:10px;">
+           <span style="color:#94a3b8;">${c}:</span> <strong style="color:#38ef7d; font-size:1.1rem;">${companyCounts[c]}</strong>
+         </div>`;
+      });
+
+      statsContainer.innerHTML = `
+        <div style="display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;">
+          <div style="background: linear-gradient(135deg, #0f172a, #1e293b); padding: 20px; border-radius: 10px; border: 1px solid #3b82f6; flex: 1; min-width: 200px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+            <div style="color: #93c5fd; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; margin-bottom: 5px;">Total Records Keyed In</div>
+            <div style="font-size: 2.2rem; font-weight: bold; color: #ffffff;">${totalKeyIn}</div>
+          </div>
+          <div style="background: linear-gradient(135deg, #0f172a, #1e293b); padding: 20px; border-radius: 10px; border: 1px solid #10b981; flex: 1; min-width: 200px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+            <div style="color: #6ee7b7; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; margin-bottom: 5px;">Actual Names Entered</div>
+            <div style="font-size: 2.2rem; font-weight: bold; color: #ffffff;">${actualNamesCount}</div>
+          </div>
+        </div>
+        <div style="background: #0b1120; padding: 15px; border-radius: 10px; border: 1px solid #1e293b;">
+          <div style="font-size: 0.95rem; font-weight: 600; color: #cbd5e1; margin-bottom: 15px;">🏢 Residents by Company:</div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            ${companyHtml || '<span style="color:#64748b; font-size:0.85rem;">No company data available.</span>'}
+          </div>
+        </div>
+      `;
+    }
 
     function toggleResidentSort() {
       resSortAsc = !resSortAsc;
