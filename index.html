@@ -465,7 +465,7 @@
           </div>
           <div class="form-group">
             <label>Company Name</label>
-            <input type="text" id="res-company" class="form-input" required>
+            <input type="text" id="res-company" class="form-input">
           </div>
           <div class="form-group">
             <label>Bed No.</label>
@@ -680,10 +680,11 @@
     let checklists = {};
     let currentUser = JSON.parse(localStorage.getItem('lkang_current_user')) || null;
 
-    // --- Pagination State ---
+    // --- Pagination & Filter State ---
     let currentPage = 1;
     let rowsPerPage = 20;
     let resSortAsc = true;
+    let selectedCompanyFilter = ""; // 💥 NEW: State to hold the clicked company 💥
 
     // --- REALTIME SYNC LISTENERS ---
     window.addEventListener('DOMContentLoaded', () => {
@@ -699,7 +700,7 @@
       // 2. Sync Residents
       db.ref('residents').on('value', (snapshot) => {
         residents = snapshot.val() || {};
-        renderResidentStats(); // 💥 UPDATED: Render Stats dynamically 💥
+        renderResidentStats(); 
         renderResidentsTable();
       });
 
@@ -822,7 +823,18 @@
 
     // --- RESIDENTS LOGIC & STATS ---
 
-    // 💥 NEW: Render Statistics Feature 💥
+    // 💥 NEW: Filter By Company Function 💥
+    function filterByCompany(compName) {
+      if (selectedCompanyFilter === compName) {
+        selectedCompanyFilter = ""; // Clear filter if clicked again
+      } else {
+        selectedCompanyFilter = compName; // Set new filter
+      }
+      currentPage = 1; // Reset to page 1
+      renderResidentStats(); // Re-render stats to update highlighted button
+      renderResidentsTable(); // Re-render table with filtered data
+    }
+
     function renderResidentStats() {
       const statsContainer = document.getElementById('resident-stats-container');
       if (!statsContainer) return;
@@ -848,11 +860,19 @@
         companyCounts[comp] = (companyCounts[comp] || 0) + 1;
       });
 
-      // Build Company List HTML
+      // 💥 Build Clickable Company List HTML 💥
       let companyHtml = '';
       Object.keys(companyCounts).sort().forEach(c => {
-         companyHtml += `<div style="background: #1e293b; padding: 10px 15px; border-radius: 8px; font-size: 0.85rem; border: 1px solid #334155; display:flex; align-items:center; gap:10px;">
-           <span style="color:#94a3b8;">${c}:</span> <strong style="color:#38ef7d; font-size:1.1rem;">${companyCounts[c]}</strong>
+         const isActive = (c === selectedCompanyFilter);
+         const bgCol = isActive ? '#2563eb' : '#1e293b';
+         const borderCol = isActive ? '#60a5fa' : '#334155';
+         const textCol = isActive ? '#ffffff' : '#94a3b8';
+
+         // Escape quotes just in case company name has them
+         const safeCompName = c.replace(/"/g, '&quot;');
+
+         companyHtml += `<div onclick="filterByCompany('${safeCompName}')" style="background: ${bgCol}; padding: 10px 15px; border-radius: 8px; font-size: 0.85rem; border: 1px solid ${borderCol}; display:flex; align-items:center; gap:10px; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+           <span style="color:${textCol};">${c}:</span> <strong style="color:#38ef7d; font-size:1.1rem;">${companyCounts[c]}</strong>
          </div>`;
       });
 
@@ -868,7 +888,10 @@
           </div>
         </div>
         <div style="background: #0b1120; padding: 15px; border-radius: 10px; border: 1px solid #1e293b;">
-          <div style="font-size: 0.95rem; font-weight: 600; color: #cbd5e1; margin-bottom: 15px;">🏢 Residents by Company:</div>
+          <div style="font-size: 0.95rem; font-weight: 600; color: #cbd5e1; margin-bottom: 15px; display:flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <span>🏢 Residents by Company: <span style="font-size: 0.75rem; color:#94a3b8; font-weight: normal; margin-left: 5px;">(Click a company to filter, click again to clear)</span></span>
+            ${selectedCompanyFilter ? `<button class="btn btn-danger" style="padding: 4px 10px; font-size: 0.75rem;" onclick="filterByCompany('')">✖ Clear Filter</button>` : ''}
+          </div>
           <div style="display: flex; gap: 10px; flex-wrap: wrap;">
             ${companyHtml || '<span style="color:#64748b; font-size:0.85rem;">No company data available.</span>'}
           </div>
@@ -1105,7 +1128,7 @@
       renderResidentsTable();
     }
 
-    // --- Main Render with Numbered Pagination ---
+    // --- Main Render with Numbered Pagination & Filters ---
     function renderResidentsTable() {
       const tbody = document.getElementById('resident-table-body');
       if (!tbody) return;
@@ -1118,8 +1141,20 @@
       const searchInput = document.getElementById('search-resident');
       const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
 
+      // 💥 Combine Search and Clickable Company Filter 💥
       let filteredKeys = Object.keys(residents).filter(key => {
         const res = residents[key];
+
+        // Apply Company Filter First
+        if (selectedCompanyFilter !== "") {
+          let comp = (res.company || "").trim();
+          if (comp === "" || comp === "-" || comp.toLowerCase() === "n/a") {
+            comp = "Unknown / Unassigned";
+          }
+          if (comp !== selectedCompanyFilter) return false;
+        }
+
+        // Then Apply General Search Filter
         const searchString = `${res.id} ${res.name} ${res.wpNo} ${res.company} ${res.bedNo} ${res.batchNo} ${res.nationality}`.toLowerCase();
         return !searchTerm || searchString.includes(searchTerm);
       });
