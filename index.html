@@ -43,7 +43,7 @@
     .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: #3b82f6; }
     .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-    .btn { padding: 9px 16px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; font-size: 0.875rem; transition: background-color 0.2s; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+    .btn { padding: 9px 16px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; font-size: 0.875rem; transition: background-color 0.2s; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; justify-content: center; }
     .btn-primary { background-color: #2563eb; color: #fff; } .btn-primary:hover { background-color: #1d4ed8; }
     .btn-green { background-color: #16a34a; color: #fff; } .btn-green:hover { background-color: #15803d; }
     .btn-excel { background-color: #16a34a; color: #fff; } .btn-excel:hover { background-color: #15803d; }
@@ -53,7 +53,7 @@
     .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .auth-toggle { margin-top: 16px; text-align: center; font-size: 0.85rem; color: #94a3b8; }
-    .auth-toggle a { color: #3b82f6; text-decoration: none; cursor: pointer; }
+    .auth-toggle a { color: #3b82f6; text-decoration: none; cursor: pointer; font-weight: bold; }
 
     /* --- LAYOUT --- */
     #app-container { display: flex; min-height: 100vh; }
@@ -183,6 +183,8 @@
 
   <!-- AUTHENTICATION -->
   <div id="auth-container">
+    
+    <!-- LOGIN CARD -->
     <div id="login-card" class="auth-card">
       <div class="auth-header">
         <h2>L K Ang Dormitory</h2>
@@ -197,13 +199,38 @@
           <label>Password</label>
           <input type="password" id="login-password" class="form-input" placeholder="Enter password" required>
         </div>
-        <button type="submit" class="btn btn-primary" style="width:100%;">Log In</button>
+        
+        <!-- Login Button -->
+        <button type="submit" class="btn btn-primary" style="width:100%; margin-bottom: 10px;">Log In</button>
+        
+        <!-- EXPLICIT FORGOT PASSWORD BUTTON -->
+        <button type="button" class="btn btn-secondary" style="width:100%; margin-bottom: 15px;" onclick="toggleAuthMode('forgot')">Forgot Password?</button>
       </form>
+
       <div class="auth-toggle">
         Don't have an admin account? <a onclick="toggleAuthMode('register')">Register Admin</a>
       </div>
     </div>
 
+    <!-- FORGOT PASSWORD CARD (NEW & CLEAR) -->
+    <div id="forgot-card" class="auth-card hidden">
+      <div class="auth-header">
+        <h2>L K Ang Dormitory</h2>
+        <h1>Reset Password</h1>
+      </div>
+      <form onsubmit="handleForgotPassword(event)">
+        <div class="form-group">
+          <label>Registered Email Address</label>
+          <input type="email" id="forgot-email" class="form-input" placeholder="Enter your email" required>
+        </div>
+        <button type="submit" class="btn btn-warning" style="width:100%; margin-bottom: 15px;">Recover Password</button>
+      </form>
+      <div class="auth-toggle">
+        Remembered your password? <a onclick="toggleAuthMode('login')">Sign In here</a>
+      </div>
+    </div>
+
+    <!-- REGISTER CARD -->
     <div id="register-card" class="auth-card hidden">
       <div class="auth-header">
         <h2>L K Ang Dormitory</h2>
@@ -222,10 +249,10 @@
           <label>Password</label>
           <input type="password" id="reg-password" class="form-input" required>
         </div>
-        <button type="submit" class="btn btn-green" style="width:100%;">Create Account</button>
+        <button type="submit" class="btn btn-green" style="width:100%; margin-bottom: 15px;">Create Account</button>
       </form>
       <div class="auth-toggle">
-        Already registered? <a onclick="toggleAuthMode('login')">Sign In</a>
+        Already registered? <a onclick="toggleAuthMode('login')">Sign In here</a>
       </div>
     </div>
   </div>
@@ -397,6 +424,7 @@
                 <tr>
                   <th>Name</th>
                   <th>Email</th>
+                  <th>Password</th>
                   <th>Role</th>
                   <th>Actions</th>
                 </tr>
@@ -441,39 +469,39 @@
         <div class="form-grid-2">
           <div class="form-group">
             <label>Resident ID</label>
-            <input type="text" id="res-id" class="form-input" placeholder="e.g. RES-001">
+            <input type="text" id="res-id" class="form-input" placeholder="e.g. RES-001" required>
           </div>
           <div class="form-group">
             <label>Name</label>
-            <input type="text" id="res-name" class="form-input">
+            <input type="text" id="res-name" class="form-input" required>
           </div>
           <div class="form-group">
             <label>WP No.</label>
-            <input type="text" id="res-wp" class="form-input">
+            <input type="text" id="res-wp" class="form-input" required>
           </div>
           <div class="form-group">
             <label>WP Expiry Date</label>
-            <input type="date" id="res-wp-expiry" class="form-input">
+            <input type="date" id="res-wp-expiry" class="form-input" required>
           </div>
           <div class="form-group">
             <label>Batch No.</label>
-            <input type="text" id="res-batch" class="form-input" placeholder="e.g. B-001">
+            <input type="text" id="res-batch" class="form-input" placeholder="e.g. B-001" required>
           </div>
           <div class="form-group">
             <label>Nationality</label>
-            <input type="text" id="res-nationality" class="form-input" placeholder="e.g. Myanmar">
+            <input type="text" id="res-nationality" class="form-input" placeholder="e.g. Myanmar" required>
           </div>
           <div class="form-group">
             <label>Company Name</label>
-            <input type="text" id="res-company" class="form-input">
+            <input type="text" id="res-company" class="form-input" required>
           </div>
           <div class="form-group">
             <label>Bed No.</label>
-            <input type="text" id="res-bed" class="form-input" placeholder="e.g. A-101-B">
+            <input type="text" id="res-bed" class="form-input" placeholder="e.g. A-101-B" required>
           </div>
           <div class="form-group">
             <label>Access Card No.</label>
-            <input type="text" id="res-card" class="form-input">
+            <input type="text" id="res-card" class="form-input" required>
           </div>
           <div class="form-group">
             <label>Food Order</label>
@@ -484,7 +512,7 @@
           </div>
           <div class="form-group">
             <label>Check-in Date</label>
-            <input type="date" id="res-checkin" class="form-input">
+            <input type="date" id="res-checkin" class="form-input" required>
           </div>
         </div>
         <div class="form-group">
@@ -638,7 +666,7 @@
         </div>
         <div class="form-group">
           <label>Password</label>
-          <input type="password" id="user-password-input" class="form-input">
+          <input type="text" id="user-password-input" class="form-input" required>
         </div>
         <div class="form-group">
           <label>Role</label>
@@ -684,7 +712,7 @@
     let currentPage = 1;
     let rowsPerPage = 20;
     let resSortAsc = true;
-    let selectedCompanyFilter = ""; // 💥 NEW: State to hold the clicked company 💥
+    let selectedCompanyFilter = ""; 
 
     // --- REALTIME SYNC LISTENERS ---
     window.addEventListener('DOMContentLoaded', () => {
@@ -736,14 +764,45 @@
       }
     }
 
-    // --- AUTHENTICATION ---
+    // --- 💥 AUTHENTICATION & FORGOT PASSWORD LOGIC 💥 ---
     function toggleAuthMode(mode) {
-      if (mode === 'register') {
-        document.getElementById('login-card').classList.add('hidden');
-        document.getElementById('register-card').classList.remove('hidden');
+      const loginCard = document.getElementById('login-card');
+      const regCard = document.getElementById('register-card');
+      const forgotCard = document.getElementById('forgot-card');
+
+      if(loginCard) loginCard.classList.add('hidden');
+      if(regCard) regCard.classList.add('hidden');
+      if(forgotCard) forgotCard.classList.add('hidden');
+
+      if (mode === 'register' && regCard) {
+        regCard.classList.remove('hidden');
+      } else if (mode === 'forgot' && forgotCard) {
+        forgotCard.classList.remove('hidden');
+      } else if (loginCard) {
+        loginCard.classList.remove('hidden');
+      }
+    }
+
+    function handleForgotPassword(e) {
+      e.preventDefault();
+      
+      if (!users || Object.keys(users).length === 0) {
+          alert("System is still connecting to the database. Please try again in a few seconds.");
+          return;
+      }
+
+      const emailInput = document.getElementById('forgot-email');
+      if(!emailInput) return;
+      
+      const targetEmail = emailInput.value.trim().toLowerCase();
+      const foundUser = Object.values(users).find(u => u.email && u.email.trim().toLowerCase() === targetEmail);
+
+      if (foundUser) {
+        alert(`Your current password is: ${foundUser.password}\n\n(Note: Keep your password safe!)`);
+        emailInput.value = ''; 
+        toggleAuthMode('login');
       } else {
-        document.getElementById('register-card').classList.remove('hidden');
-        document.getElementById('login-card').classList.add('hidden');
+        alert("Sorry, this Email Address is not registered in the system!");
       }
     }
 
@@ -753,7 +812,7 @@
       const email = document.getElementById('reg-email').value;
       const password = document.getElementById('reg-password').value;
 
-      const userExists = Object.values(users).some(u => u.email === email);
+      const userExists = Object.values(users).some(u => u.email && u.email.toLowerCase() === email.toLowerCase());
       if (userExists) {
         alert("User with this email already exists!");
         return;
@@ -766,10 +825,10 @@
 
     function handleLogin(e) {
       e.preventDefault();
-      const email = document.getElementById('login-email').value.trim();
+      const email = document.getElementById('login-email').value.trim().toLowerCase();
       const pwd = document.getElementById('login-password').value.trim();
 
-      const foundUser = Object.values(users).find(u => u.email === email && u.password === pwd);
+      const foundUser = Object.values(users).find(u => u.email && u.email.toLowerCase() === email && u.password === pwd);
 
       if (foundUser) {
         currentUser = foundUser;
@@ -785,6 +844,8 @@
       localStorage.removeItem('lkang_current_user');
       document.getElementById('app-container').classList.add('hidden');
       document.getElementById('auth-container').classList.remove('hidden');
+      document.getElementById('login-email').value = '';
+      document.getElementById('login-password').value = '';
     }
 
     // --- NAVIGATION ---
@@ -823,16 +884,15 @@
 
     // --- RESIDENTS LOGIC & STATS ---
 
-    // 💥 NEW: Filter By Company Function 💥
     function filterByCompany(compName) {
       if (selectedCompanyFilter === compName) {
-        selectedCompanyFilter = ""; // Clear filter if clicked again
+        selectedCompanyFilter = ""; 
       } else {
-        selectedCompanyFilter = compName; // Set new filter
+        selectedCompanyFilter = compName; 
       }
-      currentPage = 1; // Reset to page 1
-      renderResidentStats(); // Re-render stats to update highlighted button
-      renderResidentsTable(); // Re-render table with filtered data
+      currentPage = 1; 
+      renderResidentStats(); 
+      renderResidentsTable(); 
     }
 
     function renderResidentStats() {
@@ -846,13 +906,11 @@
       const companyCounts = {};
 
       resArray.forEach(res => {
-        // Count actual names (Ignore empty, -, N/A)
         const name = (res.name || "").trim();
         if (name !== "" && name !== "-" && name.toLowerCase() !== "n/a") {
           actualNamesCount++;
         }
 
-        // Count by company
         let comp = (res.company || "").trim();
         if (comp === "" || comp === "-" || comp.toLowerCase() === "n/a") {
           comp = "Unknown / Unassigned";
@@ -860,7 +918,6 @@
         companyCounts[comp] = (companyCounts[comp] || 0) + 1;
       });
 
-      // 💥 Build Clickable Company List HTML 💥
       let companyHtml = '';
       Object.keys(companyCounts).sort().forEach(c => {
          const isActive = (c === selectedCompanyFilter);
@@ -868,7 +925,6 @@
          const borderCol = isActive ? '#60a5fa' : '#334155';
          const textCol = isActive ? '#ffffff' : '#94a3b8';
 
-         // Escape quotes just in case company name has them
          const safeCompName = c.replace(/"/g, '&quot;');
 
          companyHtml += `<div onclick="filterByCompany('${safeCompName}')" style="background: ${bgCol}; padding: 10px 15px; border-radius: 8px; font-size: 0.85rem; border: 1px solid ${borderCol}; display:flex; align-items:center; gap:10px; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
@@ -1005,7 +1061,6 @@
       }
     }
 
-    // --- Bulk Delete Checkbox Logic ---
     function toggleSelectAllResidents(master) {
       const checkboxes = document.querySelectorAll('.res-row-checkbox');
       checkboxes.forEach(cb => cb.checked = master.checked);
@@ -1036,7 +1091,6 @@
       }
     }
 
-    // --- Export Selected Residents to PDF ---
     function exportResidentsPDF() {
       const checkboxes = document.querySelectorAll('.res-row-checkbox');
       const selectedKeys = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
@@ -1110,7 +1164,6 @@
       });
     }
 
-    // --- Pagination Actions ---
     function changePage(step) {
       currentPage += step;
       renderResidentsTable();
@@ -1128,7 +1181,6 @@
       renderResidentsTable();
     }
 
-    // --- Main Render with Numbered Pagination & Filters ---
     function renderResidentsTable() {
       const tbody = document.getElementById('resident-table-body');
       if (!tbody) return;
@@ -1137,15 +1189,12 @@
       const masterCb = document.getElementById('select-all-res');
       if (masterCb) masterCb.checked = false;
 
-      // 1. Search Logic
       const searchInput = document.getElementById('search-resident');
       const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
 
-      // 💥 Combine Search and Clickable Company Filter 💥
       let filteredKeys = Object.keys(residents).filter(key => {
         const res = residents[key];
 
-        // Apply Company Filter First
         if (selectedCompanyFilter !== "") {
           let comp = (res.company || "").trim();
           if (comp === "" || comp === "-" || comp.toLowerCase() === "n/a") {
@@ -1154,12 +1203,10 @@
           if (comp !== selectedCompanyFilter) return false;
         }
 
-        // Then Apply General Search Filter
         const searchString = `${res.id} ${res.name} ${res.wpNo} ${res.company} ${res.bedNo} ${res.batchNo} ${res.nationality}`.toLowerCase();
         return !searchTerm || searchString.includes(searchTerm);
       });
 
-      // 2. Sorting Logic by Resident ID
       filteredKeys.sort((a, b) => {
         let idA = (residents[a].id || "").toString().toLowerCase();
         let idB = (residents[b].id || "").toString().toLowerCase();
@@ -1168,7 +1215,6 @@
         return 0;
       });
 
-      // 3. Pagination Logic
       const totalRecords = filteredKeys.length;
       const totalPages = Math.ceil(totalRecords / rowsPerPage) || 1;
 
@@ -1179,7 +1225,6 @@
       const endIndex = Math.min(startIndex + rowsPerPage, totalRecords);
       const paginatedKeys = filteredKeys.slice(startIndex, endIndex);
 
-      // --- Rendering Pagination UI (Page Numbers) ---
       const infoSpan = document.getElementById('res-page-info');
       if (infoSpan) {
         infoSpan.innerText = totalRecords === 0 ? '0-0 of 0' : `${startIndex + 1}-${endIndex} of ${totalRecords}`;
@@ -1189,7 +1234,6 @@
       if (pageNumbersContainer) {
         pageNumbersContainer.innerHTML = '';
         
-        // Previous Button
         const prevDisabled = currentPage === 1 ? 'disabled' : '';
         pageNumbersContainer.innerHTML += `<button class="btn btn-secondary" onclick="changePage(-1)" ${prevDisabled}>Prev</button>`;
 
@@ -1211,12 +1255,10 @@
           pageNumbersContainer.innerHTML += `<button class="btn-page" onclick="goToPage(${totalPages})">${totalPages}</button>`;
         }
 
-        // Next Button
         const nextDisabled = currentPage === totalPages ? 'disabled' : '';
         pageNumbersContainer.innerHTML += `<button class="btn btn-secondary" onclick="changePage(1)" ${nextDisabled}>Next</button>`;
       }
 
-      // 4. Render the sliced data
       paginatedKeys.forEach((key) => {
         const res = residents[key];
         const tr = document.createElement('tr');
@@ -1531,7 +1573,6 @@
       }
     }
 
-    // --- CHECKBOX & DIRECT PDF EXPORT LOGIC FOR MAINTENANCE ---
     function toggleSelectAllMaintenance(master) {
       const checkboxes = document.querySelectorAll('.row-checkbox');
       checkboxes.forEach(cb => cb.checked = master.checked);
@@ -1673,8 +1714,7 @@
       });
     }
 
-    // --- CHECKLIST LOGIC (WITH EDIT & DELETE FEATURES) ---
-
+    // --- CHECKLIST LOGIC ---
     function openEditChecklistModal(key) {
       const item = checklists[key];
       if (!item) return;
@@ -1814,7 +1854,7 @@
       });
     }
 
-    // --- USERS LOGIC ---
+    // --- 💥 USERS LOGIC (PASSWORD EDIT FIX) 💥 ---
     function openNewUserModal() {
       document.getElementById('modal-user-title').innerText = "Add New User";
       document.getElementById('user-submit-btn').innerText = "Create User";
@@ -1837,11 +1877,14 @@
       document.getElementById('user-submit-btn').innerText = "Update User";
       document.getElementById('user-edit-key').value = key;
 
-      document.getElementById('user-name-input').value = u.name;
-      document.getElementById('user-email-input').value = u.email;
-      document.getElementById('user-password-input').value = ''; 
-      document.getElementById('user-password-input').required = false; 
-      document.getElementById('user-role-input').value = u.role;
+      document.getElementById('user-name-input').value = u.name || '';
+      document.getElementById('user-email-input').value = u.email || '';
+      
+      // FIX: Pre-fill password so user can explicitly see and update it
+      document.getElementById('user-password-input').value = u.password || ''; 
+      document.getElementById('user-password-input').required = true; 
+      
+      document.getElementById('user-role-input').value = u.role || 'Staff';
 
       openModal('modal-user');
     }
@@ -1851,18 +1894,32 @@
       const key = document.getElementById('user-edit-key').value;
       const name = document.getElementById('user-name-input').value;
       const email = document.getElementById('user-email-input').value;
-      const pwd = document.getElementById('user-password-input').value;
+      const pwd = document.getElementById('user-password-input').value.trim();
       const role = document.getElementById('user-role-input').value;
 
       if (key) {
-        const updateData = { name, email, role };
-        if (pwd.trim() !== "") updateData.password = pwd;
-        db.ref('users/' + key).update(updateData);
-      } else {
-        db.ref('users').push({ name, email, password: pwd, role });
-      }
+        // Edit Existing User
+        const updateData = { 
+          name: name, 
+          email: email, 
+          role: role,
+          password: pwd // Save the explicitly updated password
+        };
+        
+        db.ref('users/' + key).update(updateData).then(() => {
+            alert("User account updated successfully!");
+            closeModal('modal-user');
+        }).catch(err => {
+            alert("Error updating user: " + err.message);
+        });
 
-      closeModal('modal-user');
+      } else {
+        // Create New User
+        db.ref('users').push({ name, email, password: pwd, role }).then(() => {
+            alert("New user created successfully!");
+            closeModal('modal-user');
+        });
+      }
     }
 
     function deleteUser(key) {
@@ -1887,6 +1944,7 @@
         tr.innerHTML = `
           <td>${u.name}</td>
           <td>${u.email}</td>
+          <td style="color: #38ef7d; font-family: monospace;">${u.password}</td> <!-- Show password explicitly for admin -->
           <td><b>${u.role}</b></td>
           <td style="display:flex; gap:6px;">
             <button class="btn btn-warning" style="padding:4px 8px; font-size:0.75rem;" onclick="openEditUserModal('${key}')">Edit</button>
