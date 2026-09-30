@@ -1362,7 +1362,7 @@
 
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet);
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, {raw: false});
 
           if (jsonData.length === 0) {
             alert("There is no data in the Excel file.");
@@ -1385,6 +1385,10 @@
             }
 
             const newRefKey = db.ref('residents').push().key;
+            
+            let checkInVal = row['Check-in Date'] || row['checkIn'];
+            let checkOutVal = row['Check-out Date'] || row['checkOut'];
+            let wpExpiryVal = row['WP Expiry'] || row['wpExpiry'];
 
             updates['residents/' + newRefKey] = {
               id: rowId,
