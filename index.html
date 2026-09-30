@@ -1362,7 +1362,9 @@
 
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet, {raw: false});
+          
+          // ရက်စွဲတွေကို Excel ထဲကအတိုင်း အတိအကျယူရန် { raw: false } သုံးထားပါသည်
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false });
 
           if (jsonData.length === 0) {
             alert("There is no data in the Excel file.");
@@ -1370,59 +1372,65 @@
           }
 
           const updates = {};
-          let count = 0;
-          let skipCount = 0;
+          let newCount = 0;
+          let updateCount = 0;
 
           jsonData.forEach((row) => {
             const rowId = String(row['Resident ID'] || row['residentId'] || row['id'] || `LKAD-${Math.floor(1000 + Math.random() * 9000)}`);
             const rowName = String(row['Name'] || row['name'] || "N/A");
 
-            const isDuplicate = Object.values(residents).some(r => r.id === rowId && r.name === rowName);
-
-            if (isDuplicate) {
-              skipCount++;
-              return; 
+            // ⚠️ အရေးကြီး: ID တူတဲ့သူ (လူဟောင်း) ရှိမရှိ ရှာမည် (ရှိပါက Skip မလုပ်ဘဲ Update လုပ်မည်)
+            let existingKey = null;
+            for (const key in residents) {
+              if (residents[key].id === rowId) {
+                existingKey = key;
+                break;
+              }
             }
 
-            const newRefKey = db.ref('residents').push().key;
-            
+            // လူဟောင်းဖြစ်ပါက လက်ရှိ Key ကိုသုံးမည်၊ လူသစ်ဆိုလျှင် Key အသစ်ထုတ်မည်
+            const refKey = existingKey ? existingKey : db.ref('residents').push().key;
+
             let checkInVal = row['Check-in Date'] || row['checkIn'];
             let checkOutVal = row['Check-out Date'] || row['checkOut'];
             let wpExpiryVal = row['WP Expiry'] || row['wpExpiry'];
 
-            updates['residents/' + newRefKey] = {
+            updates['residents/' + refKey] = {
               id: rowId,
               name: rowName,
-              sex: row['Sex'] || row['sex'] || "M",
-              finNumber: row['Fin Number'] || row['finNumber'] || row['Fin'] || "-",
+              sex: row['Sex'] || row['sex'] || (existingKey && residents[existingKey].sex ? residents[existingKey].sex : "M"),
+              finNumber: row['Fin Number'] || row['finNumber'] || row['Fin'] || (existingKey && residents[existingKey].finNumber ? residents[existingKey].finNumber : "-"),
               wpNo: row['WP No.'] || row['WP No'] || row['wpNo'] || "N/A",
-              wpExpiry: row['WP Expiry'] || row['wpExpiry'] || "N/A",
+              wpExpiry: wpExpiryVal ? String(wpExpiryVal).trim() : "N/A",
               batchNo: row['Batch No.'] || row['Batch No'] || row['batchNo'] || "-",
               nationality: row['Nationality'] || row['nationality'] || "N/A",
               company: row['Company Name'] || row['company'] || "N/A",
               bedNo: row['Bed No.'] || row['Bed No'] || row['bedNo'] || "N/A",
               cardNo: row['Access Card No.'] || row['Access Card No'] || row['cardNo'] || "N/A",
               foodOrder: row['Food Order'] || row['foodOrder'] || "No",
-              checkIn: row['Check-in Date'] || row['checkIn'] || new Date().toISOString().split('T')[0],
-              checkOut: row['Check-out Date'] || row['checkOut'] || "-",
-              photo: row['Photo'] || ""
+              checkIn: checkInVal ? String(checkInVal).trim() : new Date().toISOString().split('T')[0],
+              checkOut: checkOutVal ? String(checkOutVal).trim() : "-",
+              // ဓာတ်ပုံဟောင်းရှိပါက မပျောက်စေရန် ပြန်ထည့်ပေးမည်
+              photo: row['Photo'] || (existingKey && residents[existingKey].photo ? residents[existingKey].photo : "")
             };
-            count++;
+
+            if (existingKey) {
+              updateCount++; // လူဟောင်းကို Update လုပ်သည့် အရေအတွက်
+            } else {
+              newCount++;    // လူသစ်အသစ်သွင်းသည့် အရေအတွက်
+            }
           });
 
           if (Object.keys(updates).length > 0) {
             db.ref().update(updates)
               .then(() => {
-                alert(`Import Successful!\n✅ Uploaded: ${count} New Residents.\n⚠️ Skipped: ${skipCount} Duplicates.`);
+                alert(`Import Successful!\n✅ Added New: ${newCount} Residents.\n🔄 Updated Existing: ${updateCount} Residents.`);
                 event.target.value = '';
               })
               .catch((err) => {
                 console.error("Import Error:", err);
                 alert("Unable to save data. Error: " + err.message);
               });
-          } else {
-            alert(`No new data to import.\n⚠️ Skipped: ${skipCount} Duplicate records.`);
-            event.target.value = '';
           }
 
         } catch (err) {
