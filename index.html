@@ -318,6 +318,8 @@
                   <!-- Sortable Header -->
                   <th onclick="toggleResidentSort()" style="cursor:pointer; color:#3b82f6;" title="Click to sort by ID">Resident ID <span id="res-sort-icon">🔽</span></th>
                   <th>Name</th>
+                  <th>Sex</th>
+                  <th>Fin Number</th>
                   <th>WP No.</th>
                   <th>WP Expiry</th>
                   <th>Batch No.</th>
@@ -474,6 +476,17 @@
           <div class="form-group">
             <label>Name</label>
             <input type="text" id="res-name" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Sex</label>
+            <select id="res-sex" class="form-select">
+              <option value="M">M</option>
+              <option value="F">F</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Fin Number</label>
+            <input type="text" id="res-fin" class="form-input">
           </div>
           <div class="form-group">
             <label>WP No.</label>
@@ -975,6 +988,8 @@
       document.getElementById('res-photo-input').value = '';
       document.getElementById('res-id').value = '';
       document.getElementById('res-name').value = '';
+      document.getElementById('res-sex').value = 'M';
+      document.getElementById('res-fin').value = '';
       document.getElementById('res-wp').value = '';
       document.getElementById('res-wp-expiry').value = '';
       document.getElementById('res-batch').value = '';
@@ -1000,6 +1015,8 @@
       document.getElementById('res-photo-input').value = '';
       document.getElementById('res-id').value = res.id || '';
       document.getElementById('res-name').value = res.name || '';
+      document.getElementById('res-sex').value = res.sex || 'M';
+      document.getElementById('res-fin').value = res.finNumber || '';
       document.getElementById('res-wp').value = res.wpNo || '';
       document.getElementById('res-wp-expiry').value = res.wpExpiry || '';
       document.getElementById('res-batch').value = res.batchNo || '';
@@ -1024,6 +1041,8 @@
           photo: photoBase64,
           id: document.getElementById('res-id').value,
           name: document.getElementById('res-name').value,
+          sex: document.getElementById('res-sex').value,
+          finNumber: document.getElementById('res-fin').value,
           wpNo: document.getElementById('res-wp').value,
           wpExpiry: document.getElementById('res-wp-expiry').value,
           batchNo: document.getElementById('res-batch').value,
@@ -1128,6 +1147,8 @@
               <span>👤 ${res.name || '-'} (ID: ${res.id || '-'})</span>
             </div>
             <div class="pdf-meta" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <div><b>Sex:</b> ${res.sex || '-'}</div>
+              <div><b>Fin Number:</b> ${res.finNumber || '-'}</div>
               <div><b>WP No:</b> ${res.wpNo || '-'}</div>
               <div><b>WP Expiry:</b> ${res.wpExpiry || '-'}</div>
               <div><b>Batch No:</b> ${res.batchNo || '-'}</div>
@@ -1203,7 +1224,7 @@
           if (comp !== selectedCompanyFilter) return false;
         }
 
-        const searchString = `${res.id} ${res.name} ${res.wpNo} ${res.company} ${res.bedNo} ${res.batchNo} ${res.nationality}`.toLowerCase();
+        const searchString = `${res.id} ${res.name} ${res.sex} ${res.finNumber} ${res.wpNo} ${res.company} ${res.bedNo} ${res.batchNo} ${res.nationality}`.toLowerCase();
         return !searchTerm || searchString.includes(searchTerm);
       });
 
@@ -1273,6 +1294,8 @@
           <td>${photoHtml}</td>
           <td><b>${res.id || '-'}</b></td>
           <td>${res.name || '-'}</td>
+          <td>${res.sex || '-'}</td>
+          <td>${res.finNumber || '-'}</td>
           <td>${res.wpNo || '-'}</td>
           <td>${res.wpExpiry || '-'}</td>
           <td>${res.batchNo || '-'}</td>
@@ -1292,7 +1315,7 @@
       });
 
       if (paginatedKeys.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; padding: 20px; color: #94a3b8;">No records found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="17" style="text-align:center; padding: 20px; color: #94a3b8;">No records found.</td></tr>`;
       }
     }
 
@@ -1306,6 +1329,8 @@
       const excelData = list.map(r => ({
         "Resident ID": r.id || '',
         "Name": r.name || '',
+        "Sex": r.sex || '',
+        "Fin Number": r.finNumber || '',
         "WP No.": r.wpNo || '',
         "WP Expiry": r.wpExpiry || '',
         "Batch No.": r.batchNo || '',
@@ -1364,6 +1389,8 @@
             updates['residents/' + newRefKey] = {
               id: rowId,
               name: rowName,
+              sex: row['Sex'] || row['sex'] || "M",
+              finNumber: row['Fin Number'] || row['finNumber'] || row['Fin'] || "-",
               wpNo: row['WP No.'] || row['WP No'] || row['wpNo'] || "N/A",
               wpExpiry: row['WP Expiry'] || row['wpExpiry'] || "N/A",
               batchNo: row['Batch No.'] || row['Batch No'] || row['batchNo'] || "-",
@@ -1620,7 +1647,7 @@
             <div><b>Assigned To:</b> ${req.assignPerson} (${req.assignEmail})</div>
             <div><b>Created By:</b> ${req.createdByName || '-'} (${req.createdDate || '-'})</div>
             <div style="grid-column: span 2;"><b>Description:</b> ${req.desc}</div>
-            ${req.completedDate ? `<div style="grid-column: span 2; color:#15803d;"><b>Completed On:</b> ${req.completedDate} by ${req.completedByName || '-'}</div>` : ''}
+            ${req.completedDate ? `<div style="grid-column: span 2; color:#15803d;"><b>Completed On:</b> ${req.completedDate} by${req.completedByName || '-'}</div>` : ''}
           </div>
           <div class="pdf-img-container">
             <div class="pdf-img-box">
