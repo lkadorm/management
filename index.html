@@ -200,10 +200,7 @@
           <input type="password" id="login-password" class="form-input" placeholder="Enter password" required>
         </div>
         
-        <!-- Login Button -->
         <button type="submit" class="btn btn-primary" style="width:100%; margin-bottom: 10px;">Log In</button>
-        
-        <!-- EXPLICIT FORGOT PASSWORD BUTTON -->
         <button type="button" class="btn btn-secondary" style="width:100%; margin-bottom: 15px;" onclick="toggleAuthMode('forgot')">Forgot Password?</button>
       </form>
 
@@ -287,19 +284,12 @@
             <h1 class="page-title">Resident Records</h1>
             
             <div class="header-actions">
-              <!-- Search Box -->
               <input type="text" id="search-resident" class="form-input" placeholder="🔍 Search Name, ID, Bed No..." onkeyup="handleSearch()" style="max-width: 220px; background-color: #172033;">
-              
-              <!-- Bulk Delete Button -->
               <button class="btn btn-danger" onclick="deleteSelectedResidents()">🗑️ Delete Selected</button>
-              
               <button class="btn btn-green" onclick="exportResidentsPDF()">📄 Export Selected PDF</button>
-
               <button class="btn btn-green" onclick="openNewResidentModal()">+ New Resident</button>
-              
               <input type="file" id="excel-file-input" accept=".xlsx, .xls" style="display: none;" onchange="handleExcelImport(event)" />
               <button class="btn btn-green" onclick="document.getElementById('excel-file-input').click()">📁 Import Excel</button>
-              
               <button class="btn btn-green" onclick="exportResidentsToExcel()">📊 Export to Excel</button>
             </div>
           </div>
@@ -315,7 +305,6 @@
                     <input type="checkbox" id="select-all-res" onchange="toggleSelectAllResidents(this)">
                   </th>
                   <th>Photo</th>
-                  <!-- Sortable Header -->
                   <th onclick="toggleResidentSort()" style="cursor:pointer; color:#3b82f6;" title="Click to sort by ID">Resident ID <span id="res-sort-icon">🔽</span></th>
                   <th>Name</th>
                   <th>Sex</th>
@@ -347,12 +336,7 @@
                 <option value="100">100</option>
               </select>
             </div>
-            
-            <!-- Specific Page Number Buttons Here -->
-            <div style="display: flex; gap: 4px; align-items: center;" id="res-page-numbers">
-              <!-- Dynamically Populated via JS -->
-            </div>
-            
+            <div style="display: flex; gap: 4px; align-items: center;" id="res-page-numbers"></div>
             <div class="pagination-info">
               Showing <span id="res-page-info">0-0 of 0</span> records
             </div>
@@ -440,7 +424,7 @@
     </div>
   </div>
 
-  <!-- HIDDEN CONTAINER FOR GENERATING MAINTENANCE PDF REPORT -->
+  <!-- HIDDEN CONTAINERS FOR PDF -->
   <div id="pdf-report-template">
     <div class="pdf-header">
       <h1>Maintenance Report</h1>
@@ -449,7 +433,6 @@
     <div id="pdf-cards-container"></div>
   </div>
 
-  <!-- HIDDEN CONTAINER FOR GENERATING RESIDENT PDF REPORT -->
   <div id="pdf-resident-template">
     <div class="pdf-header">
       <h1>Resident Records Report</h1>
@@ -464,18 +447,26 @@
       <h2 id="modal-resident-title" style="margin-bottom:16px;">Add New Resident Record</h2>
       <form onsubmit="saveResidentForm(event)">
         <input type="hidden" id="res-edit-key" value="">
-        <div class="form-group">
+        <input type="hidden" id="res-hidden-photo" value="">
+        
+        <!-- 💥 NEW: Feature to Remove Photo 💥 -->
+        <div class="form-group" style="background: #0f172a; padding: 15px; border-radius: 8px; border: 1px dashed #334155;">
           <label>Resident Photo (Upload Image)</label>
+          <div id="current-photo-container" class="hidden" style="margin-bottom: 10px; display: flex; align-items: center; gap: 15px;">
+              <img id="current-res-photo" src="" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #3b82f6;">
+              <button type="button" class="btn btn-danger" style="padding: 4px 10px; font-size: 0.75rem;" onclick="removeResidentPhoto()">🗑️ Remove Photo</button>
+          </div>
           <input type="file" id="res-photo-input" class="form-input" accept="image/*">
         </div>
+
         <div class="form-grid-2">
           <div class="form-group">
             <label>Resident ID</label>
-            <input type="text" id="res-id" class="form-input" placeholder="e.g. RES-001">
+            <input type="text" id="res-id" class="form-input" placeholder="e.g. RES-001" required>
           </div>
           <div class="form-group">
             <label>Name</label>
-            <input type="text" id="res-name" class="form-input">
+            <input type="text" id="res-name" class="form-input" required>
           </div>
           <div class="form-group">
             <label>Sex</label>
@@ -506,7 +497,7 @@
           </div>
           <div class="form-group">
             <label>Company Name</label>
-            <input type="text" id="res-company" class="form-input">
+            <input type="text" id="res-company" class="form-input" required>
           </div>
           <div class="form-group">
             <label>Bed No.</label>
@@ -553,7 +544,7 @@
       <form onsubmit="submitMaintenanceRequest(event)">
         <div class="form-group">
           <label>Assign Person Name</label>
-          <select id="req-assign-person" class="form-select">
+          <select id="req-assign-person" class="form-select" required>
             <option value="">-- Select Assign Person --</option>
             <option value="maung@lkangco.sg" data-name="Maung">Maung (maung@lkangco.sg)</option>
             <option value="lkadorm@gmail.com" data-name="Zia">Zia (lkadorm@gmail.com)</option>
@@ -561,7 +552,7 @@
         </div>
         <div class="form-group">
           <label>Location / Room</label>
-          <select id="req-location" class="form-select">
+          <select id="req-location" class="form-select" required>
             <option value="">-- Select Location --</option>
             <option value="Room-1">Room-1</option>
             <option value="Room-2">Room-2</option>
@@ -602,7 +593,6 @@
       <h2 style="margin-bottom:16px;">Update Request Details</h2>
       <form onsubmit="saveMaintenanceUpdate(event)">
         <input type="hidden" id="update-req-key">
-        
         <div class="form-group">
           <label>Assign Person Name</label>
           <select id="update-assign-person" class="form-select" required>
@@ -642,20 +632,15 @@
       <h2 id="chk-modal-title" style="margin-bottom:16px;">Dormitory Inspection Record</h2>
       <form onsubmit="submitChecklist(event)">
         <input type="hidden" id="chk-edit-key" value="">
-
-        <!-- Remarks Field -->
         <div class="form-group">
           <label>Remarks</label>
           <textarea id="chk-remarks" class="form-textarea" rows="3" placeholder="Enter remarks..."></textarea>
         </div>
-
-        <!-- PDF File Upload Field -->
         <div class="form-group" id="chk-file-group">
           <label>Attachment (PDF File)</label>
           <input type="file" id="chk-file" class="form-input" accept="application/pdf">
           <p id="chk-file-hint" style="font-size:0.75rem; color:#94a3b8; margin-top:4px; display:none;"></p>
         </div>
-
         <div style="display:flex; gap:10px; margin-top:20px;">
           <button type="submit" id="chk-submit-btn" class="btn btn-green">Submit Inspection</button>
           <button type="button" class="btn btn-secondary" onclick="closeModal('modal-new-checklist')">Cancel</button>
@@ -729,7 +714,6 @@
 
     // --- REALTIME SYNC LISTENERS ---
     window.addEventListener('DOMContentLoaded', () => {
-      // 1. Sync Users
       db.ref('users').on('value', (snapshot) => {
         users = snapshot.val() || {};
         if (Object.keys(users).length === 0) {
@@ -738,26 +722,22 @@
         renderUsersTable();
       });
 
-      // 2. Sync Residents
       db.ref('residents').on('value', (snapshot) => {
         residents = snapshot.val() || {};
         renderResidentStats(); 
         renderResidentsTable();
       });
 
-      // 3. Sync Maintenance
       db.ref('maintenance').on('value', (snapshot) => {
         maintenanceRequests = snapshot.val() || {};
         renderMaintenanceTable();
       });
 
-      // 4. Sync Checklist
       db.ref('checklists').on('value', (snapshot) => {
         checklists = snapshot.val() || {};
         renderChecklistTable(checklists); 
       });
 
-      // Refresh Auto-Login
       if (currentUser) {
         showDashboard(currentUser);
       }
@@ -938,7 +918,7 @@
          const borderCol = isActive ? '#60a5fa' : '#334155';
          const textCol = isActive ? '#ffffff' : '#94a3b8';
 
-         const safeCompName = c.replace(/"/g, '&quot;');
+         const safeCompName = c.replace(/"/g, '"');
 
          companyHtml += `<div onclick="filterByCompany('${safeCompName}')" style="background: ${bgCol}; padding: 10px 15px; border-radius: 8px; font-size: 0.85rem; border: 1px solid ${borderCol}; display:flex; align-items:center; gap:10px; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
            <span style="color:${textCol};">${c}:</span> <strong style="color:#38ef7d; font-size:1.1rem;">${companyCounts[c]}</strong>
@@ -985,7 +965,12 @@
       document.getElementById('res-submit-btn').innerText = "Save Resident";
       document.getElementById('res-edit-key').value = "";
       
+      // Reset Fields & Hidden Image State
+      document.getElementById('res-hidden-photo').value = '';
+      document.getElementById('current-photo-container').classList.add('hidden');
+      document.getElementById('current-res-photo').src = '';
       document.getElementById('res-photo-input').value = '';
+      
       document.getElementById('res-id').value = '';
       document.getElementById('res-name').value = '';
       document.getElementById('res-sex').value = 'M';
@@ -1012,7 +997,17 @@
       document.getElementById('res-submit-btn').innerText = "Update Resident";
       document.getElementById('res-edit-key').value = key;
 
+      // 💥 NEW: Setup existing Photo for Edit & Removal 💥
       document.getElementById('res-photo-input').value = '';
+      document.getElementById('res-hidden-photo').value = res.photo || '';
+      
+      if (res.photo) {
+        document.getElementById('current-res-photo').src = res.photo;
+        document.getElementById('current-photo-container').classList.remove('hidden');
+      } else {
+        document.getElementById('current-photo-container').classList.add('hidden');
+      }
+
       document.getElementById('res-id').value = res.id || '';
       document.getElementById('res-name').value = res.name || '';
       document.getElementById('res-sex').value = res.sex || 'M';
@@ -1031,10 +1026,18 @@
       openModal('modal-resident');
     }
 
+    // 💥 NEW: Function to remove resident photo manually during Edit 💥
+    function removeResidentPhoto() {
+      document.getElementById('res-hidden-photo').value = ''; // Clear hidden value
+      document.getElementById('current-photo-container').classList.add('hidden'); // Hide the UI box
+      document.getElementById('res-photo-input').value = ''; // Clear any newly selected file
+    }
+
     function saveResidentForm(e) {
       e.preventDefault();
       const editKey = document.getElementById('res-edit-key').value;
       const photoInput = document.getElementById('res-photo-input');
+      const hiddenPhoto = document.getElementById('res-hidden-photo').value; // Read hidden state
 
       const processSave = (photoBase64) => {
         const resData = {
@@ -1064,13 +1067,14 @@
         closeModal('modal-resident');
       };
 
-      if (photoInput.files[0]) {
+      if (photoInput.files && photoInput.files[0]) {
+        // If a new photo is uploaded, use it
         const reader = new FileReader();
         reader.onload = function() { processSave(reader.result); };
         reader.readAsDataURL(photoInput.files[0]);
       } else {
-        const existingPhoto = editKey && residents[editKey] ? residents[editKey].photo : "";
-        processSave(existingPhoto);
+        // Otherwise, use whatever is left in the hiddenPhoto field (could be old photo, or empty if removed)
+        processSave(hiddenPhoto);
       }
     }
 
@@ -1363,7 +1367,6 @@
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
           
-          // ရက်စွဲတွေကို Excel ထဲကအတိုင်း အတိအကျယူရန် { raw: false } သုံးထားပါသည်
           const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false });
 
           if (jsonData.length === 0) {
@@ -1379,7 +1382,6 @@
             const rowId = String(row['Resident ID'] || row['residentId'] || row['id'] || `LKAD-${Math.floor(1000 + Math.random() * 9000)}`);
             const rowName = String(row['Name'] || row['name'] || "N/A");
 
-            // ⚠️ အရေးကြီး: ID တူတဲ့သူ (လူဟောင်း) ရှိမရှိ ရှာမည် (ရှိပါက Skip မလုပ်ဘဲ Update လုပ်မည်)
             let existingKey = null;
             for (const key in residents) {
               if (residents[key].id === rowId) {
@@ -1388,7 +1390,6 @@
               }
             }
 
-            // လူဟောင်းဖြစ်ပါက လက်ရှိ Key ကိုသုံးမည်၊ လူသစ်ဆိုလျှင် Key အသစ်ထုတ်မည်
             const refKey = existingKey ? existingKey : db.ref('residents').push().key;
 
             let checkInVal = row['Check-in Date'] || row['checkIn'];
@@ -1410,14 +1411,13 @@
               foodOrder: row['Food Order'] || row['foodOrder'] || "No",
               checkIn: checkInVal ? String(checkInVal).trim() : new Date().toISOString().split('T')[0],
               checkOut: checkOutVal ? String(checkOutVal).trim() : "-",
-              // ဓာတ်ပုံဟောင်းရှိပါက မပျောက်စေရန် ပြန်ထည့်ပေးမည်
               photo: row['Photo'] || (existingKey && residents[existingKey].photo ? residents[existingKey].photo : "")
             };
 
             if (existingKey) {
-              updateCount++; // လူဟောင်းကို Update လုပ်သည့် အရေအတွက်
+              updateCount++; 
             } else {
-              newCount++;    // လူသစ်အသစ်သွင်းသည့် အရေအတွက်
+              newCount++;    
             }
           });
 
@@ -1893,7 +1893,7 @@
       });
     }
 
-    // --- 💥 USERS LOGIC (PASSWORD EDIT FIX) 💥 ---
+    // --- USERS LOGIC ---
     function openNewUserModal() {
       document.getElementById('modal-user-title').innerText = "Add New User";
       document.getElementById('user-submit-btn').innerText = "Create User";
@@ -1919,7 +1919,6 @@
       document.getElementById('user-name-input').value = u.name || '';
       document.getElementById('user-email-input').value = u.email || '';
       
-      // FIX: Pre-fill password so user can explicitly see and update it
       document.getElementById('user-password-input').value = u.password || ''; 
       document.getElementById('user-password-input').required = true; 
       
@@ -1937,12 +1936,11 @@
       const role = document.getElementById('user-role-input').value;
 
       if (key) {
-        // Edit Existing User
         const updateData = { 
           name: name, 
           email: email, 
           role: role,
-          password: pwd // Save the explicitly updated password
+          password: pwd 
         };
         
         db.ref('users/' + key).update(updateData).then(() => {
@@ -1953,7 +1951,6 @@
         });
 
       } else {
-        // Create New User
         db.ref('users').push({ name, email, password: pwd, role }).then(() => {
             alert("New user created successfully!");
             closeModal('modal-user');
@@ -1983,7 +1980,7 @@
         tr.innerHTML = `
           <td>${u.name}</td>
           <td>${u.email}</td>
-          <td style="color: #38ef7d; font-family: monospace;">${u.password}</td> <!-- Show password explicitly for admin -->
+          <td style="color: #38ef7d; font-family: monospace;">${u.password}</td>
           <td><b>${u.role}</b></td>
           <td style="display:flex; gap:6px;">
             <button class="btn btn-warning" style="padding:4px 8px; font-size:0.75rem;" onclick="openEditUserModal('${key}')">Edit</button>
