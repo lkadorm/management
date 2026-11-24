@@ -409,8 +409,7 @@
               <thead>
                 <tr>
                   <th>Name</th>
-                  <th>Email</th>
-                  <th>Password</th>
+                  <th>Email</th>              
                   <th>Role</th>
                   <th>Actions</th>
                 </tr>
@@ -1979,8 +1978,7 @@
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${u.name}</td>
-          <td>${u.email}</td>
-          <td style="color: #38ef7d; font-family: monospace;">${u.password}</td>
+          <td>${u.email}</td>          
           <td><b>${u.role}</b></td>
           <td style="display:flex; gap:6px;">
             <button class="btn btn-warning" style="padding:4px 8px; font-size:0.75rem;" onclick="openEditUserModal('${key}')">Edit</button>
