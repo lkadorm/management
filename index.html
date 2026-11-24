@@ -16,6 +16,7 @@
 
   <!-- Firebase SDKs (v9 Compat Mode) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script> <!-- ADDED AUTH SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <script type="text/javascript">
@@ -153,29 +154,11 @@
     .pdf-img-box img { width: 100%; height: 210px; object-fit: cover; border-radius: 4px; border: 1px solid #cbd5e1; }
     .pdf-img-box .no-img { height: 210px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; color: #94a3b8; font-size: 12px; border-radius: 4px; }
 
-    @page {
-        size: A4 portrait;
-        margin: 10mm;
-    }
-
+    @page { size: A4 portrait; margin: 10mm; }
     @media print {
-        body {
-            background-color: #ffffff !important;
-            padding: 0 !important;
-            margin: 0 !important;
-        }
-        #pdf-report-template, #pdf-resident-template {
-            display: block !important;
-            width: 100% !important;
-            max-width: 100% !important;
-            margin: 0 auto !important;
-            padding: 0 !important;
-        }
-        .pdf-card {
-            border: 2px solid #334155 !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-        }
+        body { background-color: #ffffff !important; padding: 0 !important; margin: 0 !important; }
+        #pdf-report-template, #pdf-resident-template { display: block !important; width: 100% !important; max-width: 100% !important; margin: 0 auto !important; padding: 0 !important; }
+        .pdf-card { border: 2px solid #334155 !important; width: 100% !important; box-sizing: border-box !important; }
     }
   </style>
 </head>
@@ -197,7 +180,7 @@
         </div>
         <div class="form-group">
           <label>Password</label>
-          <input type="password" id="login-password" class="form-input" placeholder="Enter password" required>
+          <input type="password" id="login-password" class="form-input" placeholder="Enter password" autocomplete="current-password" required>
         </div>
         
         <button type="submit" class="btn btn-primary" style="width:100%; margin-bottom: 10px;">Log In</button>
@@ -209,7 +192,7 @@
       </div>
     </div>
 
-    <!-- FORGOT PASSWORD CARD (NEW & CLEAR) -->
+    <!-- FORGOT PASSWORD CARD (AUTH RESET) -->
     <div id="forgot-card" class="auth-card hidden">
       <div class="auth-header">
         <h2>L K Ang Dormitory</h2>
@@ -220,14 +203,17 @@
           <label>Registered Email Address</label>
           <input type="email" id="forgot-email" class="form-input" placeholder="Enter your email" required>
         </div>
-        <button type="submit" class="btn btn-warning" style="width:100%; margin-bottom: 15px;">Recover Password</button>
+        <p style="font-size:0.8rem; color:#94a3b8; margin-bottom:15px; text-align:center;">
+          We will send a password reset link to your email.
+        </p>
+        <button type="submit" class="btn btn-warning" style="width:100%; margin-bottom: 15px;">Send Reset Link</button>
       </form>
       <div class="auth-toggle">
         Remembered your password? <a onclick="toggleAuthMode('login')">Sign In here</a>
       </div>
     </div>
 
-    <!-- REGISTER CARD -->
+    <!-- REGISTER CARD (FIRST ADMIN) -->
     <div id="register-card" class="auth-card hidden">
       <div class="auth-header">
         <h2>L K Ang Dormitory</h2>
@@ -243,8 +229,8 @@
           <input type="email" id="reg-email" class="form-input" placeholder="admin@lkang.com" required>
         </div>
         <div class="form-group">
-          <label>Password</label>
-          <input type="password" id="reg-password" class="form-input" required>
+          <label>Password (Min 6 characters)</label>
+          <input type="password" id="reg-password" class="form-input" autocomplete="new-password" minlength="6" required>
         </div>
         <button type="submit" class="btn btn-green" style="width:100%; margin-bottom: 15px;">Create Account</button>
       </form>
@@ -294,7 +280,6 @@
             </div>
           </div>
 
-          <!-- SUMMARY STATS CONTAINER -->
           <div id="resident-stats-container" style="margin-bottom: 20px;"></div>
           
           <div class="table-container">
@@ -326,7 +311,7 @@
             </table>
           </div>
 
-          <!-- Pagination Controls with Page Numbers -->
+          <!-- Pagination -->
           <div class="pagination-container">
             <div>
               <label style="font-size: 0.85rem; color: #cbd5e1; margin-right: 8px;">Rows per page:</label>
@@ -341,7 +326,6 @@
               Showing <span id="res-page-info">0-0 of 0</span> records
             </div>
           </div>
-
         </div>
 
         <!-- TAB 2: MAINTENANCE -->
@@ -357,9 +341,7 @@
             <table>
               <thead>
                 <tr>
-                  <th style="text-align:center; width: 40px;">
-                    <input type="checkbox" id="select-all-maint" onchange="toggleSelectAllMaintenance(this)">
-                  </th>
+                  <th style="text-align:center; width: 40px;"><input type="checkbox" id="select-all-maint" onchange="toggleSelectAllMaintenance(this)"></th>
                   <th>Assign Person</th>
                   <th>Created By</th>
                   <th>Location / Room</th>
@@ -409,7 +391,7 @@
               <thead>
                 <tr>
                   <th>Name</th>
-                  <th>Email</th>              
+                  <th>Email</th>
                   <th>Role</th>
                   <th>Actions</th>
                 </tr>
@@ -424,21 +406,8 @@
   </div>
 
   <!-- HIDDEN CONTAINERS FOR PDF -->
-  <div id="pdf-report-template">
-    <div class="pdf-header">
-      <h1>Maintenance Report</h1>
-      <p id="pdf-generated-date">Generated on: -</p>
-    </div>
-    <div id="pdf-cards-container"></div>
-  </div>
-
-  <div id="pdf-resident-template">
-    <div class="pdf-header">
-      <h1>Resident Records Report</h1>
-      <p id="pdf-res-generated-date">Generated on: -</p>
-    </div>
-    <div id="pdf-res-cards-container"></div>
-  </div>
+  <div id="pdf-report-template"><div class="pdf-header"><h1>Maintenance Report</h1><p id="pdf-generated-date">Generated on: -</p></div><div id="pdf-cards-container"></div></div>
+  <div id="pdf-resident-template"><div class="pdf-header"><h1>Resident Records Report</h1><p id="pdf-res-generated-date">Generated on: -</p></div><div id="pdf-res-cards-container"></div></div>
 
   <!-- MODALS -->
   <div id="modal-resident" class="modal hidden">
@@ -447,8 +416,6 @@
       <form onsubmit="saveResidentForm(event)">
         <input type="hidden" id="res-edit-key" value="">
         <input type="hidden" id="res-hidden-photo" value="">
-        
-        <!-- 💥 NEW: Feature to Remove Photo 💥 -->
         <div class="form-group" style="background: #0f172a; padding: 15px; border-radius: 8px; border: 1px dashed #334155;">
           <label>Resident Photo (Upload Image)</label>
           <div id="current-photo-container" class="hidden" style="margin-bottom: 10px; display: flex; align-items: center; gap: 15px;">
@@ -459,69 +426,21 @@
         </div>
 
         <div class="form-grid-2">
-          <div class="form-group">
-            <label>Resident ID</label>
-            <input type="text" id="res-id" class="form-input" placeholder="e.g. RES-001" required>
-          </div>
-          <div class="form-group">
-            <label>Name</label>
-            <input type="text" id="res-name" class="form-input" required>
-          </div>
-          <div class="form-group">
-            <label>Sex</label>
-            <select id="res-sex" class="form-select">
-              <option value="M">M</option>
-              <option value="F">F</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Fin Number</label>
-            <input type="text" id="res-fin" class="form-input">
-          </div>
-          <div class="form-group">
-            <label>WP No.</label>
-            <input type="text" id="res-wp" class="form-input">
-          </div>
-          <div class="form-group">
-            <label>WP Expiry Date</label>
-            <input type="date" id="res-wp-expiry" class="form-input">
-          </div>
-          <div class="form-group">
-            <label>Batch No.</label>
-            <input type="text" id="res-batch" class="form-input" placeholder="e.g. B-001">
-          </div>
-          <div class="form-group">
-            <label>Nationality</label>
-            <input type="text" id="res-nationality" class="form-input" placeholder="e.g. Myanmar">
-          </div>
-          <div class="form-group">
-            <label>Company Name</label>
-            <input type="text" id="res-company" class="form-input" required>
-          </div>
-          <div class="form-group">
-            <label>Bed No.</label>
-            <input type="text" id="res-bed" class="form-input" placeholder="e.g. A-101-B">
-          </div>
-          <div class="form-group">
-            <label>Access Card No.</label>
-            <input type="text" id="res-card" class="form-input">
-          </div>
-          <div class="form-group">
-            <label>Food Order</label>
-            <select id="res-food" class="form-select">
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Check-in Date</label>
-            <input type="date" id="res-checkin" class="form-input">
-          </div>
+          <div class="form-group"><label>Resident ID</label><input type="text" id="res-id" class="form-input" placeholder="e.g. RES-001" required></div>
+          <div class="form-group"><label>Name</label><input type="text" id="res-name" class="form-input" required></div>
+          <div class="form-group"><label>Sex</label><select id="res-sex" class="form-select"><option value="M">M</option><option value="F">F</option></select></div>
+          <div class="form-group"><label>Fin Number</label><input type="text" id="res-fin" class="form-input"></div>
+          <div class="form-group"><label>WP No.</label><input type="text" id="res-wp" class="form-input"></div>
+          <div class="form-group"><label>WP Expiry Date</label><input type="date" id="res-wp-expiry" class="form-input"></div>
+          <div class="form-group"><label>Batch No.</label><input type="text" id="res-batch" class="form-input" placeholder="e.g. B-001"></div>
+          <div class="form-group"><label>Nationality</label><input type="text" id="res-nationality" class="form-input" placeholder="e.g. Myanmar"></div>
+          <div class="form-group"><label>Company Name</label><input type="text" id="res-company" class="form-input" required></div>
+          <div class="form-group"><label>Bed No.</label><input type="text" id="res-bed" class="form-input" placeholder="e.g. A-101-B"></div>
+          <div class="form-group"><label>Access Card No.</label><input type="text" id="res-card" class="form-input"></div>
+          <div class="form-group"><label>Food Order</label><select id="res-food" class="form-select"><option value="Yes">Yes</option><option value="No">No</option></select></div>
+          <div class="form-group"><label>Check-in Date</label><input type="date" id="res-checkin" class="form-input"></div>
         </div>
-        <div class="form-group">
-          <label>Check-out Date (Optional)</label>
-          <input type="date" id="res-checkout" class="form-input">
-        </div>
+        <div class="form-group"><label>Check-out Date (Optional)</label><input type="date" id="res-checkout" class="form-input"></div>
         <div style="display:flex; gap:10px; margin-top:20px;">
           <button type="submit" id="res-submit-btn" class="btn btn-green">Save Resident</button>
           <button type="button" class="btn btn-secondary" onclick="closeModal('modal-resident')">Cancel</button>
@@ -558,12 +477,6 @@
             <option value="Room-3">Room-3</option>
             <option value="Room-4">Room-4</option>
             <option value="Room-5">Room-5</option>
-            <option value="Room-6">Room-6</option>
-            <option value="Room-7">Room-7</option>
-            <option value="Room-8">Room-8</option>
-            <option value="Room-9">Room-9</option>
-            <option value="Room-10">Room-10</option>
-            <option value="Room-11">Room-11</option>
             <option value="External Corridor">External Corridor</option>
             <option value="Internal Corridor">Internal Corridor</option>
             <option value="Kitchen">Kitchen</option>
@@ -571,14 +484,8 @@
             <option value="Wifi">Wifi</option>
           </select>
         </div>
-        <div class="form-group">
-          <label>Issue Description</label>
-          <textarea id="req-desc" class="form-textarea" rows="3" required placeholder="Describe the issue..."></textarea>
-        </div>
-        <div class="form-group">
-          <label>Before Image (Upload Photo)</label>
-          <input type="file" id="req-before-img" class="form-input" accept="image/*" required>
-        </div>
+        <div class="form-group"><label>Issue Description</label><textarea id="req-desc" class="form-textarea" rows="3" required placeholder="Describe the issue..."></textarea></div>
+        <div class="form-group"><label>Before Image (Upload Photo)</label><input type="file" id="req-before-img" class="form-input" accept="image/*" required></div>
         <div style="display:flex; gap:10px; margin-top:20px;">
           <button type="submit" class="btn btn-green">Submit & Send Auto Email</button>
           <button type="button" class="btn btn-secondary" onclick="closeModal('modal-new-request')">Cancel</button>
@@ -607,14 +514,10 @@
             <option value="Resolved">Resolved</option>
           </select>
         </div>
-        <div class="form-group">
-          <label>After Image (Upload Fixed Photo)</label>
-          <input type="file" id="req-after-img" class="form-input" accept="image/*">
-        </div>
+        <div class="form-group"><label>After Image (Upload Fixed Photo)</label><input type="file" id="req-after-img" class="form-input" accept="image/*"></div>
         <div id="after-img-preview-container" class="hidden" style="margin-top: 10px; border: 1px dashed #334155; padding: 10px; border-radius: 6px; text-align: center;">
           <p style="font-size:0.8rem; color:#cbd5e1; margin-bottom:6px;">Current After Image:</p>
-          <img id="update-after-preview" src="" class="img-preview" style="width:80px; height:80px;" alt="After Preview">
-          <br>
+          <img id="update-after-preview" src="" class="img-preview" style="width:80px; height:80px;" alt="After Preview"><br>
           <button type="button" class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem; margin-top:8px;" onclick="removeAfterImage()">🗑️ Delete Image</button>
         </div>
         <div style="display:flex; gap:10px; margin-top:20px;">
@@ -625,16 +528,12 @@
     </div>
   </div>
 
-  <!-- CHECKLIST MODAL (NEW / EDIT) -->
   <div id="modal-new-checklist" class="modal hidden">
     <div class="modal-content">
       <h2 id="chk-modal-title" style="margin-bottom:16px;">Dormitory Inspection Record</h2>
       <form onsubmit="submitChecklist(event)">
         <input type="hidden" id="chk-edit-key" value="">
-        <div class="form-group">
-          <label>Remarks</label>
-          <textarea id="chk-remarks" class="form-textarea" rows="3" placeholder="Enter remarks..."></textarea>
-        </div>
+        <div class="form-group"><label>Remarks</label><textarea id="chk-remarks" class="form-textarea" rows="3" placeholder="Enter remarks..."></textarea></div>
         <div class="form-group" id="chk-file-group">
           <label>Attachment (PDF File)</label>
           <input type="file" id="chk-file" class="form-input" accept="application/pdf">
@@ -661,10 +560,12 @@
           <label>Email</label>
           <input type="email" id="user-email-input" class="form-input" required>
         </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input type="text" id="user-password-input" class="form-input" required>
+        
+        <div class="form-group" id="user-password-group">
+          <label>Password (Min 6 characters)</label>
+          <input type="password" id="user-password-input" class="form-input" autocomplete="new-password" minlength="6" required>
         </div>
+        
         <div class="form-group">
           <label>Role</label>
           <select id="user-role-input" class="form-select">
@@ -681,7 +582,7 @@
     </div>
   </div>
 
-  <!-- JAVASCRIPT WITH FIREBASE INTEGRATION -->
+  <!-- JAVASCRIPT WITH FIREBASE AUTH INTEGRATION -->
   <script>
     // 1. FIREBASE CONFIGURATION
     const firebaseConfig = {
@@ -696,6 +597,7 @@
 
     // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
     const db = firebase.database();
 
     // Data Store State
@@ -703,21 +605,44 @@
     let residents = {};
     let maintenanceRequests = {};
     let checklists = {};
-    let currentUser = JSON.parse(localStorage.getItem('lkang_current_user')) || null;
+    let currentUser = null;
 
-    // --- Pagination & Filter State ---
     let currentPage = 1;
     let rowsPerPage = 20;
     let resSortAsc = true;
     let selectedCompanyFilter = ""; 
 
-    // --- REALTIME SYNC LISTENERS ---
+    let isDbListening = false;
+
+    // --- FIREBASE AUTHENTICATION LISTENER ---
     window.addEventListener('DOMContentLoaded', () => {
+      auth.onAuthStateChanged((user) => {
+        if (user) {
+          // User is signed in via Firebase Auth, fetch their role from DB
+          db.ref('users/' + user.uid).once('value').then(snap => {
+            const userData = snap.val();
+            if (userData) {
+              currentUser = { uid: user.uid, ...userData };
+              showDashboard(currentUser);
+              setupDatabaseListeners(); // Start pulling data securely
+            } else {
+              alert("Your account data is missing in the database. Please contact an Admin.");
+              auth.signOut();
+            }
+          });
+        } else {
+          // User is signed out
+          handleLogoutUI();
+        }
+      });
+    });
+
+    function setupDatabaseListeners() {
+      if(isDbListening) return;
+      isDbListening = true;
+
       db.ref('users').on('value', (snapshot) => {
         users = snapshot.val() || {};
-        if (Object.keys(users).length === 0) {
-          db.ref('users').push({ name: "Default Admin", email: "admin@lkang.com", password: "admin123", role: "Admin" });
-        }
         renderUsersTable();
       });
 
@@ -736,11 +661,7 @@
         checklists = snapshot.val() || {};
         renderChecklistTable(checklists); 
       });
-
-      if (currentUser) {
-        showDashboard(currentUser);
-      }
-    });
+    }
 
     function showDashboard(user) {
       document.getElementById('auth-container').classList.add('hidden');
@@ -756,7 +677,15 @@
       }
     }
 
-    // --- 💥 AUTHENTICATION & FORGOT PASSWORD LOGIC 💥 ---
+    function handleLogoutUI() {
+      currentUser = null;
+      document.getElementById('app-container').classList.add('hidden');
+      document.getElementById('auth-container').classList.remove('hidden');
+      document.getElementById('login-email').value = '';
+      document.getElementById('login-password').value = '';
+    }
+
+    // --- 💥 AUTHENTICATION FUNCTIONS 💥 ---
     function toggleAuthMode(mode) {
       const loginCard = document.getElementById('login-card');
       const regCard = document.getElementById('register-card');
@@ -777,25 +706,17 @@
 
     function handleForgotPassword(e) {
       e.preventDefault();
+      const email = document.getElementById('forgot-email').value.trim();
       
-      if (!users || Object.keys(users).length === 0) {
-          alert("System is still connecting to the database. Please try again in a few seconds.");
-          return;
-      }
-
-      const emailInput = document.getElementById('forgot-email');
-      if(!emailInput) return;
-      
-      const targetEmail = emailInput.value.trim().toLowerCase();
-      const foundUser = Object.values(users).find(u => u.email && u.email.trim().toLowerCase() === targetEmail);
-
-      if (foundUser) {
-        alert(`Your current password is: ${foundUser.password}\n\n(Note: Keep your password safe!)`);
-        emailInput.value = ''; 
-        toggleAuthMode('login');
-      } else {
-        alert("Sorry, this Email Address is not registered in the system!");
-      }
+      auth.sendPasswordResetEmail(email)
+        .then(() => {
+           alert("Password reset link has been sent to your email!");
+           document.getElementById('forgot-email').value = '';
+           toggleAuthMode('login');
+        })
+        .catch(err => {
+           alert("Error: " + err.message);
+        });
     }
 
     function handleRegister(e) {
@@ -804,40 +725,37 @@
       const email = document.getElementById('reg-email').value;
       const password = document.getElementById('reg-password').value;
 
-      const userExists = Object.values(users).some(u => u.email && u.email.toLowerCase() === email.toLowerCase());
-      if (userExists) {
-        alert("User with this email already exists!");
-        return;
-      }
-
-      db.ref('users').push({ name, email, password, role: "Admin" });
-      alert("Admin Account Created Successfully!");
-      toggleAuthMode('login');
+      auth.createUserWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+           const uid = userCredential.user.uid;
+           // Save user metadata to Realtime Database
+           db.ref('users/' + uid).set({
+             name: name,
+             email: email,
+             role: "Admin"
+           }).then(() => {
+             alert("Admin Account Created Successfully!");
+             // Auto-login happens automatically by Firebase Auth
+           });
+        })
+        .catch((error) => {
+           alert("Registration Error: " + error.message);
+        });
     }
 
     function handleLogin(e) {
       e.preventDefault();
-      const email = document.getElementById('login-email').value.trim().toLowerCase();
+      const email = document.getElementById('login-email').value.trim();
       const pwd = document.getElementById('login-password').value.trim();
 
-      const foundUser = Object.values(users).find(u => u.email && u.email.toLowerCase() === email && u.password === pwd);
-
-      if (foundUser) {
-        currentUser = foundUser;
-        localStorage.setItem('lkang_current_user', JSON.stringify(currentUser));
-        showDashboard(currentUser);
-      } else {
-        alert("Invalid Email or Password!");
-      }
+      auth.signInWithEmailAndPassword(email, pwd)
+        .catch((error) => {
+          alert("Invalid Email or Password! \nError: " + error.message);
+        });
     }
 
     function handleLogout() {
-      currentUser = null;
-      localStorage.removeItem('lkang_current_user');
-      document.getElementById('app-container').classList.add('hidden');
-      document.getElementById('auth-container').classList.remove('hidden');
-      document.getElementById('login-email').value = '';
-      document.getElementById('login-password').value = '';
+      auth.signOut();
     }
 
     // --- NAVIGATION ---
@@ -852,7 +770,6 @@
       }
     }
 
-    // --- MODALS ---
     function openModal(id) { 
       if (id === 'modal-new-checklist') {
         document.getElementById('chk-modal-title').innerText = "Dormitory Inspection Record";
@@ -874,14 +791,10 @@
       openModal('modal-image-viewer');
     }
 
-    // --- RESIDENTS LOGIC & STATS ---
-
+    // --- RESIDENTS LOGIC (UNCHANGED EXCEPT REFERENCES) ---
     function filterByCompany(compName) {
-      if (selectedCompanyFilter === compName) {
-        selectedCompanyFilter = ""; 
-      } else {
-        selectedCompanyFilter = compName; 
-      }
+      if (selectedCompanyFilter === compName) selectedCompanyFilter = ""; 
+      else selectedCompanyFilter = compName; 
       currentPage = 1; 
       renderResidentStats(); 
       renderResidentsTable(); 
@@ -890,23 +803,16 @@
     function renderResidentStats() {
       const statsContainer = document.getElementById('resident-stats-container');
       if (!statsContainer) return;
-
       const resArray = Object.values(residents);
       const totalKeyIn = resArray.length;
-
       let actualNamesCount = 0;
       const companyCounts = {};
 
       resArray.forEach(res => {
         const name = (res.name || "").trim();
-        if (name !== "" && name !== "-" && name.toLowerCase() !== "n/a") {
-          actualNamesCount++;
-        }
-
+        if (name !== "" && name !== "-" && name.toLowerCase() !== "n/a") actualNamesCount++;
         let comp = (res.company || "").trim();
-        if (comp === "" || comp === "-" || comp.toLowerCase() === "n/a") {
-          comp = "Unknown / Unassigned";
-        }
+        if (comp === "" || comp === "-" || comp.toLowerCase() === "n/a") comp = "Unknown / Unassigned";
         companyCounts[comp] = (companyCounts[comp] || 0) + 1;
       });
 
@@ -916,9 +822,7 @@
          const bgCol = isActive ? '#2563eb' : '#1e293b';
          const borderCol = isActive ? '#60a5fa' : '#334155';
          const textCol = isActive ? '#ffffff' : '#94a3b8';
-
          const safeCompName = c.replace(/"/g, '"');
-
          companyHtml += `<div onclick="filterByCompany('${safeCompName}')" style="background: ${bgCol}; padding: 10px 15px; border-radius: 8px; font-size: 0.85rem; border: 1px solid ${borderCol}; display:flex; align-items:center; gap:10px; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
            <span style="color:${textCol};">${c}:</span> <strong style="color:#38ef7d; font-size:1.1rem;">${companyCounts[c]}</strong>
          </div>`;
@@ -940,36 +844,21 @@
             <span>🏢 Residents by Company: <span style="font-size: 0.75rem; color:#94a3b8; font-weight: normal; margin-left: 5px;">(Click a company to filter, click again to clear)</span></span>
             ${selectedCompanyFilter ? `<button class="btn btn-danger" style="padding: 4px 10px; font-size: 0.75rem;" onclick="filterByCompany('')">✖ Clear Filter</button>` : ''}
           </div>
-          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            ${companyHtml || '<span style="color:#64748b; font-size:0.85rem;">No company data available.</span>'}
-          </div>
-        </div>
-      `;
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">${companyHtml || '<span style="color:#64748b; font-size:0.85rem;">No company data available.</span>'}</div>
+        </div>`;
     }
 
-    function toggleResidentSort() {
-      resSortAsc = !resSortAsc;
-      document.getElementById('res-sort-icon').innerText = resSortAsc ? "🔽" : "🔼";
-      currentPage = 1; 
-      renderResidentsTable();
-    }
-
-    function handleSearch() {
-      currentPage = 1; 
-      renderResidentsTable();
-    }
+    function toggleResidentSort() { resSortAsc = !resSortAsc; document.getElementById('res-sort-icon').innerText = resSortAsc ? "🔽" : "🔼"; currentPage = 1; renderResidentsTable(); }
+    function handleSearch() { currentPage = 1; renderResidentsTable(); }
 
     function openNewResidentModal() {
       document.getElementById('modal-resident-title').innerText = "Add New Resident Record";
       document.getElementById('res-submit-btn').innerText = "Save Resident";
       document.getElementById('res-edit-key').value = "";
-      
-      // Reset Fields & Hidden Image State
       document.getElementById('res-hidden-photo').value = '';
       document.getElementById('current-photo-container').classList.add('hidden');
       document.getElementById('current-res-photo').src = '';
       document.getElementById('res-photo-input').value = '';
-      
       document.getElementById('res-id').value = '';
       document.getElementById('res-name').value = '';
       document.getElementById('res-sex').value = 'M';
@@ -984,19 +873,15 @@
       document.getElementById('res-food').value = 'Yes';
       document.getElementById('res-checkin').value = '';
       document.getElementById('res-checkout').value = '';
-
       openModal('modal-resident');
     }
 
     function openEditResidentModal(key) {
       const res = residents[key];
       if (!res) return;
-
       document.getElementById('modal-resident-title').innerText = "Edit Resident Record";
       document.getElementById('res-submit-btn').innerText = "Update Resident";
       document.getElementById('res-edit-key').value = key;
-
-      // 💥 NEW: Setup existing Photo for Edit & Removal 💥
       document.getElementById('res-photo-input').value = '';
       document.getElementById('res-hidden-photo').value = res.photo || '';
       
@@ -1021,212 +906,103 @@
       document.getElementById('res-food').value = res.foodOrder || 'Yes';
       document.getElementById('res-checkin').value = res.checkIn || '';
       document.getElementById('res-checkout').value = (res.checkOut === '-' ? '' : res.checkOut) || '';
-
       openModal('modal-resident');
     }
 
-    // 💥 NEW: Function to remove resident photo manually during Edit 💥
     function removeResidentPhoto() {
-      document.getElementById('res-hidden-photo').value = ''; // Clear hidden value
-      document.getElementById('current-photo-container').classList.add('hidden'); // Hide the UI box
-      document.getElementById('res-photo-input').value = ''; // Clear any newly selected file
+      document.getElementById('res-hidden-photo').value = ''; 
+      document.getElementById('current-photo-container').classList.add('hidden'); 
+      document.getElementById('res-photo-input').value = ''; 
     }
 
     function saveResidentForm(e) {
       e.preventDefault();
       const editKey = document.getElementById('res-edit-key').value;
       const photoInput = document.getElementById('res-photo-input');
-      const hiddenPhoto = document.getElementById('res-hidden-photo').value; // Read hidden state
+      const hiddenPhoto = document.getElementById('res-hidden-photo').value; 
 
       const processSave = (photoBase64) => {
         const resData = {
-          photo: photoBase64,
-          id: document.getElementById('res-id').value,
-          name: document.getElementById('res-name').value,
-          sex: document.getElementById('res-sex').value,
-          finNumber: document.getElementById('res-fin').value,
-          wpNo: document.getElementById('res-wp').value,
-          wpExpiry: document.getElementById('res-wp-expiry').value,
-          batchNo: document.getElementById('res-batch').value,
-          nationality: document.getElementById('res-nationality').value,
-          company: document.getElementById('res-company').value,
-          bedNo: document.getElementById('res-bed').value,
-          cardNo: document.getElementById('res-card').value,
-          foodOrder: document.getElementById('res-food').value,
-          checkIn: document.getElementById('res-checkin').value,
-          checkOut: document.getElementById('res-checkout').value || '-'
+          photo: photoBase64, id: document.getElementById('res-id').value, name: document.getElementById('res-name').value, sex: document.getElementById('res-sex').value,
+          finNumber: document.getElementById('res-fin').value, wpNo: document.getElementById('res-wp').value, wpExpiry: document.getElementById('res-wp-expiry').value,
+          batchNo: document.getElementById('res-batch').value, nationality: document.getElementById('res-nationality').value, company: document.getElementById('res-company').value,
+          bedNo: document.getElementById('res-bed').value, cardNo: document.getElementById('res-card').value, foodOrder: document.getElementById('res-food').value,
+          checkIn: document.getElementById('res-checkin').value, checkOut: document.getElementById('res-checkout').value || '-'
         };
-
-        if (editKey) {
-          db.ref('residents/' + editKey).update(resData);
-        } else {
-          db.ref('residents').push(resData);
-        }
-
+        if (editKey) db.ref('residents/' + editKey).update(resData);
+        else db.ref('residents').push(resData);
         closeModal('modal-resident');
       };
 
       if (photoInput.files && photoInput.files[0]) {
-        // If a new photo is uploaded, use it
         const reader = new FileReader();
         reader.onload = function() { processSave(reader.result); };
         reader.readAsDataURL(photoInput.files[0]);
-      } else {
-        // Otherwise, use whatever is left in the hiddenPhoto field (could be old photo, or empty if removed)
-        processSave(hiddenPhoto);
-      }
+      } else { processSave(hiddenPhoto); }
     }
 
-    function deleteResident(key) {
-      if (confirm('Are you sure you want to delete this resident record?')) {
-        db.ref('residents/' + key).remove();
-      }
-    }
-
-    function toggleSelectAllResidents(master) {
-      const checkboxes = document.querySelectorAll('.res-row-checkbox');
-      checkboxes.forEach(cb => cb.checked = master.checked);
-    }
+    function deleteResident(key) { if (confirm('Are you sure you want to delete this resident record?')) db.ref('residents/' + key).remove(); }
+    function toggleSelectAllResidents(master) { document.querySelectorAll('.res-row-checkbox').forEach(cb => cb.checked = master.checked); }
 
     function deleteSelectedResidents() {
-      const checkboxes = document.querySelectorAll('.res-row-checkbox');
-      const selectedKeys = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
-
-      if (selectedKeys.length === 0) {
-        alert("Please select at least 1 resident to delete.");
-        return;
-      }
-
+      const selectedKeys = Array.from(document.querySelectorAll('.res-row-checkbox')).filter(cb => cb.checked).map(cb => cb.value);
+      if (selectedKeys.length === 0) return alert("Please select at least 1 resident to delete.");
       if (confirm(`Are you sure you want to delete ${selectedKeys.length} selected residents?`)) {
         const updates = {};
-        selectedKeys.forEach(key => {
-          updates['residents/' + key] = null;
-        });
-
+        selectedKeys.forEach(key => updates['residents/' + key] = null);
         db.ref().update(updates).then(() => {
           alert("Selected residents deleted successfully.");
           const masterCb = document.getElementById('select-all-res');
           if (masterCb) masterCb.checked = false;
-        }).catch(err => {
-          alert("Error deleting residents: " + err.message);
-        });
+        }).catch(err => alert("Error: " + err.message));
       }
     }
 
     function exportResidentsPDF() {
-      const checkboxes = document.querySelectorAll('.res-row-checkbox');
-      const selectedKeys = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
-
-      if (selectedKeys.length === 0) {
-        alert("Please select at least 1 Resident in the checkbox for which you want to export a PDF.");
-        return;
-      }
-
+      const selectedKeys = Array.from(document.querySelectorAll('.res-row-checkbox')).filter(cb => cb.checked).map(cb => cb.value);
+      if (selectedKeys.length === 0) return alert("Please select at least 1 Resident in the checkbox.");
       const cardsContainer = document.getElementById('pdf-res-cards-container');
       cardsContainer.innerHTML = '';
-
       document.getElementById('pdf-res-generated-date').innerText = `Generated on: ${new Date().toLocaleString()}`;
-
+      
       selectedKeys.forEach(key => {
         const res = residents[key];
         if (!res) return;
-
         const card = document.createElement('div');
         card.className = 'pdf-card';
         card.style.display = 'flex';
         card.style.gap = '20px';
         card.style.alignItems = 'flex-start';
-
-        const photoHtml = res.photo 
-          ? `<img src="${res.photo}" style="width: 120px; height: 120px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1;">` 
-          : `<div style="width: 120px; height: 120px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 12px; border-radius: 6px; border: 1px solid #cbd5e1;">No Photo</div>`;
-
-        card.innerHTML = `
-          <div>
-            ${photoHtml}
-          </div>
-          <div style="flex: 1;">
-            <div class="pdf-card-title" style="border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 10px;">
-              <span>👤 ${res.name || '-'} (ID: ${res.id || '-'})</span>
-            </div>
-            <div class="pdf-meta" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-              <div><b>Sex:</b> ${res.sex || '-'}</div>
-              <div><b>Fin Number:</b> ${res.finNumber || '-'}</div>
-              <div><b>WP No:</b> ${res.wpNo || '-'}</div>
-              <div><b>WP Expiry:</b> ${res.wpExpiry || '-'}</div>
-              <div><b>Batch No:</b> ${res.batchNo || '-'}</div>
-              <div><b>Nationality:</b> ${res.nationality || '-'}</div>
-              <div><b>Company Name:</b> ${res.company || '-'}</div>
-              <div><b>Bed No:</b> ${res.bedNo || '-'}</div>
-              <div><b>Card No:</b> ${res.cardNo || '-'}</div>
-              <div><b>Food Order:</b> ${res.foodOrder || '-'}</div>
-              <div><b>Check-in Date:</b> ${res.checkIn || '-'}</div>
-              <div><b>Check-out Date:</b> ${res.checkOut || '-'}</div>
-            </div>
-          </div>
-        `;
+        const photoHtml = res.photo ? `<img src="${res.photo}" style="width: 120px; height: 120px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1;">` : `<div style="width: 120px; height: 120px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 12px; border-radius: 6px; border: 1px solid #cbd5e1;">No Photo</div>`;
+        card.innerHTML = `<div>${photoHtml}</div><div style="flex: 1;"><div class="pdf-card-title" style="border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 10px;"><span>👤 ${res.name || '-'} (ID: ${res.id || '-'})</span></div><div class="pdf-meta" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;"><div><b>Sex:</b> ${res.sex || '-'}</div><div><b>Fin Number:</b> ${res.finNumber || '-'}</div><div><b>WP No:</b> ${res.wpNo || '-'}</div><div><b>WP Expiry:</b> ${res.wpExpiry || '-'}</div><div><b>Batch No:</b> ${res.batchNo || '-'}</div><div><b>Nationality:</b> ${res.nationality || '-'}</div><div><b>Company Name:</b> ${res.company || '-'}</div><div><b>Bed No:</b> ${res.bedNo || '-'}</div><div><b>Card No:</b> ${res.cardNo || '-'}</div><div><b>Food Order:</b> ${res.foodOrder || '-'}</div><div><b>Check-in Date:</b> ${res.checkIn || '-'}</div><div><b>Check-out Date:</b> ${res.checkOut || '-'}</div></div></div>`;
         cardsContainer.appendChild(card);
       });
 
       const element = document.getElementById('pdf-resident-template');
       element.style.display = 'block';
-
-      const opt = {
-        margin:       10,
-        filename:     `Resident_Records_${new Date().toISOString().slice(0,10)}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true, logging: false },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-
-      html2pdf().set(opt).from(element).save().then(() => {
-        element.style.display = 'none';
-      }).catch(err => {
-        console.error("PDF Export Error:", err);
-        element.style.display = 'none';
-        alert("There was an error generating the PDF.");
-      });
+      html2pdf().set({ margin: 10, filename: `Resident_Records_${new Date().toISOString().slice(0,10)}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, logging: false }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).from(element).save().then(() => element.style.display = 'none').catch(err => { element.style.display = 'none'; alert("PDF Error."); });
     }
 
-    function changePage(step) {
-      currentPage += step;
-      renderResidentsTable();
-    }
-
-    function goToPage(page) {
-      currentPage = page;
-      renderResidentsTable();
-    }
-
-    function changeRowsPerPage() {
-      const select = document.getElementById('res-rows-per-page');
-      rowsPerPage = parseInt(select.value, 10);
-      currentPage = 1; 
-      renderResidentsTable();
-    }
+    function changePage(step) { currentPage += step; renderResidentsTable(); }
+    function goToPage(page) { currentPage = page; renderResidentsTable(); }
+    function changeRowsPerPage() { rowsPerPage = parseInt(document.getElementById('res-rows-per-page').value, 10); currentPage = 1; renderResidentsTable(); }
 
     function renderResidentsTable() {
       const tbody = document.getElementById('resident-table-body');
       if (!tbody) return;
       tbody.innerHTML = '';
-
       const masterCb = document.getElementById('select-all-res');
       if (masterCb) masterCb.checked = false;
-
       const searchInput = document.getElementById('search-resident');
       const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
 
       let filteredKeys = Object.keys(residents).filter(key => {
         const res = residents[key];
-
         if (selectedCompanyFilter !== "") {
           let comp = (res.company || "").trim();
-          if (comp === "" || comp === "-" || comp.toLowerCase() === "n/a") {
-            comp = "Unknown / Unassigned";
-          }
+          if (comp === "" || comp === "-" || comp.toLowerCase() === "n/a") comp = "Unknown / Unassigned";
           if (comp !== selectedCompanyFilter) return false;
         }
-
         const searchString = `${res.id} ${res.name} ${res.sex} ${res.finNumber} ${res.wpNo} ${res.company} ${res.bedNo} ${res.batchNo} ${res.nationality}`.toLowerCase();
         return !searchTerm || searchString.includes(searchTerm);
       });
@@ -1241,44 +1017,24 @@
 
       const totalRecords = filteredKeys.length;
       const totalPages = Math.ceil(totalRecords / rowsPerPage) || 1;
-
       if (currentPage > totalPages) currentPage = totalPages;
       if (currentPage < 1) currentPage = 1;
 
       const startIndex = (currentPage - 1) * rowsPerPage;
       const endIndex = Math.min(startIndex + rowsPerPage, totalRecords);
       const paginatedKeys = filteredKeys.slice(startIndex, endIndex);
-
       const infoSpan = document.getElementById('res-page-info');
-      if (infoSpan) {
-        infoSpan.innerText = totalRecords === 0 ? '0-0 of 0' : `${startIndex + 1}-${endIndex} of ${totalRecords}`;
-      }
+      if (infoSpan) infoSpan.innerText = totalRecords === 0 ? '0-0 of 0' : `${startIndex + 1}-${endIndex} of ${totalRecords}`;
 
       const pageNumbersContainer = document.getElementById('res-page-numbers');
       if (pageNumbersContainer) {
         pageNumbersContainer.innerHTML = '';
-        
         const prevDisabled = currentPage === 1 ? 'disabled' : '';
         pageNumbersContainer.innerHTML += `<button class="btn btn-secondary" onclick="changePage(-1)" ${prevDisabled}>Prev</button>`;
-
-        let startPage = Math.max(1, currentPage - 2);
-        let endPage = Math.min(totalPages, currentPage + 2);
-
-        if (startPage > 1) {
-          pageNumbersContainer.innerHTML += `<button class="btn-page" onclick="goToPage(1)">1</button>`;
-          if (startPage > 2) pageNumbersContainer.innerHTML += `<span style="color:#cbd5e1; padding: 4px;">...</span>`;
-        }
-
-        for (let i = startPage; i <= endPage; i++) {
-          const activeClass = (i === currentPage) ? 'active' : '';
-          pageNumbersContainer.innerHTML += `<button class="btn-page ${activeClass}" onclick="goToPage(${i})">${i}</button>`;
-        }
-
-        if (endPage < totalPages) {
-          if (endPage < totalPages - 1) pageNumbersContainer.innerHTML += `<span style="color:#cbd5e1; padding: 4px;">...</span>`;
-          pageNumbersContainer.innerHTML += `<button class="btn-page" onclick="goToPage(${totalPages})">${totalPages}</button>`;
-        }
-
+        let startPage = Math.max(1, currentPage - 2); let endPage = Math.min(totalPages, currentPage + 2);
+        if (startPage > 1) { pageNumbersContainer.innerHTML += `<button class="btn-page" onclick="goToPage(1)">1</button>`; if (startPage > 2) pageNumbersContainer.innerHTML += `<span style="color:#cbd5e1; padding: 4px;">...</span>`; }
+        for (let i = startPage; i <= endPage; i++) { const activeClass = (i === currentPage) ? 'active' : ''; pageNumbersContainer.innerHTML += `<button class="btn-page ${activeClass}" onclick="goToPage(${i})">${i}</button>`; }
+        if (endPage < totalPages) { if (endPage < totalPages - 1) pageNumbersContainer.innerHTML += `<span style="color:#cbd5e1; padding: 4px;">...</span>`; pageNumbersContainer.innerHTML += `<button class="btn-page" onclick="goToPage(${totalPages})">${totalPages}</button>`; }
         const nextDisabled = currentPage === totalPages ? 'disabled' : '';
         pageNumbersContainer.innerHTML += `<button class="btn btn-secondary" onclick="changePage(1)" ${nextDisabled}>Next</button>`;
       }
@@ -1286,684 +1042,258 @@
       paginatedKeys.forEach((key) => {
         const res = residents[key];
         const tr = document.createElement('tr');
-        const photoHtml = res.photo 
-          ? `<img src="${res.photo}" class="img-preview" onclick="viewFullImage('${res.photo}')" alt="Resident">` 
-          : `<span style="color:#64748b; font-size:0.75rem;">No Photo</span>`;
-
-        tr.innerHTML = `
-          <td style="text-align:center;">
-            <input type="checkbox" class="res-row-checkbox" value="${key}">
-          </td>
-          <td>${photoHtml}</td>
-          <td><b>${res.id || '-'}</b></td>
-          <td>${res.name || '-'}</td>
-          <td>${res.sex || '-'}</td>
-          <td>${res.finNumber || '-'}</td>
-          <td>${res.wpNo || '-'}</td>
-          <td>${res.wpExpiry || '-'}</td>
-          <td>${res.batchNo || '-'}</td>
-          <td>${res.nationality || '-'}</td>
-          <td>${res.company || '-'}</td>
-          <td>${res.bedNo || '-'}</td>
-          <td>${res.cardNo || '-'}</td>
-          <td>${res.foodOrder || '-'}</td>
-          <td>${res.checkIn || '-'}</td>
-          <td>${res.checkOut || '-'}</td>
-          <td style="display:flex; gap:6px;">
-            <button class="btn btn-warning" style="padding:4px 8px; font-size:0.75rem;" onclick="openEditResidentModal('${key}')">Edit</button>
-            <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="deleteResident('${key}')">Delete</button>
-          </td>
-        `;
+        const photoHtml = res.photo ? `<img src="${res.photo}" class="img-preview" onclick="viewFullImage('${res.photo}')" alt="Resident">` : `<span style="color:#64748b; font-size:0.75rem;">No Photo</span>`;
+        tr.innerHTML = `<td style="text-align:center;"><input type="checkbox" class="res-row-checkbox" value="${key}"></td><td>${photoHtml}</td><td><b>${res.id || '-'}</b></td><td>${res.name || '-'}</td><td>${res.sex || '-'}</td><td>${res.finNumber || '-'}</td><td>${res.wpNo || '-'}</td><td>${res.wpExpiry || '-'}</td><td>${res.batchNo || '-'}</td><td>${res.nationality || '-'}</td><td>${res.company || '-'}</td><td>${res.bedNo || '-'}</td><td>${res.cardNo || '-'}</td><td>${res.foodOrder || '-'}</td><td>${res.checkIn || '-'}</td><td>${res.checkOut || '-'}</td><td style="display:flex; gap:6px;"><button class="btn btn-warning" style="padding:4px 8px; font-size:0.75rem;" onclick="openEditResidentModal('${key}')">Edit</button><button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="deleteResident('${key}')">Delete</button></td>`;
         tbody.appendChild(tr);
       });
-
-      if (paginatedKeys.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="17" style="text-align:center; padding: 20px; color: #94a3b8;">No records found.</td></tr>`;
-      }
+      if (paginatedKeys.length === 0) tbody.innerHTML = `<tr><td colspan="17" style="text-align:center; padding: 20px; color: #94a3b8;">No records found.</td></tr>`;
     }
 
     function exportResidentsToExcel() {
       const list = Object.values(residents);
-      if (list.length === 0) {
-        alert("No resident records available to export!");
-        return;
-      }
-
-      const excelData = list.map(r => ({
-        "Resident ID": r.id || '',
-        "Name": r.name || '',
-        "Sex": r.sex || '',
-        "Fin Number": r.finNumber || '',
-        "WP No.": r.wpNo || '',
-        "WP Expiry": r.wpExpiry || '',
-        "Batch No.": r.batchNo || '',
-        "Nationality": r.nationality || '',
-        "Company Name": r.company || '',
-        "Bed No.": r.bedNo || '',
-        "Access Card No.": r.cardNo || '',
-        "Food Order": r.foodOrder || 'No',
-        "Check-in Date": r.checkIn || '',
-        "Check-out Date": r.checkOut || '-'
-      }));
-
-      const worksheet = XLSX.utils.json_to_sheet(excelData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Resident Records");
-      XLSX.writeFile(workbook, "LK_Ang_Dormitory_Residents.xlsx");
+      if (list.length === 0) return alert("No records!");
+      const excelData = list.map(r => ({ "Resident ID": r.id||'', "Name": r.name||'', "Sex": r.sex||'', "Fin Number": r.finNumber||'', "WP No.": r.wpNo||'', "WP Expiry": r.wpExpiry||'', "Batch No.": r.batchNo||'', "Nationality": r.nationality||'', "Company Name": r.company||'', "Bed No.": r.bedNo||'', "Access Card No.": r.cardNo||'', "Food Order": r.foodOrder||'No', "Check-in Date": r.checkIn||'', "Check-out Date": r.checkOut||'-' }));
+      const worksheet = XLSX.utils.json_to_sheet(excelData); const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Resident Records"); XLSX.writeFile(workbook, "LK_Ang_Dormitory_Residents.xlsx");
     }
 
     function handleExcelImport(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
+      const file = event.target.files[0]; if (!file) return;
       const reader = new FileReader();
-
       reader.onload = function (e) {
         try {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
-          
-          const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false });
-
-          if (jsonData.length === 0) {
-            alert("There is no data in the Excel file.");
-            return;
-          }
-
-          const updates = {};
-          let newCount = 0;
-          let updateCount = 0;
-
+          const data = new Uint8Array(e.target.result); const workbook = XLSX.read(data, { type: 'array' });
+          const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { raw: false });
+          if (jsonData.length === 0) return alert("No data.");
+          const updates = {}; let newCount = 0; let updateCount = 0;
           jsonData.forEach((row) => {
             const rowId = String(row['Resident ID'] || row['residentId'] || row['id'] || `LKAD-${Math.floor(1000 + Math.random() * 9000)}`);
-            const rowName = String(row['Name'] || row['name'] || "N/A");
-
-            let existingKey = null;
-            for (const key in residents) {
-              if (residents[key].id === rowId) {
-                existingKey = key;
-                break;
-              }
-            }
-
+            let existingKey = null; for (const key in residents) { if (residents[key].id === rowId) { existingKey = key; break; } }
             const refKey = existingKey ? existingKey : db.ref('residents').push().key;
-
-            let checkInVal = row['Check-in Date'] || row['checkIn'];
-            let checkOutVal = row['Check-out Date'] || row['checkOut'];
-            let wpExpiryVal = row['WP Expiry'] || row['wpExpiry'];
-
+            let checkInVal = row['Check-in Date'] || row['checkIn']; let checkOutVal = row['Check-out Date'] || row['checkOut']; let wpExpiryVal = row['WP Expiry'] || row['wpExpiry'];
             updates['residents/' + refKey] = {
-              id: rowId,
-              name: rowName,
-              sex: row['Sex'] || row['sex'] || (existingKey && residents[existingKey].sex ? residents[existingKey].sex : "M"),
+              id: rowId, name: String(row['Name'] || row['name'] || "N/A"), sex: row['Sex'] || row['sex'] || (existingKey && residents[existingKey].sex ? residents[existingKey].sex : "M"),
               finNumber: row['Fin Number'] || row['finNumber'] || row['Fin'] || (existingKey && residents[existingKey].finNumber ? residents[existingKey].finNumber : "-"),
-              wpNo: row['WP No.'] || row['WP No'] || row['wpNo'] || "N/A",
-              wpExpiry: wpExpiryVal ? String(wpExpiryVal).trim() : "N/A",
-              batchNo: row['Batch No.'] || row['Batch No'] || row['batchNo'] || "-",
-              nationality: row['Nationality'] || row['nationality'] || "N/A",
-              company: row['Company Name'] || row['company'] || "N/A",
-              bedNo: row['Bed No.'] || row['Bed No'] || row['bedNo'] || "N/A",
-              cardNo: row['Access Card No.'] || row['Access Card No'] || row['cardNo'] || "N/A",
-              foodOrder: row['Food Order'] || row['foodOrder'] || "No",
-              checkIn: checkInVal ? String(checkInVal).trim() : new Date().toISOString().split('T')[0],
-              checkOut: checkOutVal ? String(checkOutVal).trim() : "-",
-              photo: row['Photo'] || (existingKey && residents[existingKey].photo ? residents[existingKey].photo : "")
+              wpNo: row['WP No.'] || row['WP No'] || row['wpNo'] || "N/A", wpExpiry: wpExpiryVal ? String(wpExpiryVal).trim() : "N/A", batchNo: row['Batch No.'] || row['Batch No'] || row['batchNo'] || "-",
+              nationality: row['Nationality'] || row['nationality'] || "N/A", company: row['Company Name'] || row['company'] || "N/A", bedNo: row['Bed No.'] || row['Bed No'] || row['bedNo'] || "N/A",
+              cardNo: row['Access Card No.'] || row['Access Card No'] || row['cardNo'] || "N/A", foodOrder: row['Food Order'] || row['foodOrder'] || "No",
+              checkIn: checkInVal ? String(checkInVal).trim() : new Date().toISOString().split('T')[0], checkOut: checkOutVal ? String(checkOutVal).trim() : "-", photo: row['Photo'] || (existingKey && residents[existingKey].photo ? residents[existingKey].photo : "")
             };
-
-            if (existingKey) {
-              updateCount++; 
-            } else {
-              newCount++;    
-            }
+            existingKey ? updateCount++ : newCount++;
           });
-
-          if (Object.keys(updates).length > 0) {
-            db.ref().update(updates)
-              .then(() => {
-                alert(`Import Successful!\n✅ Added New: ${newCount} Residents.\n🔄 Updated Existing: ${updateCount} Residents.`);
-                event.target.value = '';
-              })
-              .catch((err) => {
-                console.error("Import Error:", err);
-                alert("Unable to save data. Error: " + err.message);
-              });
-          }
-
-        } catch (err) {
-          console.error("Excel Processing Error:", err);
-          alert("Excel file cannot be read. Please check the file format.");
-        }
+          if (Object.keys(updates).length > 0) db.ref().update(updates).then(() => { alert(`Import Successful!\n✅ Added New: ${newCount}\n🔄 Updated: ${updateCount}`); event.target.value = ''; }).catch(err => alert("Error: " + err.message));
+        } catch (err) { alert("Excel file format error."); }
       };
-
       reader.readAsArrayBuffer(file);
     }
 
-    // --- MAINTENANCE SYSTEM & EMAILJS ---
+    // --- MAINTENANCE SYSTEM ---
     function submitMaintenanceRequest(e) {
       e.preventDefault();
       const selectEl = document.getElementById('req-assign-person');
-      const assignEmail = selectEl.value; 
-      const assignPerson = selectEl.options[selectEl.selectedIndex].getAttribute('data-name'); 
-      const location = document.getElementById('req-location').value;
-      const desc = document.getElementById('req-desc').value;
-      const fileInput = document.getElementById('req-before-img');
-
-      const creatorName = currentUser ? currentUser.name : "System User";
-      const creatorEmail = currentUser ? currentUser.email : "";
-      const todayStr = new Date().toLocaleDateString('en-GB');
-
+      const assignEmail = selectEl.value; const assignPerson = selectEl.options[selectEl.selectedIndex].getAttribute('data-name'); 
+      const location = document.getElementById('req-location').value; const desc = document.getElementById('req-desc').value; const fileInput = document.getElementById('req-before-img');
+      const creatorName = currentUser ? currentUser.name : "System User"; const creatorEmail = currentUser ? currentUser.email : "";
       const reader = new FileReader();
       reader.onload = function() {
-        const newReq = {
-          assignPerson, 
-          assignEmail, 
-          createdByName: creatorName, 
-          createdByEmail: creatorEmail,
-          location, 
-          desc, 
-          beforeImg: reader.result, 
-          createdDate: todayStr,
-          afterImg: '', 
-          completedDate: '', 
-          completedByName: '',
-          status: 'Pending'
-        };
-
-        db.ref('maintenance').push(newReq);
-        closeModal('modal-new-request');
-        sendNotificationEmail(assignPerson, assignEmail, location, desc);
+        db.ref('maintenance').push({ assignPerson, assignEmail, createdByName: creatorName, createdByEmail: creatorEmail, location, desc, beforeImg: reader.result, createdDate: new Date().toLocaleDateString('en-GB'), afterImg: '', completedDate: '', completedByName: '', status: 'Pending' });
+        closeModal('modal-new-request'); sendNotificationEmail(assignPerson, assignEmail, location, desc);
       };
-
       if (fileInput.files[0]) reader.readAsDataURL(fileInput.files[0]);
     }
 
     function sendNotificationEmail(personName, email, location, desc) {
       if (!email) return;
-      const senderName = currentUser ? currentUser.name : "System User";
-
-      emailjs.send('service_94a1xtp', 'template_ik9p9kc', {
-        to_name: personName, 
-        to_email: email, 
-        sender_name: senderName, 
-        location: location, 
-        description: desc
-      }).then(() => alert(`Email sent to ${personName}`))
-        .catch(err => console.error("Email error:", err));
+      emailjs.send('service_94a1xtp', 'template_ik9p9kc', { to_name: personName, to_email: email, sender_name: currentUser ? currentUser.name : "System", location: location, description: desc })
+        .then(() => alert(`Email sent to ${personName}`)).catch(err => console.error("Email error:", err));
     }
 
     function sendCompletionEmail(req) {
-      try {
-        const requestorName = req.createdByName || req.requestorName || "Requestor";
-        const technicianName = req.completedByName || (currentUser ? currentUser.name : req.assignPerson) || "Technician";
-
-        const todayStr = new Date().toLocaleDateString('en-GB'); 
-        const beforeDate = req.createdDate || "N/A";
-        const afterDate = req.completedDate || todayStr;
-
-        const safePayload = {
-          requestor_name: String(requestorName),
-          technician_name: String(technicianName),
-          location: String(req.location || "N/A"),
-          description: String(req.desc || req.resolution || "Completed / Resolved"),
-          before_date: String(beforeDate),
-          after_date: String(afterDate),
-          to_email: String(req.createdByEmail || req.assignEmail || "maung@lkangco.sg")
-        };
-
-        emailjs.send('service_94a1xtp', 'template_h6xz4dc', safePayload)
-          .then((response) => {
-            alert(`Completion email sent successfully to ${requestorName}!`);
-          })
-          .catch((error) => {
-            console.error('EMAILJS FAILED...', error);
-            alert("Failed to send completion email. Check console.");
-          });
-      } catch (err) {
-        console.error("Error in sendCompletionEmail:", err);
-      }
+      const safePayload = { requestor_name: String(req.createdByName || "Requestor"), technician_name: String(req.completedByName || "Technician"), location: String(req.location || "N/A"), description: String(req.desc || "Completed"), before_date: String(req.createdDate || "N/A"), after_date: String(req.completedDate || new Date().toLocaleDateString('en-GB')), to_email: String(req.createdByEmail || req.assignEmail || "maung@lkangco.sg") };
+      emailjs.send('service_94a1xtp', 'template_h6xz4dc', safePayload).then(() => alert(`Completion email sent!`)).catch(err => console.error('EMAILJS FAILED', err));
     }
 
     function openUpdateModal(key) {
-      const req = maintenanceRequests[key];
-      if (!req) return;
-
-      document.getElementById('update-req-key').value = key;
-      document.getElementById('update-assign-person').value = req.assignEmail;
-      document.getElementById('update-status').value = req.status;
-      document.getElementById('req-after-img').value = '';
-
-      const previewContainer = document.getElementById('after-img-preview-container');
-      const previewImg = document.getElementById('update-after-preview');
-
-      if (req.afterImg) {
-        previewImg.src = req.afterImg;
-        previewContainer.classList.remove('hidden');
-      } else {
-        previewContainer.classList.add('hidden');
-      }
-
+      const req = maintenanceRequests[key]; if (!req) return;
+      document.getElementById('update-req-key').value = key; document.getElementById('update-assign-person').value = req.assignEmail; document.getElementById('update-status').value = req.status; document.getElementById('req-after-img').value = '';
+      const previewContainer = document.getElementById('after-img-preview-container'); const previewImg = document.getElementById('update-after-preview');
+      if (req.afterImg) { previewImg.src = req.afterImg; previewContainer.classList.remove('hidden'); } else { previewContainer.classList.add('hidden'); }
       openModal('modal-update-request');
     }
 
     function removeAfterImage() {
       const key = document.getElementById('update-req-key').value;
-      if (key && maintenanceRequests[key]) {
-        db.ref('maintenance/' + key).update({ afterImg: '', status: 'Pending' });
-        closeModal('modal-update-request');
-      }
+      if (key && maintenanceRequests[key]) { db.ref('maintenance/' + key).update({ afterImg: '', status: 'Pending' }); closeModal('modal-update-request'); }
     }
 
     function saveMaintenanceUpdate(e) {
       e.preventDefault();
-      const key = document.getElementById('update-req-key').value;
-      const selectEl = document.getElementById('update-assign-person');
-      const assignEmail = selectEl.value;
-      const assignPerson = selectEl.options[selectEl.selectedIndex].getAttribute('data-name');
-      let status = document.getElementById('update-status').value;
-      const fileInput = document.getElementById('req-after-img');
-
-      const target = maintenanceRequests[key];
-      if (!target) return;
-
-      const previousStatus = target.status;
-      const todayStr = new Date().toLocaleDateString('en-GB');
-      const techName = currentUser ? currentUser.name : assignPerson;
+      const key = document.getElementById('update-req-key').value; const selectEl = document.getElementById('update-assign-person');
+      const assignEmail = selectEl.value; const assignPerson = selectEl.options[selectEl.selectedIndex].getAttribute('data-name');
+      let status = document.getElementById('update-status').value; const fileInput = document.getElementById('req-after-img');
+      const target = maintenanceRequests[key]; if (!target) return;
+      const previousStatus = target.status; const todayStr = new Date().toLocaleDateString('en-GB'); const techName = currentUser ? currentUser.name : assignPerson;
 
       if (fileInput.files[0]) {
         const reader = new FileReader();
         reader.onload = function() {
-          const updateData = {
-            assignPerson, 
-            assignEmail, 
-            afterImg: reader.result, 
-            completedDate: todayStr,
-            completedByName: techName,
-            status: 'Resolved'
-          };
-          
-          db.ref('maintenance/' + key).update(updateData);
-          closeModal('modal-update-request');
-          sendCompletionEmail({ ...target, ...updateData });
+          const updateData = { assignPerson, assignEmail, afterImg: reader.result, completedDate: todayStr, completedByName: techName, status: 'Resolved' };
+          db.ref('maintenance/' + key).update(updateData); closeModal('modal-update-request'); sendCompletionEmail({ ...target, ...updateData });
         };
         reader.readAsDataURL(fileInput.files[0]);
       } else {
         const updateData = { assignPerson, assignEmail, status };
-        if (status === 'Resolved' && !target.completedDate) {
-          updateData.completedDate = todayStr;
-          updateData.completedByName = techName;
-        }
-        
-        db.ref('maintenance/' + key).update(updateData);
-        closeModal('modal-update-request');
-
-        if (status === 'Resolved' && previousStatus !== 'Resolved') {
-          sendCompletionEmail({ ...target, ...updateData });
-        }
+        if (status === 'Resolved' && !target.completedDate) { updateData.completedDate = todayStr; updateData.completedByName = techName; }
+        db.ref('maintenance/' + key).update(updateData); closeModal('modal-update-request');
+        if (status === 'Resolved' && previousStatus !== 'Resolved') sendCompletionEmail({ ...target, ...updateData });
       }
     }
 
-    function deleteMaintenanceRecord(key) {
-      if (confirm('Are you sure you want to delete this record?')) {
-        db.ref('maintenance/' + key).remove();
-      }
-    }
-
-    function toggleSelectAllMaintenance(master) {
-      const checkboxes = document.querySelectorAll('.row-checkbox');
-      checkboxes.forEach(cb => cb.checked = master.checked);
-    }
+    function deleteMaintenanceRecord(key) { if (confirm('Delete this record?')) db.ref('maintenance/' + key).remove(); }
+    function toggleSelectAllMaintenance(master) { document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = master.checked); }
 
     function exportMaintenancePDF() {
-      const checkboxes = document.querySelectorAll('.row-checkbox');
-      const selectedKeys = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
-
-      if (selectedKeys.length === 0) {
-        alert("Please select at least 1 Maintenance Request in the checkbox for which you want to export a PDF.");
-        return;
-      }
-
-      const cardsContainer = document.getElementById('pdf-cards-container');
-      cardsContainer.innerHTML = '';
-
+      const selectedKeys = Array.from(document.querySelectorAll('.row-checkbox')).filter(cb => cb.checked).map(cb => cb.value);
+      if (selectedKeys.length === 0) return alert("Select at least 1 request.");
+      const cardsContainer = document.getElementById('pdf-cards-container'); cardsContainer.innerHTML = '';
       document.getElementById('pdf-generated-date').innerText = `Generated on: ${new Date().toLocaleString()}`;
-
       selectedKeys.forEach(key => {
-        const req = maintenanceRequests[key];
-        if (!req) return;
-
-        const card = document.createElement('div');
-        card.className = 'pdf-card';
-
-        const beforeImgHtml = req.beforeImg 
-          ? `<img src="${req.beforeImg}">` 
-          : `<div class="no-img">No Before Image</div>`;
-
-        const afterImgHtml = req.afterImg 
-          ? `<img src="${req.afterImg}">` 
-          : `<div class="no-img">Image Not Uploaded Yet</div>`;
-
-        let pdfBadgeClass = 'pdf-status-pending';
-        if (req.status === 'In Progress') pdfBadgeClass = 'pdf-status-progress';
-        if (req.status === 'Resolved') pdfBadgeClass = 'pdf-status-resolved';
-
-        card.innerHTML = `
-          <div class="pdf-card-title">
-            <span>📍 Location: ${req.location}</span>
-            <span class="pdf-status-badge ${pdfBadgeClass}">Status: ${req.status}</span>
-          </div>
-          <div class="pdf-meta">
-            <div><b>Assigned To:</b> ${req.assignPerson} (${req.assignEmail})</div>
-            <div><b>Created By:</b> ${req.createdByName || '-'} (${req.createdDate || '-'})</div>
-            <div style="grid-column: span 2;"><b>Description:</b> ${req.desc}</div>
-            ${req.completedDate ? `<div style="grid-column: span 2; color:#15803d;"><b>Completed On:</b> ${req.completedDate} by${req.completedByName || '-'}</div>` : ''}
-          </div>
-          <div class="pdf-img-container">
-            <div class="pdf-img-box">
-              <h4>📷 Before Maintenance (${req.createdDate || 'N/A'})</h4>
-              ${beforeImgHtml}
-            </div>
-            <div class="pdf-img-box">
-              <h4>✅ After Maintenance (${req.completedDate || 'Pending'})</h4>
-              ${afterImgHtml}
-            </div>
-          </div>
-        `;
+        const req = maintenanceRequests[key]; if (!req) return;
+        const card = document.createElement('div'); card.className = 'pdf-card';
+        card.innerHTML = `<div class="pdf-card-title"><span>📍 Location: ${req.location}</span><span class="pdf-status-badge pdf-status-${req.status === 'Resolved'?'resolved':(req.status === 'In Progress'?'progress':'pending')}">Status: ${req.status}</span></div><div class="pdf-meta"><div><b>Assigned To:</b> ${req.assignPerson} (${req.assignEmail})</div><div><b>Created By:</b> ${req.createdByName || '-'} (${req.createdDate || '-'})</div><div style="grid-column: span 2;"><b>Description:</b> ${req.desc}</div>${req.completedDate ? `<div style="grid-column: span 2; color:#15803d;"><b>Completed On:</b> ${req.completedDate} by ${req.completedByName || '-'}</div>` : ''}</div><div class="pdf-img-container"><div class="pdf-img-box"><h4>📷 Before</h4>${req.beforeImg ? `<img src="${req.beforeImg}">` : `<div class="no-img">No Image</div>`}</div><div class="pdf-img-box"><h4>✅ After</h4>${req.afterImg ? `<img src="${req.afterImg}">` : `<div class="no-img">No Image</div>`}</div></div>`;
         cardsContainer.appendChild(card);
       });
-
-      const element = document.getElementById('pdf-report-template');
-      element.style.display = 'block';
-
-      const opt = {
-        margin:       10,
-        filename:     `Maintenance_Report_${new Date().toISOString().slice(0,10)}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true, logging: false },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-
-      html2pdf().set(opt).from(element).save().then(() => {
-        element.style.display = 'none';
-      }).catch(err => {
-        console.error("PDF Export Error:", err);
-        element.style.display = 'none';
-        alert("There was an error generating the PDF.");
-      });
+      const element = document.getElementById('pdf-report-template'); element.style.display = 'block';
+      html2pdf().set({ margin: 10, filename: `Maintenance_Report.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).from(element).save().then(() => element.style.display = 'none');
     }
 
     function renderMaintenanceTable() {
-      const tbody = document.getElementById('maintenance-table-body');
-      if (!tbody) return;
-      tbody.innerHTML = '';
-
-      const masterCb = document.getElementById('select-all-maint');
-      if (masterCb) masterCb.checked = false;
-
+      const tbody = document.getElementById('maintenance-table-body'); if (!tbody) return; tbody.innerHTML = '';
+      const masterCb = document.getElementById('select-all-maint'); if (masterCb) masterCb.checked = false;
       Object.keys(maintenanceRequests).forEach((key) => {
         const req = maintenanceRequests[key];
-        let badgeClass = 'badge-pending';
-        if (req.status === 'In Progress') badgeClass = 'badge-progress';
-        if (req.status === 'Resolved') badgeClass = 'badge-resolved';
-
-        const beforeDateHtml = req.createdDate 
-          ? `<div style="font-size:0.75rem; color:#94a3b8; margin-top:4px;">📅 ${req.createdDate}</div>` 
-          : '';
-          
-        const afterDateHtml = req.completedDate 
-          ? `<div style="font-size:0.75rem; color:#86efac; margin-top:4px;">✅ ${req.completedDate}</div>` 
-          : '';
-
-        const tr = document.createElement('tr');
-        tr.setAttribute('data-key', key);
-
-        tr.innerHTML = `
-          <td style="text-align:center;">
-            <input type="checkbox" class="row-checkbox" value="${key}">
-          </td>
-          <td><b>${req.assignPerson}</b><br><span style="font-size:0.75rem; color:#94a3b8;">${req.assignEmail}</span></td>
-          <td><b>${req.createdByName || '-'}</b></td>
-          <td>${req.location}</td>
-          <td>${req.desc}</td>
-          
-          <td style="text-align:center;">
-            <img src="${req.beforeImg}" class="img-preview" onclick="viewFullImage('${req.beforeImg}')" alt="Before">
-            ${beforeDateHtml}
-          </td>
-
-          <td style="text-align:center;">
-            ${req.afterImg 
-              ? `<img src="${req.afterImg}" class="img-preview" onclick="viewFullImage('${req.afterImg}')" alt="After">${afterDateHtml}` 
-              : '<span style="color:#64748b;">Not Uploaded</span>'}
-          </td>
-
-          <td><span class="badge ${badgeClass}">${req.status}</span></td>
-          <td>
-            <button class="btn btn-secondary" style="padding:4px 8px; font-size:0.75rem;" onclick="sendNotificationEmail('${req.assignPerson}', '${req.assignEmail}', '${req.location}', '${req.desc}')">⚡ Resend Email</button>
-          </td>
-          <td style="display:flex; gap:6px;">
-            <button class="btn btn-warning" style="padding:4px 8px; font-size:0.75rem;" onclick="openUpdateModal('${key}')">Edit / Update</button>
-            <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="deleteMaintenanceRecord('${key}')">Delete</button>
-          </td>
-        `;
+        let badgeClass = req.status === 'In Progress' ? 'badge-progress' : (req.status === 'Resolved' ? 'badge-resolved' : 'badge-pending');
+        const tr = document.createElement('tr'); tr.innerHTML = `<td style="text-align:center;"><input type="checkbox" class="row-checkbox" value="${key}"></td><td><b>${req.assignPerson}</b><br><span style="font-size:0.75rem; color:#94a3b8;">${req.assignEmail}</span></td><td><b>${req.createdByName || '-'}</b></td><td>${req.location}</td><td>${req.desc}</td><td style="text-align:center;"><img src="${req.beforeImg}" class="img-preview" onclick="viewFullImage('${req.beforeImg}')">${req.createdDate ? `<div style="font-size:0.75rem; color:#94a3b8; margin-top:4px;">📅 ${req.createdDate}</div>` : ''}</td><td style="text-align:center;">${req.afterImg ? `<img src="${req.afterImg}" class="img-preview" onclick="viewFullImage('${req.afterImg}')">${req.completedDate ? `<div style="font-size:0.75rem; color:#86efac; margin-top:4px;">✅ ${req.completedDate}</div>` : ''}` : '<span style="color:#64748b;">Not Uploaded</span>'}</td><td><span class="badge ${badgeClass}">${req.status}</span></td><td><button class="btn btn-secondary" style="padding:4px 8px; font-size:0.75rem;" onclick="sendNotificationEmail('${req.assignPerson}', '${req.assignEmail}', '${req.location}', '${req.desc}')">⚡ Resend</button></td><td style="display:flex; gap:6px;"><button class="btn btn-warning" style="padding:4px 8px; font-size:0.75rem;" onclick="openUpdateModal('${key}')">Edit</button><button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="deleteMaintenanceRecord('${key}')">Delete</button></td>`;
         tbody.appendChild(tr);
       });
     }
 
     // --- CHECKLIST LOGIC ---
     function openEditChecklistModal(key) {
-      const item = checklists[key];
-      if (!item) return;
-
+      const item = checklists[key]; if (!item) return;
       openModal('modal-new-checklist'); 
-
-      document.getElementById('chk-modal-title').innerText = "Edit Checklist Record";
-      document.getElementById('chk-submit-btn').innerText = "Update Record";
-      document.getElementById('chk-edit-key').value = key;
-      document.getElementById('chk-remarks').value = item.remarks || "";
-      
-      const fileInput = document.getElementById('chk-file');
-      fileInput.value = "";
-      fileInput.required = false; 
-
-      const fileHint = document.getElementById('chk-file-hint');
-      fileHint.innerText = item.fileName ? `Current File: ${item.fileName} (Leave empty to keep current file)` : '';
-      fileHint.style.display = item.fileName ? "block" : "none";
+      document.getElementById('chk-modal-title').innerText = "Edit Checklist Record"; document.getElementById('chk-submit-btn').innerText = "Update Record";
+      document.getElementById('chk-edit-key').value = key; document.getElementById('chk-remarks').value = item.remarks || "";
+      const fileInput = document.getElementById('chk-file'); fileInput.value = ""; fileInput.required = false; 
+      const fileHint = document.getElementById('chk-file-hint'); fileHint.innerText = item.fileName ? `Current File: ${item.fileName}` : ''; fileHint.style.display = item.fileName ? "block" : "none";
     }
 
-    function deleteChecklistRecord(key) {
-      if (confirm('Are you sure you want to delete this inspection record?')) {
-        db.ref('checklists/' + key).remove();
-      }
-    }
-
+    function deleteChecklistRecord(key) { if (confirm('Delete this inspection record?')) db.ref('checklists/' + key).remove(); }
     function submitChecklist(e) {
-      e.preventDefault();
-
-      const editKey = document.getElementById('chk-edit-key').value;
-      const fileInput = document.getElementById('chk-file');
-      const remarksInput = document.getElementById('chk-remarks');
-      const remarksVal = remarksInput ? remarksInput.value : '';
-
-      if (!editKey && (!fileInput || !fileInput.files || fileInput.files.length === 0)) {
-        alert("Please select a PDF file!");
-        return;
-      }
-
+      e.preventDefault(); const editKey = document.getElementById('chk-edit-key').value; const fileInput = document.getElementById('chk-file'); const remarksVal = document.getElementById('chk-remarks').value;
+      if (!editKey && (!fileInput || !fileInput.files || fileInput.files.length === 0)) return alert("Select a PDF file!");
       const saveToFirebase = (fileData, fileName) => {
         if (editKey) {
-          const updateObj = {
-            remarks: remarksVal || '-'
-          };
-          
-          if (fileData) {
-            updateObj.fileData = fileData;
-            updateObj.fileName = fileName;
-          }
-
-          db.ref('checklists/' + editKey).update(updateObj, function(error) {
-            if (error) {
-              alert("Update Error: " + error.message);
-            } else {
-              alert("Checklist updated successfully!");
-              closeModal('modal-new-checklist');
-            }
-          });
-
+          const updateObj = { remarks: remarksVal || '-' }; if (fileData) { updateObj.fileData = fileData; updateObj.fileName = fileName; }
+          db.ref('checklists/' + editKey).update(updateObj).then(() => { alert("Updated successfully!"); closeModal('modal-new-checklist'); });
         } else {
-          const item = {
-            date: new Date().toLocaleDateString('en-GB') + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-            inspector: (typeof currentUser !== 'undefined' && currentUser && currentUser.name) ? currentUser.name : "Inspector",
-            remarks: remarksVal || '-',
-            fileName: fileName,
-            fileData: fileData
-          };
-
-          db.ref('checklists').push(item, function(error) {
-            if (error) {
-              alert("Firebase Save Error: " + error.message);
-            } else {
-              alert("Checklist created successfully!");
-              e.target.reset();
-              closeModal('modal-new-checklist');
-            }
-          });
+          db.ref('checklists').push({ date: new Date().toLocaleDateString('en-GB') + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), inspector: currentUser ? currentUser.name : "Inspector", remarks: remarksVal || '-', fileName: fileName, fileData: fileData })
+          .then(() => { alert("Created successfully!"); e.target.reset(); closeModal('modal-new-checklist'); });
         }
       };
-
       if (fileInput.files && fileInput.files[0]) {
-        const file = fileInput.files[0];
-
-        if (file.size > 2097152) {
-          alert("PDF file size cannot exceed 2MB.");
-          return;
-        }
-
-        const reader = new FileReader();
-        reader.onerror = function() {
-          alert("Error reading file!");
-        };
-
-        reader.onload = function(evt) {
-          saveToFirebase(evt.target.result, file.name);
-        };
-
-        reader.readAsDataURL(file);
-      } else {
-        saveToFirebase(null, null);
-      }
+        if (fileInput.files[0].size > 2097152) return alert("PDF size cannot exceed 2MB.");
+        const reader = new FileReader(); reader.onload = function(evt) { saveToFirebase(evt.target.result, fileInput.files[0].name); }; reader.readAsDataURL(fileInput.files[0]);
+      } else { saveToFirebase(null, null); }
     }
 
     function renderChecklistTable(dataObj) {
-      const tbody = document.getElementById('checklist-table-body');
-      if (!tbody) return;
-      
-      tbody.innerHTML = '';
-
+      const tbody = document.getElementById('checklist-table-body'); if (!tbody) return; tbody.innerHTML = '';
       const data = dataObj || checklists;
-
-      if (!data || Object.keys(data).length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8;">No inspection records found.</td></tr>';
-        return;
-      }
-
+      if (!data || Object.keys(data).length === 0) return tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8;">No records found.</td></tr>';
       Object.keys(data).reverse().forEach(key => {
-        const c = data[key];
-        const tr = document.createElement('tr');
-        
-        const attachmentHtml = c.fileData 
-          ? `<div style="font-size: 0.75rem; color: #93c5fd; margin-bottom: 4px; word-break: break-all;">📄 ${c.fileName || 'Attached_Document.pdf'}</div>
-             <a href="${c.fileData}" download="${c.fileName || 'Inspection_Report.pdf'}" class="btn btn-primary" style="padding: 4px 10px; font-size: 0.75rem;">📥 Download</a>`
-          : '-';
-
-        tr.innerHTML = `
-          <td>${c.date || '-'}</td>
-          <td>${c.inspector || '-'}</td>
-          <td>${c.remarks || '-'}</td>
-          <td>${attachmentHtml}</td>
-          <td style="display:flex; gap:6px;">
-            <button class="btn btn-warning" style="padding:4px 8px; font-size:0.75rem;" onclick="openEditChecklistModal('${key}')">Edit</button>
-            <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="deleteChecklistRecord('${key}')">Delete</button>
-          </td>
-        `;
+        const c = data[key]; const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${c.date || '-'}</td><td>${c.inspector || '-'}</td><td>${c.remarks || '-'}</td><td>${c.fileData ? `<div style="font-size: 0.75rem; color: #93c5fd; margin-bottom: 4px;">📄 ${c.fileName || 'Report.pdf'}</div><a href="${c.fileData}" download="${c.fileName || 'Report.pdf'}" class="btn btn-primary" style="padding: 4px 10px; font-size: 0.75rem;">📥 Download</a>` : '-'}</td><td style="display:flex; gap:6px;"><button class="btn btn-warning" style="padding:4px 8px; font-size:0.75rem;" onclick="openEditChecklistModal('${key}')">Edit</button><button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="deleteChecklistRecord('${key}')">Delete</button></td>`;
         tbody.appendChild(tr);
       });
     }
 
-    // --- USERS LOGIC ---
+    // --- 💥 UPDATED USERS LOGIC (AUTH MANAGEMENT) 💥 ---
     function openNewUserModal() {
       document.getElementById('modal-user-title').innerText = "Add New User";
       document.getElementById('user-submit-btn').innerText = "Create User";
       document.getElementById('user-edit-key').value = "";
-
       document.getElementById('user-name-input').value = '';
       document.getElementById('user-email-input').value = '';
+      document.getElementById('user-email-input').disabled = false; // Allow typing email
       document.getElementById('user-password-input').value = '';
+      document.getElementById('user-password-group').classList.remove('hidden'); // Show password for new user
       document.getElementById('user-password-input').required = true;
       document.getElementById('user-role-input').value = 'Staff';
-
       openModal('modal-user');
     }
 
     function openEditUserModal(key) {
       const u = users[key];
       if (!u) return;
-
-      document.getElementById('modal-user-title').innerText = "Edit User Account";
-      document.getElementById('user-submit-btn').innerText = "Update User";
+      document.getElementById('modal-user-title').innerText = "Edit User Details";
+      document.getElementById('user-submit-btn').innerText = "Update Profile";
       document.getElementById('user-edit-key').value = key;
-
       document.getElementById('user-name-input').value = u.name || '';
       document.getElementById('user-email-input').value = u.email || '';
-      
-      document.getElementById('user-password-input').value = u.password || ''; 
-      document.getElementById('user-password-input').required = true; 
-      
+      document.getElementById('user-email-input').disabled = true; // Email change via client not permitted easily
+      document.getElementById('user-password-group').classList.add('hidden'); // Hide password for edits
+      document.getElementById('user-password-input').required = false;
       document.getElementById('user-role-input').value = u.role || 'Staff';
-
       openModal('modal-user');
     }
 
     function saveUserForm(e) {
       e.preventDefault();
       const key = document.getElementById('user-edit-key').value;
-      const name = document.getElementById('user-name-input').value;
-      const email = document.getElementById('user-email-input').value;
-      const pwd = document.getElementById('user-password-input').value.trim();
+      const name = document.getElementById('user-name-input').value.trim();
       const role = document.getElementById('user-role-input').value;
 
       if (key) {
-        const updateData = { 
-          name: name, 
-          email: email, 
-          role: role,
-          password: pwd 
-        };
-        
-        db.ref('users/' + key).update(updateData).then(() => {
-            alert("User account updated successfully!");
+        // Edit Existing User (Only Name & Role)
+        db.ref('users/' + key).update({ name, role }).then(() => {
+            alert("User profile updated successfully!");
             closeModal('modal-user');
-        }).catch(err => {
-            alert("Error updating user: " + err.message);
-        });
-
+        }).catch(err => alert("Error updating user: " + err.message));
       } else {
-        db.ref('users').push({ name, email, password: pwd, role }).then(() => {
-            alert("New user created successfully!");
-            closeModal('modal-user');
-        });
+        // Create New User
+        const email = document.getElementById('user-email-input').value.trim();
+        const pwd = document.getElementById('user-password-input').value.trim();
+        
+        // Use Secondary App to create user so Admin isn't logged out
+        let secondaryApp;
+        try {
+            secondaryApp = firebase.app("Secondary");
+        } catch(e) {
+            secondaryApp = firebase.initializeApp(firebaseConfig, "Secondary");
+        }
+
+        secondaryApp.auth().createUserWithEmailAndPassword(email, pwd)
+          .then((cred) => {
+             const newUid = cred.user.uid;
+             db.ref('users/' + newUid).set({ name, email, role }).then(() => {
+                secondaryApp.auth().signOut();
+                alert("New user created successfully!");
+                closeModal('modal-user');
+             });
+          })
+          .catch(err => {
+             alert("Error creating user: " + err.message);
+          });
       }
     }
 
     function deleteUser(key) {
-      if (Object.keys(users).length <= 1) {
-        alert("Cannot delete the last remaining user!");
+      if (key === currentUser.uid) {
+        alert("You cannot delete your own account while logged in!");
         return;
       }
-
-      if (confirm(`Are you sure you want to delete user "${users[key].name}"?`)) {
+      if (confirm(`Are you sure you want to delete user "${users[key].name}"?\n(This revokes database access, but full removal requires Firebase Console).`)) {
         db.ref('users/' + key).remove();
       }
     }
@@ -1972,13 +1302,12 @@
       const tbody = document.getElementById('users-table-body');
       if (!tbody) return;
       tbody.innerHTML = '';
-
       Object.keys(users).forEach((key) => {
         const u = users[key];
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${u.name}</td>
-          <td>${u.email}</td>          
+          <td>${u.email}</td>
           <td><b>${u.role}</b></td>
           <td style="display:flex; gap:6px;">
             <button class="btn btn-warning" style="padding:4px 8px; font-size:0.75rem;" onclick="openEditUserModal('${key}')">Edit</button>
