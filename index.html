@@ -193,25 +193,25 @@
     </div>
 
     <!-- FORGOT PASSWORD CARD (AUTH RESET) -->
-    <div id="forgot-card" class="auth-card hidden">
-      <div class="auth-header">
-        <h2>L K Ang Dormitory</h2>
-        <h1>Reset Password</h1>
-      </div>
-      <form onsubmit="handleForgotPassword(event)">
-        <div class="form-group">
-          <label>Registered Email Address</label>
-          <input type="email" id="forgot-email" class="form-input" placeholder="Enter your email" required>
-        </div>
-        <p style="font-size:0.8rem; color:#94a3b8; margin-bottom:15px; text-align:center;">
-          We will send a password reset link to your email.
-        </p>
-        <button type="submit" class="btn btn-warning" style="width:100%; margin-bottom: 15px;">Send Reset Link</button>
-      </form>
-      <div class="auth-toggle">
-        Remembered your password? <a onclick="toggleAuthMode('login')">Sign In here</a>
-      </div>
+<div id="forgot-card" class="auth-card hidden">
+  <div class="auth-header">
+    <h2>L K Ang Dormitory</h2>
+    <h1>Reset Password</h1>
+  </div>
+  <form onsubmit="handleForgotPassword(event)">
+    <div class="form-group">
+      <label>Registered Email Address</label>
+      <input type="email" id="forgot-email" class="form-input" placeholder="Enter your email" required>
     </div>
+    <p style="font-size:0.8rem; color:#94a3b8; margin-bottom:15px; text-align:center;">
+      We will send a password reset link to your email.
+    </p>
+    <button type="submit" class="btn btn-warning" style="width:100%; margin-bottom: 15px;">Send Reset Link</button>
+  </form>
+  <div class="auth-toggle">
+    Remembered your password? <a onclick="toggleAuthMode('login')">Sign In here</a>
+  </div>
+</div>
 
     <!-- REGISTER CARD (FIRST ADMIN) -->
     <div id="register-card" class="auth-card hidden">
