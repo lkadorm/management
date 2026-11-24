@@ -705,19 +705,33 @@
     }
 
     function handleForgotPassword(e) {
-      e.preventDefault();
-      const email = document.getElementById('forgot-email').value.trim();
-      
-      auth.sendPasswordResetEmail(email)
-        .then(() => {
-           alert("Password reset link has been sent to your email!");
-           document.getElementById('forgot-email').value = '';
-           toggleAuthMode('login');
-        })
-        .catch(err => {
+  e.preventDefault();
+  const emailInput = document.getElementById('forgot-email');
+  const email = emailInput.value.trim();
+  
+  if (!email) {
+      alert("Please enter your Email");
+      return;
+  }
+
+  // Firebase ၏ Password Reset Email ပို့သော စနစ်
+  auth.sendPasswordResetEmail(email)
+    .then(() => {
+       alert("A password reset link has been sent to your email. Please check your inbox or spam folder.");
+       emailInput.value = ''; // Input ကို ရှင်းလင်းရန်
+       toggleAuthMode('login'); // Login page သို့ ပြန်သွားရန်
+    })
+    .catch(err => {
+       // Error အလိုက် သတိပေးချက်များ ပြသရန်
+       if (err.code === 'auth/user-not-found') {
+           alert("Incorrect. There is no account registered with this email.");
+       } else if (err.code === 'auth/invalid-email') {
+           alert("The email format is incorrect. Please check it again.");
+       } else {
            alert("Error: " + err.message);
-        });
-    }
+       }
+    });
+}
 
     function handleRegister(e) {
       e.preventDefault();
